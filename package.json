@@ -1,0 +1,16 @@
+{
+  "name": "shell-protocol",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Decentralized AI Agent Red Team Network - Mine $SHELL by attacking AI Agents",
+  "scripts": {
+    "dev:oracle": "pnpm --filter @shell/oracle dev",
+    "dev:web": "pnpm --filter @shell/web dev",
+    "build:oracle": "pnpm --filter @shell/oracle build",
+    "build:web": "pnpm --filter @shell/web build",
+    "db:generate": "pnpm --filter @shell/oracle db:generate",
+    "db:migrate": "pnpm --filter @shell/oracle db:migrate",
+    "db:push": "pnpm --filter @shell/oracle db:push"
+  },
+  "packageManager": "pnpm@10.6.0"
+}
