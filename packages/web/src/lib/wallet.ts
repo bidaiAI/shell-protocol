@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue'
-import { requestNonce, login, setToken, getToken } from './api'
+import { requestNonce, login, setToken } from './api'
 
 export interface WalletState {
   connected: boolean

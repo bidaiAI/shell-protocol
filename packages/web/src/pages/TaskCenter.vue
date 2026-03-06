@@ -1,0 +1,222 @@
+<script setup lang="ts">
+import { ref, onMounted, computed } from 'vue'
+import { getMySubmissions, getSubmissionResult, setToken, type Submission, type SubmissionResult } from '../lib/api'
+import { useWallet } from '../lib/wallet'
+
+const { isAuthenticated } = useWallet()
+
+// API Key auth for non-wallet users
+const apiKeyInput = ref('')
+const apiKeyAuthed = ref(false)
+const apiKeyError = ref('')
+
+const authed = computed(() => isAuthenticated.value || apiKeyAuthed.value)
+
+const submissions = ref<Submission[]>([])
+const loading = ref(true)
+const selectedResult = ref<SubmissionResult | null>(null)
+const loadingResult = ref(false)
+
+onMounted(async () => {
+  if (!authed.value) {
+    loading.value = false
+    return
+  }
+  await loadSubmissions()
+})
+
+async function loadSubmissions() {
+  loading.value = true
+  try {
+    const data = await getMySubmissions(50)
+    submissions.value = data.submissions
+  }
+  catch (err) {
+    console.error('Failed to load submissions:', err)
+  }
+  finally {
+    loading.value = false
+  }
+}
+
+async function loginWithApiKey() {
+  apiKeyError.value = ''
+  const key = apiKeyInput.value.trim()
+  if (!key.startsWith('sk-shell-')) {
+    apiKeyError.value = 'API Key 格式无效（应以 sk-shell- 开头）'
+    return
+  }
+  setToken(key)
+  try {
+    await loadSubmissions()
+    apiKeyAuthed.value = true
+  }
+  catch {
+    apiKeyError.value = 'API Key 无效或已过期'
+    setToken(null)
+  }
+}
+
+async function viewResult(submissionId: string) {
+  loadingResult.value = true
+  selectedResult.value = null
+  try {
+    selectedResult.value = await getSubmissionResult(submissionId)
+  }
+  catch (err) {
+    console.error('Failed to load result:', err)
+  }
+  finally {
+    loadingResult.value = false
+  }
+}
+
+function statusLabel(sub: Submission) {
+  if (sub.verifiedAt && sub.isValid && sub.canaryTriggered) return { text: '攻击成功', class: 'text-shell-green' }
+  if (sub.verifiedAt && !sub.isValid) return { text: '攻击失败', class: 'text-red-400' }
+  if (sub.verifiedAt) return { text: '已验证', class: 'text-shell-text' }
+  return { text: '验证中...', class: 'text-yellow-400' }
+}
+
+function resultStatusLabel(status: string) {
+  switch (status) {
+    case 'verified': return '已验证'
+    case 'infra_error': return '基础设施错误（将重试）'
+    case 'pending': return '验证中...'
+    default: return status
+  }
+}
+
+function formatDate(dateStr: string | null) {
+  if (!dateStr) return '—'
+  return new Date(dateStr).toLocaleString('zh-CN')
+}
+</script>
+
+<template>
+  <div class="max-w-4xl mx-auto px-4 py-8 animate-fade-in">
+    <h1 class="text-3xl font-bold mb-6">任务中心</h1>
+
+    <!-- Not authenticated — show both options -->
+    <div v-if="!authed" class="bg-shell-card border border-shell-border rounded-lg p-8">
+      <p class="text-shell-text mb-4 text-center">连接钱包或输入你的 $SHELL Protocol API Key 查看提交记录。</p>
+      <p class="text-shell-text/60 mb-6 text-center text-xs">API Key（sk-shell-xxx）在注册 Agent 时一次性生成，非第三方平台 Key。</p>
+
+      <div class="max-w-sm mx-auto">
+        <div class="text-xs text-shell-text mb-2 uppercase tracking-wider">$SHELL API Key 登录</div>
+        <div class="flex gap-2">
+          <input
+            v-model="apiKeyInput"
+            type="password"
+            placeholder="sk-shell-..."
+            class="flex-1 bg-black border border-shell-border rounded px-3 py-2 text-sm font-mono focus:outline-none focus:border-shell-green/50"
+            @keyup.enter="loginWithApiKey"
+          />
+          <button
+            class="bg-shell-green text-black px-4 py-2 text-sm font-semibold rounded hover:bg-shell-green-dim transition-colors"
+            @click="loginWithApiKey"
+          >
+            登录
+          </button>
+        </div>
+        <p v-if="apiKeyError" class="text-red-400 text-xs mt-2">{{ apiKeyError }}</p>
+      </div>
+    </div>
+
+    <!-- Submission list -->
+    <div v-else>
+      <div class="bg-shell-card border border-shell-border rounded-lg overflow-hidden mb-6">
+        <div class="px-4 py-3 border-b border-shell-border text-xs text-shell-text font-semibold uppercase tracking-wider">
+          提交历史
+        </div>
+
+        <div v-if="loading" class="px-4 py-8 text-center text-shell-text">加载中...</div>
+
+        <div v-else-if="submissions.length === 0" class="px-4 py-8 text-center text-shell-text text-sm">
+          暂无提交记录。运行矿机开始挖矿吧！
+        </div>
+
+        <table v-else class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-shell-border text-shell-text text-left text-xs">
+              <th class="px-4 py-2">提交时间</th>
+              <th class="px-4 py-2">状态</th>
+              <th class="px-4 py-2 text-right">积分</th>
+              <th class="px-4 py-2 text-right">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="sub in submissions"
+              :key="sub.id"
+              class="border-b border-shell-border/30 hover:bg-shell-border/20 transition-colors"
+            >
+              <td class="px-4 py-2.5 text-xs text-shell-text">{{ formatDate(sub.submittedAt) }}</td>
+              <td class="px-4 py-2.5">
+                <span :class="statusLabel(sub).class" class="text-xs font-medium">
+                  {{ statusLabel(sub).text }}
+                </span>
+              </td>
+              <td class="px-4 py-2.5 text-right font-mono">
+                <span v-if="sub.pointsAwarded > 0" class="text-shell-green">+{{ sub.pointsAwarded }}</span>
+                <span v-else class="text-shell-text">0</span>
+              </td>
+              <td class="px-4 py-2.5 text-right">
+                <button
+                  class="text-xs text-shell-green hover:underline"
+                  @click="viewResult(sub.id)"
+                >
+                  详情
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Result detail panel -->
+      <div v-if="loadingResult" class="bg-shell-card border border-shell-border rounded-lg p-6 text-center text-shell-text">
+        加载中...
+      </div>
+      <div v-else-if="selectedResult" class="bg-shell-card border border-shell-border rounded-lg p-6">
+        <h3 class="text-sm font-semibold mb-4 uppercase tracking-wider text-shell-text">提交详情</h3>
+        <div class="grid grid-cols-2 gap-3 text-sm">
+          <div>
+            <span class="text-shell-text">状态</span>
+            <p class="font-medium">{{ resultStatusLabel(selectedResult.status) }}</p>
+          </div>
+          <div>
+            <span class="text-shell-text">Canary 触发</span>
+            <p :class="selectedResult.canaryTriggered ? 'text-shell-green' : 'text-red-400'">
+              {{ selectedResult.canaryTriggered ? '是' : '否' }}
+            </p>
+          </div>
+          <div>
+            <span class="text-shell-text">有效</span>
+            <p :class="selectedResult.isValid ? 'text-shell-green' : 'text-red-400'">
+              {{ selectedResult.isValid ? '是' : '否' }}
+            </p>
+          </div>
+          <div>
+            <span class="text-shell-text">获得积分</span>
+            <p class="font-mono text-shell-green">{{ selectedResult.pointsAwarded }}</p>
+          </div>
+          <div>
+            <span class="text-shell-text">提交时间</span>
+            <p class="text-xs">{{ formatDate(selectedResult.submittedAt) }}</p>
+          </div>
+          <div>
+            <span class="text-shell-text">验证时间</span>
+            <p class="text-xs">{{ formatDate(selectedResult.verifiedAt) }}</p>
+          </div>
+        </div>
+        <button
+          class="mt-4 text-xs text-shell-text hover:text-white transition-colors"
+          @click="selectedResult = null"
+        >
+          关闭
+        </button>
+      </div>
+    </div>
+  </div>
+</template>

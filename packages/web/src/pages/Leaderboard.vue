@@ -54,10 +54,6 @@ function tierDot(tier: string) {
   }
 }
 
-function shortAddr(addr: string) {
-  return `${addr.slice(0, 6)}...${addr.slice(-4)}`
-}
-
 function formatPoints(n: number) {
   return n.toLocaleString()
 }
@@ -83,11 +79,11 @@ function formatPoints(n: number) {
         <tbody v-if="!loading">
           <tr
             v-for="(entry, i) in entries"
-            :key="entry.walletAddress"
+            :key="entry.displayName"
             class="border-b border-shell-border/50 hover:bg-shell-border/20 transition-colors"
           >
             <td class="px-4 py-3 text-shell-text">{{ page * pageSize + i + 1 }}</td>
-            <td class="px-4 py-3 font-mono text-xs">{{ shortAddr(entry.walletAddress) }}</td>
+            <td class="px-4 py-3 font-mono text-xs">{{ entry.displayName }}</td>
             <td class="px-4 py-3">
               <span class="flex items-center gap-1.5">
                 <span class="w-2 h-2 rounded-full" :class="tierDot(entry.tier)"></span>

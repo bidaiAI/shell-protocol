@@ -1,16 +1,21 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useWallet } from '../lib/wallet'
-import { getMyStats, getMyReferral, getMySubmissions, type UserData, type ReferralData, type Submission } from '../lib/api'
+import {
+  getMyStats, getMySubmissions, getReferralOverview, getReferralCommissions,
+  type UserData, type Submission, type ReferralOverview, type CommissionEntry,
+} from '../lib/api'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const { isAuthenticated, address } = useWallet()
 
 const user = ref<UserData | null>(null)
-const referral = ref<ReferralData | null>(null)
+const referralOverview = ref<ReferralOverview | null>(null)
+const commissions = ref<CommissionEntry[]>([])
 const submissions = ref<Submission[]>([])
 const loading = ref(true)
+const showCommissions = ref(false)
 
 onMounted(async () => {
   if (!isAuthenticated.value) {
@@ -23,13 +28,13 @@ onMounted(async () => {
 async function loadDashboard() {
   loading.value = true
   try {
-    const [stats, ref_, subs] = await Promise.all([
+    const [stats, refData, subs] = await Promise.all([
       getMyStats(),
-      getMyReferral(),
+      getReferralOverview(),
       getMySubmissions(10),
     ])
     user.value = stats
-    referral.value = ref_
+    referralOverview.value = refData
     submissions.value = subs.submissions
   }
   catch (err) {
@@ -62,11 +67,34 @@ function formatDate(iso: string) {
 
 const referralLink = ref('')
 function copyReferral() {
-  if (!referral.value) return
-  const link = `${window.location.origin}/?ref=${referral.value.referralCode}`
+  if (!referralOverview.value) return
+  const link = `${window.location.origin}/?ref=${referralOverview.value.referralCode}`
   navigator.clipboard.writeText(link)
   referralLink.value = '已复制!'
   setTimeout(() => { referralLink.value = '' }, 2000)
+}
+
+async function toggleCommissions() {
+  showCommissions.value = !showCommissions.value
+  if (showCommissions.value && commissions.value.length === 0) {
+    try {
+      const data = await getReferralCommissions(20)
+      commissions.value = data.commissions
+    }
+    catch (err) {
+      console.error('Failed to load commissions:', err)
+    }
+  }
+}
+
+function commissionStatusText(status: string) {
+  switch (status) {
+    case 'released': return '已发放'
+    case 'frozen': return '冻结中'
+    case 'pending': return '待发放'
+    case 'clawback': return '已追缴'
+    default: return status
+  }
 }
 </script>
 
@@ -112,11 +140,14 @@ function copyReferral() {
             注册时间 {{ user.createdAt ? formatDate(user.createdAt) : '—' }}
           </div>
         </div>
+
+        <!-- Referral Dashboard -->
         <div class="bg-shell-card border border-shell-border rounded-lg p-5">
-          <div class="text-xs text-shell-text mb-2">推荐计划</div>
-          <div v-if="referral" class="space-y-2">
+          <div class="text-xs text-shell-text mb-3">推荐计划</div>
+          <div v-if="referralOverview" class="space-y-3">
+            <!-- Referral Code & Copy -->
             <div class="flex items-center gap-2">
-              <code class="bg-black px-2 py-1 rounded text-shell-green text-sm flex-1">{{ referral.referralCode }}</code>
+              <code class="bg-black px-2 py-1 rounded text-shell-green text-sm flex-1">{{ referralOverview.referralCode }}</code>
               <button
                 class="text-xs text-shell-text hover:text-shell-green transition-colors"
                 @click="copyReferral"
@@ -124,9 +155,62 @@ function copyReferral() {
                 {{ referralLink || '复制链接' }}
               </button>
             </div>
-            <div class="flex justify-between text-xs text-shell-text">
-              <span>已推荐: {{ referral.referredCount }} 人</span>
-              <span>推荐收益: {{ referral.totalReferralEarnings.toLocaleString() }} 分</span>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <span class="text-shell-text">已推荐</span>
+                <span class="text-white ml-1 font-bold">{{ referralOverview.totalReferrals }} 人</span>
+              </div>
+              <div>
+                <span class="text-shell-text">活跃中</span>
+                <span class="text-shell-green ml-1 font-bold">{{ referralOverview.activeCount }} 人</span>
+              </div>
+              <div>
+                <span class="text-shell-text">总收益</span>
+                <span class="text-shell-green ml-1 font-bold">{{ referralOverview.totalReleased.toLocaleString() }} 分</span>
+              </div>
+              <div>
+                <span class="text-shell-text">今日佣金</span>
+                <span class="text-white ml-1 font-bold">{{ referralOverview.todayCommissions.toLocaleString() }} 分</span>
+              </div>
+            </div>
+
+            <!-- Frozen warning -->
+            <div v-if="referralOverview.totalFrozen > 0"
+              class="text-xs text-yellow-400 bg-yellow-400/10 rounded px-3 py-2">
+              冻结中: {{ referralOverview.totalFrozen.toLocaleString() }} 分（风控审核中）
+            </div>
+
+            <!-- Commission Details Toggle -->
+            <button
+              class="text-xs text-shell-text hover:text-shell-green transition-colors"
+              @click="toggleCommissions"
+            >
+              {{ showCommissions ? '收起佣金明细' : '查看佣金明细' }}
+            </button>
+
+            <!-- Commission List -->
+            <div v-if="showCommissions" class="space-y-1">
+              <div v-if="commissions.length === 0" class="text-xs text-shell-text">暂无佣金记录</div>
+              <div v-for="c in commissions" :key="c.id"
+                class="flex justify-between items-center text-xs border-t border-shell-border/50 pt-1.5">
+                <div>
+                  <span class="text-white">{{ c.inviteeDisplay }}</span>
+                  <span class="text-shell-text ml-2">{{ formatDate(c.createdAt) }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span :class="{
+                    'text-shell-green': c.status === 'released',
+                    'text-yellow-400': c.status === 'frozen',
+                    'text-shell-text': c.status === 'pending',
+                    'text-red-400': c.status === 'clawback',
+                  }">
+                    +{{ c.commissionPoints }}
+                  </span>
+                  <span class="text-shell-text">({{ c.commissionRateBps / 100 }}%)</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

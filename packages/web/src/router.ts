@@ -21,6 +21,16 @@ const routes = [
     name: 'tasks',
     component: () => import('./pages/TaskFeed.vue'),
   },
+  {
+    path: '/task-center',
+    name: 'task-center',
+    component: () => import('./pages/TaskCenter.vue'),
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: () => import('./pages/NotFound.vue'),
+  },
 ]
 
 export const router = createRouter({
