@@ -52,3 +52,62 @@ body {
 .animate-fade-in {
   animation: fade-in 0.4s ease-out;
 }
+
+/* Slide-in from left */
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.animate-slide-in {
+  animation: slide-in-left 0.3s ease-out;
+}
+
+/* Attack success flash */
+@keyframes breach-flash {
+  0% { background-color: rgba(239, 68, 68, 0.2); }
+  50% { background-color: rgba(239, 68, 68, 0.05); }
+  100% { background-color: transparent; }
+}
+.animate-breach {
+  animation: breach-flash 1.5s ease-out;
+}
+
+/* Scanning line effect */
+@keyframes scan-line {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.scan-line {
+  overflow: hidden;
+  position: relative;
+}
+.scan-line::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.05), transparent);
+  animation: scan-line 3s linear infinite;
+  pointer-events: none;
+}
+
+/* Pulse border for live elements */
+@keyframes pulse-border {
+  0%, 100% { border-color: rgba(0, 255, 136, 0.2); }
+  50% { border-color: rgba(0, 255, 136, 0.5); }
+}
+.animate-pulse-border {
+  animation: pulse-border 2s ease-in-out infinite;
+}
+
+/* Typewriter cursor */
+@keyframes type-cursor {
+  0%, 100% { border-right-color: var(--color-shell-green); }
+  50% { border-right-color: transparent; }
+}
+.type-cursor {
+  border-right: 2px solid var(--color-shell-green);
+  animation: type-cursor 0.8s step-end infinite;
+}

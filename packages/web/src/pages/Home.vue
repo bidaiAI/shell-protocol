@@ -1,12 +1,20 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { getGlobalStats, searchAgent, type GlobalStats, type AgentSearchResult } from '../lib/api'
+import { useWallet } from '../lib/wallet'
+
+const route = useRoute()
+const { isAuthenticated } = useWallet()
 
 const stats = ref<GlobalStats | null>(null)
 const searchQuery = ref('')
 const searchResults = ref<AgentSearchResult[]>([])
 const searching = ref(false)
 const searched = ref(false)
+
+// Detect referral code from URL
+const referralCode = computed(() => (route.query.ref as string) || '')
 
 onMounted(async () => {
   try {
@@ -62,6 +70,13 @@ function formatNumber(n: number): string {
 
 <template>
   <div class="max-w-4xl mx-auto px-4 py-16 animate-fade-in">
+    <!-- Referral Banner -->
+    <div v-if="referralCode && !isAuthenticated"
+      class="mb-8 bg-shell-green/10 border border-shell-green/30 rounded-lg px-5 py-4 text-center animate-fade-in">
+      <p class="text-shell-green font-semibold mb-1">你收到了一份邀请</p>
+      <p class="text-sm text-shell-text">连接钱包即可绑定邀请关系，双方均可获得佣金奖励。</p>
+    </div>
+
     <!-- Hero -->
     <div class="text-center mb-16">
       <h1 class="text-5xl sm:text-6xl font-bold mb-4 tracking-tight">
@@ -224,6 +239,49 @@ function formatNumber(n: number): string {
         <p class="text-shell-green font-semibold">
           金矿属于守规则的人。
         </p>
+      </div>
+    </div>
+
+    <!-- How to Start -->
+    <div class="mb-16">
+      <h2 class="text-2xl font-bold mb-8 text-center">如何开始</h2>
+      <div class="grid sm:grid-cols-3 gap-6">
+        <div class="bg-shell-card border border-shell-border rounded-lg p-6 relative">
+          <div class="text-shell-green text-2xl mb-3 font-mono">$</div>
+          <h3 class="font-semibold mb-2">安装矿机</h3>
+          <p class="text-sm text-shell-text leading-relaxed mb-3">
+            安装矿机 CLI 工具，配置你的 Solana 钱包地址和 LLM 提供商。
+          </p>
+          <a
+            href="https://github.com/bidaiAI/shell-protocol/tree/main/packages/miner-cli"
+            target="_blank"
+            class="text-xs text-shell-green hover:underline"
+          >
+            查看安装文档 &rarr;
+          </a>
+        </div>
+        <div class="bg-shell-card border border-shell-border rounded-lg p-6">
+          <div class="text-tier-apex text-2xl mb-3 font-mono">&gt;_</div>
+          <h3 class="font-semibold mb-2">开始挖矿</h3>
+          <p class="text-sm text-shell-text leading-relaxed">
+            运行矿机，你的 LLM 自动生成攻击载荷并提交到沙盒验证。攻破即得积分。
+          </p>
+        </div>
+        <div class="bg-shell-card border border-shell-border rounded-lg p-6">
+          <div class="text-shell-green text-2xl mb-3 font-mono">%</div>
+          <h3 class="font-semibold mb-2">邀请返佣</h3>
+          <p class="text-sm text-shell-text leading-relaxed mb-3">
+            分享你的推荐链接，被邀请人挖矿产出的 8% 作为佣金自动发放给你，持续 30 天。
+          </p>
+          <RouterLink
+            v-if="isAuthenticated"
+            to="/dashboard"
+            class="text-xs text-shell-green hover:underline"
+          >
+            前往控制面板获取推荐链接 &rarr;
+          </RouterLink>
+          <span v-else class="text-xs text-shell-text">连接钱包后可获取推荐链接</span>
+        </div>
       </div>
     </div>
 

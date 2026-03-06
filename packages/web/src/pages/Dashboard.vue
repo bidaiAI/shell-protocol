@@ -2,8 +2,8 @@
 import { ref, onMounted } from 'vue'
 import { useWallet } from '../lib/wallet'
 import {
-  getMyStats, getMySubmissions, getReferralOverview, getReferralCommissions,
-  type UserData, type Submission, type ReferralOverview, type CommissionEntry,
+  getMyStats, getMySubmissions, getReferralOverview, getReferralCommissions, getReferralBindings,
+  type UserData, type Submission, type ReferralOverview, type CommissionEntry, type BindingEntry,
 } from '../lib/api'
 import { useRouter } from 'vue-router'
 
@@ -13,9 +13,11 @@ const { isAuthenticated, address } = useWallet()
 const user = ref<UserData | null>(null)
 const referralOverview = ref<ReferralOverview | null>(null)
 const commissions = ref<CommissionEntry[]>([])
+const bindings = ref<BindingEntry[]>([])
 const submissions = ref<Submission[]>([])
 const loading = ref(true)
 const showCommissions = ref(false)
+const showBindings = ref(false)
 
 onMounted(async () => {
   if (!isAuthenticated.value) {
@@ -93,6 +95,29 @@ function commissionStatusText(status: string) {
     case 'frozen': return '冻结中'
     case 'pending': return '待发放'
     case 'clawback': return '已追缴'
+    default: return status
+  }
+}
+
+async function toggleBindings() {
+  showBindings.value = !showBindings.value
+  if (showBindings.value && bindings.value.length === 0) {
+    try {
+      const data = await getReferralBindings()
+      bindings.value = data.bindings
+    }
+    catch (err) {
+      console.error('Failed to load bindings:', err)
+    }
+  }
+}
+
+function bindingStatusText(status: string) {
+  switch (status) {
+    case 'pending': return '待激活'
+    case 'active': return '活跃'
+    case 'expired': return '已过期'
+    case 'revoked': return '已撤销'
     default: return status
   }
 }
@@ -209,6 +234,37 @@ function commissionStatusText(status: string) {
                     +{{ c.commissionPoints }}
                   </span>
                   <span class="text-shell-text">({{ c.commissionRateBps / 100 }}%)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bindings Toggle -->
+            <button
+              class="text-xs text-shell-text hover:text-shell-green transition-colors"
+              @click="toggleBindings"
+            >
+              {{ showBindings ? '收起推荐列表' : '查看推荐列表' }}
+            </button>
+
+            <!-- Bindings List -->
+            <div v-if="showBindings" class="space-y-1">
+              <div v-if="bindings.length === 0" class="text-xs text-shell-text">暂无推荐记录</div>
+              <div v-for="b in bindings" :key="b.id"
+                class="flex justify-between items-center text-xs border-t border-shell-border/50 pt-1.5">
+                <div>
+                  <span class="text-white">{{ b.inviteeDisplay }}</span>
+                  <span class="text-shell-text ml-2">{{ formatDate(b.createdAt) }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span :class="{
+                    'text-shell-green': b.status === 'active',
+                    'text-shell-text': b.status === 'pending',
+                    'text-tier-scout': b.status === 'expired',
+                    'text-red-400': b.status === 'revoked',
+                  }">
+                    {{ bindingStatusText(b.status) }}
+                  </span>
+                  <span v-if="b.totalEarned > 0" class="text-shell-green">+{{ b.totalEarned.toLocaleString() }}</span>
                 </div>
               </div>
             </div>
