@@ -115,10 +115,17 @@ program
       catch (err) {
         pollSpinner.fail(`Error: ${err instanceof Error ? err.message : 'Unknown'}`)
 
-        if (err instanceof Error && err.message.includes('Token expired')) {
+        if (err instanceof Error && (err.message.includes('Token expired') || err.message.includes('re-authenticate'))) {
           console.log(chalk.yellow('Re-authenticating...'))
-          const result = await authenticate(config, opts.referral)
-          token = result.token
+          try {
+            const result = await authenticate(config, opts.referral)
+            token = result.token
+            console.log(chalk.green('Re-authenticated successfully'))
+          }
+          catch (authErr) {
+            console.error(chalk.red(`Re-auth failed: ${authErr instanceof Error ? authErr.message : 'Unknown'}`))
+            console.log(chalk.yellow('Will retry on next cycle...'))
+          }
         }
       }
 
@@ -142,11 +149,16 @@ program
     console.log(JSON.stringify(data, null, 2))
   })
 
+// Prevent silent crashes
+process.on('unhandledRejection', (err) => {
+  console.error(chalk.red('Unhandled error:'), err)
+})
+
 program.parse()
 
 // ── Helpers ──
 
-function buildPrompts(task: TaskData) {
+function buildPrompts(task: TaskData): { systemPrompt: string, userPrompt: string } {
   const profile = task.targetAgentProfile
   const taskInfo = {
     targetAgentType: profile.name,
@@ -173,7 +185,7 @@ function buildPrompts(task: TaskData) {
         userPrompt: tier3.buildUserPrompt(taskInfo),
       }
     case 'full_chain':
-      // Full chain uses tier1 as base with enhanced prompt
+    default:
       return {
         systemPrompt: tier1.SYSTEM_PROMPT,
         userPrompt: tier1.buildUserPrompt({

@@ -39,8 +39,12 @@ export function useWallet() {
       publicKey: pubkey.toBytes(),
     }
 
+    // Extract referral code from URL if present
+    const params = new URLSearchParams(window.location.search)
+    const referralCode = params.get('ref') || undefined
+
     // Auto-authenticate after connecting
-    await authenticate()
+    await authenticate(referralCode)
   }
 
   async function authenticate(referralCode?: string) {

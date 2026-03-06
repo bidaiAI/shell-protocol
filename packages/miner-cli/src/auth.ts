@@ -48,8 +48,15 @@ export async function authenticate(config: MinerConfig, referralCode?: string): 
   })
 
   if (!loginRes.ok) {
-    const err = await loginRes.json() as { error: string }
-    throw new Error(`Login failed: ${err.error}`)
+    let errorMsg: string
+    try {
+      const err = await loginRes.json() as { error: string }
+      errorMsg = err.error
+    }
+    catch {
+      errorMsg = loginRes.statusText || `HTTP ${loginRes.status}`
+    }
+    throw new Error(`Login failed: ${errorMsg}`)
   }
 
   return loginRes.json() as Promise<{

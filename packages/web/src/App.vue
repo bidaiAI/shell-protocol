@@ -1,8 +1,22 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
 import { useWallet } from './lib/wallet'
 
 const { connected, shortAddress, connect, disconnect, isAuthenticated } = useWallet()
+
+const connectError = ref('')
+
+async function handleConnect() {
+  connectError.value = ''
+  try {
+    await connect()
+  }
+  catch (err) {
+    connectError.value = err instanceof Error ? err.message : '连接失败'
+    setTimeout(() => { connectError.value = '' }, 5000)
+  }
+}
 </script>
 
 <template>
@@ -41,13 +55,15 @@ const { connected, shortAddress, connect, disconnect, isAuthenticated } = useWal
         </div>
 
         <div>
-          <button
-            v-if="!connected"
-            class="bg-shell-green text-black px-4 py-1.5 text-sm font-semibold rounded hover:bg-shell-green-dim transition-colors"
-            @click="connect"
-          >
-            连接钱包
-          </button>
+          <div v-if="!connected" class="flex items-center gap-2">
+            <span v-if="connectError" class="text-red-400 text-xs">{{ connectError }}</span>
+            <button
+              class="bg-shell-green text-black px-4 py-1.5 text-sm font-semibold rounded hover:bg-shell-green-dim transition-colors"
+              @click="handleConnect"
+            >
+              连接钱包
+            </button>
+          </div>
           <div v-else class="flex items-center gap-3">
             <span class="text-shell-green text-sm font-mono">{{ shortAddress }}</span>
             <button
