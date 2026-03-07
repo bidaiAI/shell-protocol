@@ -2,26 +2,16 @@
 import { ref, watch } from 'vue'
 import { RouterLink, RouterView, useRouter } from 'vue-router'
 import { useWallet } from './lib/wallet'
+import AuthModal from './components/AuthModal.vue'
 
-const { connected, shortAddress, connect, disconnect, isAuthenticated } = useWallet()
+const { disconnect, isAuthenticated, displayName } = useWallet()
 
-const connectError = ref('')
+const showAuthModal = ref(false)
 const menuOpen = ref(false)
 
 // Auto-close mobile menu on route change
 const router = useRouter()
 watch(() => router.currentRoute.value.path, () => { menuOpen.value = false })
-
-async function handleConnect() {
-  connectError.value = ''
-  try {
-    await connect()
-  }
-  catch (err) {
-    connectError.value = err instanceof Error ? err.message : '连接失败'
-    setTimeout(() => { connectError.value = '' }, 5000)
-  }
-}
 </script>
 
 <template>
@@ -49,6 +39,13 @@ async function handleConnect() {
               任务动态
             </RouterLink>
             <RouterLink
+              to="/task-center"
+              class="text-shell-text hover:text-white transition-colors"
+              active-class="!text-shell-green"
+            >
+              任务中心
+            </RouterLink>
+            <RouterLink
               v-if="isAuthenticated"
               to="/dashboard"
               class="text-shell-text hover:text-white transition-colors"
@@ -74,17 +71,16 @@ async function handleConnect() {
             </svg>
           </button>
 
-          <div v-if="!connected" class="flex items-center gap-2">
-            <span v-if="connectError" class="text-red-400 text-xs">{{ connectError }}</span>
+          <div v-if="!isAuthenticated" class="flex items-center gap-2">
             <button
               class="bg-shell-green text-black px-4 py-1.5 text-sm font-semibold rounded hover:bg-shell-green-dim transition-colors"
-              @click="handleConnect"
+              @click="showAuthModal = true"
             >
-              连接钱包
+              登录
             </button>
           </div>
           <div v-else class="flex items-center gap-3">
-            <span class="text-shell-green text-sm font-mono">{{ shortAddress }}</span>
+            <span class="text-shell-green text-sm font-mono">{{ displayName }}</span>
             <button
               class="text-shell-text text-sm hover:text-white transition-colors"
               @click="disconnect"
@@ -113,6 +109,13 @@ async function handleConnect() {
             任务动态
           </RouterLink>
           <RouterLink
+            to="/task-center"
+            class="text-shell-text hover:text-white py-1.5 transition-colors"
+            active-class="!text-shell-green"
+          >
+            任务中心
+          </RouterLink>
+          <RouterLink
             v-if="isAuthenticated"
             to="/dashboard"
             class="text-shell-text hover:text-white py-1.5 transition-colors"
@@ -133,5 +136,8 @@ async function handleConnect() {
     <footer class="border-t border-shell-border py-6 text-center text-shell-text text-xs">
       <p>$SHELL Protocol &mdash; 去中心化 AI 红队测试网络</p>
     </footer>
+
+    <!-- Auth Modal -->
+    <AuthModal v-if="showAuthModal" @close="showAuthModal = false" />
   </div>
 </template>

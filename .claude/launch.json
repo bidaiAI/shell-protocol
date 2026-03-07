@@ -4,7 +4,7 @@
     {
       "name": "web",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@shell/web", "dev"],
+      "runtimeArgs": ["--filter", "@openshell-cc/web", "dev"],
       "port": 3000
     }
   ]

@@ -1,5 +1,7 @@
 import 'dotenv/config'
 
+export type ExecutionMode = 'auto' | 'local_only' | 'sandbox_only'
+
 export interface MinerConfig {
   oracleUrl: string
   walletPrivateKey: string
@@ -7,6 +9,7 @@ export interface MinerConfig {
   llmApiKey: string
   llmModel: string
   pollingIntervalMs: number
+  executionMode: ExecutionMode
 }
 
 export function loadConfig(): MinerConfig {
@@ -25,6 +28,7 @@ export function loadConfig(): MinerConfig {
     llmApiKey: process.env.LLM_API_KEY || process.env.ANTHROPIC_API_KEY || '',
     llmModel: process.env.LLM_MODEL || defaultModels[provider],
     pollingIntervalMs: Number(process.env.POLLING_INTERVAL_MS) || 5000,
+    executionMode: (process.env.EXECUTION_MODE || 'auto') as ExecutionMode,
   }
 }
 

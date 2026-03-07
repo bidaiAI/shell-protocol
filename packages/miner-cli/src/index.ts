@@ -4,8 +4,10 @@ import chalk from 'chalk'
 import ora from 'ora'
 import { loadConfig, validateConfig } from './config.js'
 import { authenticate } from './auth.js'
-import { pollForTask, submitPayload, type TaskData } from './poller.js'
+import { pollForTask, submitPayload, submitLocalComputeResult, type TaskData, type SubmitResult } from './poller.js'
 import { generatePayload } from './llm/provider.js'
+import { executeLocally } from './local-sandbox/executor.js'
+import { buildSubmissionBody } from './local-sandbox/proof.js'
 import * as tier1 from './llm/prompts/tier1-token-injection.js'
 import * as tier2 from './llm/prompts/tier2-social-engineering.js'
 import * as tier3 from './llm/prompts/tier3-memory-poisoning.js'
@@ -15,7 +17,7 @@ const program = new Command()
 program
   .name('shell-miner')
   .description('$SHELL Protocol Miner CLI — Mine $SHELL by red-teaming AI agents')
-  .version('0.1.0')
+  .version('0.2.0')
 
 program
   .command('start')
@@ -41,6 +43,7 @@ program
     console.log(chalk.cyan('  Decentralized AI Red Team Network'))
     console.log(chalk.gray(`  Oracle: ${config.oracleUrl}`))
     console.log(chalk.gray(`  LLM: ${config.llmProvider} (${config.llmModel})`))
+    console.log(chalk.gray(`  Mode: ${config.executionMode}`))
     console.log()
 
     // Authenticate
@@ -81,30 +84,53 @@ program
           continue
         }
 
-        pollSpinner.succeed(`Task received: ${chalk.yellow(task.taskType)} | Chain: ${chalk.blue(task.targetChain)} | Difficulty: ${'*'.repeat(task.difficulty)} | Reward: ${chalk.cyan(task.rewardPoints)} pts`)
+        const isLocalCompute = task.executionMode === 'local_compute'
+        const modeTag = isLocalCompute ? chalk.magenta('[LOCAL]') : chalk.blue('[SANDBOX]')
 
-        // Generate payload
-        const genSpinner = ora('Generating attack payload with LLM...').start()
-        const { systemPrompt, userPrompt } = buildPrompts(task)
-        const response = await generatePayload(config, systemPrompt, userPrompt)
-        genSpinner.succeed(`Payload generated (${response.tokensUsed.input + response.tokensUsed.output} tokens used)`)
+        pollSpinner.succeed(`${modeTag} Task received: ${chalk.yellow(task.taskType)} | Chain: ${chalk.blue(task.targetChain)} | Difficulty: ${'*'.repeat(task.difficulty)} | Reward: ${chalk.cyan(task.rewardPoints)} pts`)
 
-        // Submit
-        const subSpinner = ora('Submitting payload to Oracle...').start()
-        const result = await submitPayload(config, token, task.id, response.text)
+        // ── Execution mode routing ──
+        // local_only: only handle local_compute tasks; skip sandbox_verified tasks
+        // sandbox_only: only handle sandbox_verified tasks; skip local_compute tasks
+        // auto (default): handle whatever the server sends
+        if (config.executionMode === 'local_only' && !isLocalCompute) {
+          console.log(chalk.gray('  [local_only] Skipping sandbox task — waiting for local_compute task.'))
+          await sleep(config.pollingIntervalMs)
+          continue
+        }
+
+        if (config.executionMode === 'sandbox_only' && isLocalCompute) {
+          console.log(chalk.gray('  [sandbox_only] Skipping local_compute task — waiting for sandbox task.'))
+          await sleep(config.pollingIntervalMs)
+          continue
+        }
+
+        let result: SubmitResult
+
+        if (isLocalCompute) {
+          // ── Local Compute Path ──
+          result = await handleLocalCompute(config, token, task)
+        } else {
+          // ── Sandbox Verified Path (original flow) ──
+          result = await handleSandboxVerified(config, token, task)
+        }
 
         totalTasks++
 
         if (result.result === 'success') {
           totalSuccess++
           totalPoints += result.pointsAwarded ?? 0
-          subSpinner.succeed(chalk.green(`Attack successful! +${result.pointsAwarded} points`))
+          console.log(chalk.green(`  Attack successful! +${result.pointsAwarded} points`))
         }
         else if (result.result === 'slashed') {
-          subSpinner.fail(chalk.red(`SLASHED! ${result.message}`))
+          console.log(chalk.red(`  SLASHED! ${result.message}`))
+        }
+        else if (result.result === 'failed') {
+          console.log(chalk.red(`  Failed: ${result.message}`))
         }
         else {
-          subSpinner.info(`Submitted for verification. ${result.message}`)
+          const spotTag = result.spotCheckSelected ? chalk.yellow(' [spot-check]') : ''
+          console.log(chalk.gray(`  Submitted for verification.${spotTag} ${result.message}`))
         }
 
         // Stats
@@ -132,6 +158,64 @@ program
       await sleep(config.pollingIntervalMs)
     }
   })
+
+/** Handle local_compute task: payload → local execution → hash/proof → structured submit */
+async function handleLocalCompute(
+  config: ReturnType<typeof loadConfig>,
+  token: string,
+  task: TaskData,
+): Promise<SubmitResult> {
+  // 1. Generate attack payload
+  const genSpinner = ora('Generating attack payload...').start()
+  const { systemPrompt, userPrompt } = buildPrompts(task)
+  const payloadResponse = await generatePayload(config, systemPrompt, userPrompt)
+  const payload = payloadResponse.text
+  genSpinner.succeed(`Payload generated (${payloadResponse.tokensUsed.input + payloadResponse.tokensUsed.output} tokens)`)
+
+  // 2. Execute locally against mock agent
+  const execSpinner = ora('Executing locally against target agent...').start()
+  const executionResult = await executeLocally(
+    config,
+    task.targetAgentProfile,
+    payload,
+    task.mockToolDefinitions,
+  )
+  const totalTokens = executionResult.tokensUsed.input + executionResult.tokensUsed.output
+  execSpinner.succeed(
+    `Local execution done: ${executionResult.actionLog.length} actions, ${executionResult.rounds} rounds, ${totalTokens} tokens, ${executionResult.executionTimeMs}ms`,
+  )
+
+  // 3. Build structured submission body with proof
+  const subSpinner = ora('Submitting structured result...').start()
+  const body = buildSubmissionBody(
+    task.id,
+    payload,
+    task.challengeNonce!,
+    executionResult,
+    config,
+  )
+
+  const result = await submitLocalComputeResult(config, token, body)
+  subSpinner.stop()
+  return result
+}
+
+/** Handle sandbox_verified task: payload → submit for server-side sandbox verification */
+async function handleSandboxVerified(
+  config: ReturnType<typeof loadConfig>,
+  token: string,
+  task: TaskData,
+): Promise<SubmitResult> {
+  const genSpinner = ora('Generating attack payload with LLM...').start()
+  const { systemPrompt, userPrompt } = buildPrompts(task)
+  const response = await generatePayload(config, systemPrompt, userPrompt)
+  genSpinner.succeed(`Payload generated (${response.tokensUsed.input + response.tokensUsed.output} tokens used)`)
+
+  const subSpinner = ora('Submitting payload to Oracle...').start()
+  const result = await submitPayload(config, token, task.id, response.text)
+  subSpinner.stop()
+  return result
+}
 
 program
   .command('status')

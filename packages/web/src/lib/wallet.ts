@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue'
-import { requestNonce, login, setToken } from './api'
+import { requestNonce, login, setToken, loginWithEmail as apiLoginEmail, registerEmail as apiRegisterEmail, bindWalletToAccount } from './api'
 
 export interface WalletState {
   connected: boolean
@@ -14,6 +14,8 @@ const walletState = ref<WalletState>({
 })
 
 const isAuthenticated = ref(false)
+const userEmail = ref<string | null>(null)
+const authMethod = ref<'wallet' | 'email' | 'apikey' | null>(null)
 
 export function useWallet() {
   const connected = computed(() => walletState.value.connected)
@@ -22,6 +24,11 @@ export function useWallet() {
     const addr = walletState.value.address
     if (!addr) return ''
     return `${addr.slice(0, 4)}...${addr.slice(-4)}`
+  })
+  const displayName = computed(() => {
+    if (walletState.value.address) return `${walletState.value.address.slice(0, 4)}...${walletState.value.address.slice(-4)}`
+    if (userEmail.value) return userEmail.value.length > 20 ? `${userEmail.value.slice(0, 17)}...` : userEmail.value
+    return ''
   })
 
   async function connect() {
@@ -72,11 +79,63 @@ export function useWallet() {
     return result
   }
 
+  async function loginEmail(email: string, password: string) {
+    const result = await apiLoginEmail(email, password)
+    setToken(result.token)
+    userEmail.value = email
+    authMethod.value = 'email'
+    isAuthenticated.value = true
+    if (result.user.walletAddress) {
+      walletState.value = { connected: true, address: result.user.walletAddress, publicKey: null }
+    }
+    return result
+  }
+
+  async function registerEmailUser(email: string, password: string, referralCode?: string) {
+    return apiRegisterEmail(email, password, referralCode)
+  }
+
+  function loginWithToken(token: string, email?: string) {
+    setToken(token)
+    if (email) userEmail.value = email
+    authMethod.value = 'email'
+    isAuthenticated.value = true
+  }
+
+  async function bindWallet() {
+    const phantom = (window as Window & { solana?: PhantomProvider }).solana
+    if (!phantom?.isPhantom) {
+      window.open('https://phantom.app/', '_blank')
+      throw new Error('请先安装 Phantom 钱包')
+    }
+
+    const resp = await phantom.connect()
+    const walletAddress = resp.publicKey.toString()
+
+    // Sign a binding message
+    const message = `Bind wallet ${walletAddress} to $SHELL account`
+    const encoded = new TextEncoder().encode(message)
+    const { signature } = await phantom.signMessage(encoded, 'utf8')
+    const sig58 = encodeBase58(signature)
+
+    await bindWalletToAccount(walletAddress, sig58, message)
+
+    walletState.value = {
+      connected: true,
+      address: walletAddress,
+      publicKey: resp.publicKey.toBytes(),
+    }
+
+    return walletAddress
+  }
+
   function disconnect() {
     const phantom = (window as Window & { solana?: PhantomProvider }).solana
     phantom?.disconnect()
     walletState.value = { connected: false, address: null, publicKey: null }
     isAuthenticated.value = false
+    userEmail.value = null
+    authMethod.value = null
     setToken(null)
   }
 
@@ -84,9 +143,16 @@ export function useWallet() {
     connected,
     address,
     shortAddress,
+    displayName,
     isAuthenticated,
+    userEmail,
+    authMethod,
     connect,
     authenticate,
+    loginEmail,
+    registerEmailUser,
+    loginWithToken,
+    bindWallet,
     disconnect,
   }
 }

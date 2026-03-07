@@ -70,13 +70,6 @@ function formatNumber(n: number): string {
 
 <template>
   <div class="max-w-4xl mx-auto px-4 py-16 animate-fade-in">
-    <!-- Referral Banner -->
-    <div v-if="referralCode && !isAuthenticated"
-      class="mb-8 bg-shell-green/10 border border-shell-green/30 rounded-lg px-5 py-4 text-center animate-fade-in">
-      <p class="text-shell-green font-semibold mb-1">你收到了一份邀请</p>
-      <p class="text-sm text-shell-text">连接钱包即可绑定邀请关系，双方均可获得佣金奖励。</p>
-    </div>
-
     <!-- Hero -->
     <div class="text-center mb-16">
       <h1 class="text-5xl sm:text-6xl font-bold mb-4 tracking-tight">
@@ -90,7 +83,7 @@ function formatNumber(n: number): string {
 
       <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
         <a
-          href="https://github.com/shell-protocol/miner-cli"
+          href="https://github.com/openshell-cc/shell-protocol/tree/main/packages/miner-cli"
           target="_blank"
           class="bg-shell-green text-black px-6 py-3 font-semibold rounded hover:bg-shell-green-dim transition-colors"
         >
@@ -102,6 +95,13 @@ function formatNumber(n: number): string {
         >
           查看排行榜
         </RouterLink>
+      </div>
+
+      <!-- Referral Banner (below CTA) -->
+      <div v-if="referralCode && !isAuthenticated"
+        class="mt-6 bg-shell-green/10 border border-shell-green/30 rounded-lg px-5 py-3 text-sm animate-fade-in max-w-lg mx-auto">
+        <p class="text-shell-green font-semibold">你已通过好友推荐链接访问</p>
+        <p class="text-shell-text text-xs mt-1">登录后自动绑定邀请关系。</p>
       </div>
     </div>
 
@@ -142,10 +142,10 @@ function formatNumber(n: number): string {
         </div>
         <div class="bg-shell-card border border-shell-border rounded-lg p-6">
           <div class="text-shell-green text-3xl mb-3">02</div>
-          <h3 class="font-semibold mb-2">攻击 AI Agent</h3>
+          <h3 class="font-semibold mb-2">本地执行 &amp; 抽检验证</h3>
           <p class="text-sm text-shell-text leading-relaxed">
-            攻击载荷会在沙盒中测试目标 AI Agent。
-            触发未授权操作即证明漏洞存在。
+            矿机在本地执行攻击并生成加密证明。
+            平台按信誉等级随机抽检，确保结果真实。
           </p>
         </div>
         <div class="bg-shell-card border border-shell-border rounded-lg p-6">
@@ -250,10 +250,10 @@ function formatNumber(n: number): string {
           <div class="text-shell-green text-2xl mb-3 font-mono">$</div>
           <h3 class="font-semibold mb-2">安装矿机</h3>
           <p class="text-sm text-shell-text leading-relaxed mb-3">
-            安装矿机 CLI 工具，配置你的 Solana 钱包地址和 LLM 提供商。
+            安装矿机 CLI 工具，配置你的账号和 LLM 提供商。
           </p>
           <a
-            href="https://github.com/bidaiAI/shell-protocol/tree/main/packages/miner-cli"
+            href="https://github.com/openshell-cc/shell-protocol/tree/main/packages/miner-cli"
             target="_blank"
             class="text-xs text-shell-green hover:underline"
           >
@@ -264,7 +264,7 @@ function formatNumber(n: number): string {
           <div class="text-tier-apex text-2xl mb-3 font-mono">&gt;_</div>
           <h3 class="font-semibold mb-2">开始挖矿</h3>
           <p class="text-sm text-shell-text leading-relaxed">
-            运行矿机，你的 LLM 自动生成攻击载荷并提交到沙盒验证。攻破即得积分。
+            运行矿机，你的 LLM 在本地生成攻击载荷并自动提交。通过验证即得积分。
           </p>
         </div>
         <div class="bg-shell-card border border-shell-border rounded-lg p-6">
@@ -280,7 +280,7 @@ function formatNumber(n: number): string {
           >
             前往控制面板获取推荐链接 &rarr;
           </RouterLink>
-          <span v-else class="text-xs text-shell-text">连接钱包后可获取推荐链接</span>
+          <span v-else class="text-xs text-shell-text">登录后可获取推荐链接</span>
         </div>
       </div>
     </div>
@@ -290,7 +290,7 @@ function formatNumber(n: number): string {
       <h2 class="text-2xl font-bold mb-2">准备好攻破 AI 了吗？</h2>
       <p class="text-shell-text mb-6">安装矿机 CLI 或通过 OpenClaw 一键接入。</p>
       <code class="bg-black text-shell-green px-4 py-2 rounded font-mono text-sm">
-        npx @shell/miner start --wallet YOUR_WALLET
+        npx @openshell-cc/miner-cli start
       </code>
     </div>
   </div>

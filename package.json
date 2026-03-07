@@ -4,9 +4,9 @@
   "private": true,
   "description": "$SHELL Protocol — Decentralized AI Red Team Mining Network",
   "scripts": {
-    "dev:web": "pnpm --filter @shell/web dev",
-    "build:web": "pnpm --filter @shell/web build",
-    "dev:miner": "pnpm --filter @shell/miner-cli dev"
+    "dev:web": "pnpm --filter @openshell-cc/web dev",
+    "build:web": "pnpm --filter @openshell-cc/web build",
+    "dev:miner": "pnpm --filter @openshell-cc/miner-cli dev"
   },
   "packageManager": "pnpm@10.6.0"
 }

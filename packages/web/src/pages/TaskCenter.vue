@@ -39,11 +39,25 @@ async function loadSubmissions() {
   }
 }
 
+const THIRD_PARTY_PREFIXES: [string, string][] = [
+  ['sk-ant-', 'Anthropic'], ['sk-proj-', 'OpenAI'], ['sk-or-', 'OpenRouter'],
+  ['gsk_', 'Groq'], ['xai-', 'xAI'], ['AIzaSy', 'Google'],
+]
+
 async function loginWithApiKey() {
   apiKeyError.value = ''
   const key = apiKeyInput.value.trim()
+
+  for (const [prefix, provider] of THIRD_PARTY_PREFIXES) {
+    if (key.startsWith(prefix)) {
+      apiKeyError.value = `这是 ${provider} 的密钥，请勿在此输入！$SHELL 密钥以 sk-shell- 开头。`
+      apiKeyInput.value = ''
+      return
+    }
+  }
+
   if (!key.startsWith('sk-shell-')) {
-    apiKeyError.value = 'API Key 格式无效（应以 sk-shell- 开头）'
+    apiKeyError.value = '格式错误 — $SHELL 密钥以 sk-shell- 开头，请检查是否粘贴正确'
     return
   }
   setToken(key)
@@ -87,6 +101,33 @@ function resultStatusLabel(status: string) {
   }
 }
 
+function executionModeLabel(mode: string) {
+  return mode === 'local_compute' ? '本地执行' : '沙盒验证'
+}
+
+function settlementLabel(status: string) {
+  const map: Record<string, string> = {
+    immediate: '即时结算',
+    pending: '待结算',
+    settled: '已结算',
+    rejected: '已拒绝',
+    timeout_refund: '超时退款',
+    arbitrated_settled: '仲裁通过',
+    arbitrated_rejected: '仲裁拒绝',
+  }
+  return map[status] || status
+}
+
+function settlementColor(status: string) {
+  switch (status) {
+    case 'settled': case 'immediate': case 'arbitrated_settled': return 'text-shell-green'
+    case 'pending': return 'text-yellow-400'
+    case 'rejected': case 'arbitrated_rejected': return 'text-red-400'
+    case 'timeout_refund': return 'text-blue-400'
+    default: return 'text-shell-text'
+  }
+}
+
 function formatDate(dateStr: string | null) {
   if (!dateStr) return '—'
   return new Date(dateStr).toLocaleString('zh-CN')
@@ -99,11 +140,11 @@ function formatDate(dateStr: string | null) {
 
     <!-- Not authenticated — show both options -->
     <div v-if="!authed" class="bg-shell-card border border-shell-border rounded-lg p-8">
-      <p class="text-shell-text mb-4 text-center">连接钱包或输入你的 $SHELL Protocol API Key 查看提交记录。</p>
-      <p class="text-shell-text/60 mb-6 text-center text-xs">API Key（sk-shell-xxx）在注册 Agent 时一次性生成，非第三方平台 Key。</p>
+      <p class="text-shell-text mb-4 text-center">连接钱包或输入你的 $SHELL 密钥查看提交记录。</p>
+      <p class="text-shell-text/60 mb-6 text-center text-xs">$SHELL 密钥（sk-shell-xxx）在注册矿机时自动生成，非第三方 API Key。</p>
 
       <div class="max-w-sm mx-auto">
-        <div class="text-xs text-shell-text mb-2 uppercase tracking-wider">$SHELL API Key 登录</div>
+        <div class="text-xs text-shell-text mb-2 uppercase tracking-wider">$SHELL 密钥登录</div>
         <div class="flex gap-2">
           <input
             v-model="apiKeyInput"
@@ -141,6 +182,8 @@ function formatDate(dateStr: string | null) {
             <tr class="border-b border-shell-border text-shell-text text-left text-xs">
               <th class="px-4 py-2">提交时间</th>
               <th class="px-4 py-2">状态</th>
+              <th class="px-4 py-2 hidden sm:table-cell">模式</th>
+              <th class="px-4 py-2 hidden sm:table-cell">结算</th>
               <th class="px-4 py-2 text-right">积分</th>
               <th class="px-4 py-2 text-right">操作</th>
             </tr>
@@ -155,6 +198,17 @@ function formatDate(dateStr: string | null) {
               <td class="px-4 py-2.5">
                 <span :class="statusLabel(sub).class" class="text-xs font-medium">
                   {{ statusLabel(sub).text }}
+                </span>
+              </td>
+              <td class="px-4 py-2.5 hidden sm:table-cell">
+                <span class="text-xs font-mono" :class="sub.executionMode === 'local_compute' ? 'text-blue-400' : 'text-shell-text'">
+                  {{ executionModeLabel(sub.executionMode) }}
+                </span>
+                <span v-if="sub.spotCheckSelected" class="text-yellow-400 text-xs ml-1" title="被抽检">⚡</span>
+              </td>
+              <td class="px-4 py-2.5 hidden sm:table-cell">
+                <span class="text-xs" :class="settlementColor(sub.settlementStatus)">
+                  {{ settlementLabel(sub.settlementStatus) }}
                 </span>
               </td>
               <td class="px-4 py-2.5 text-right font-mono">
@@ -180,10 +234,22 @@ function formatDate(dateStr: string | null) {
       </div>
       <div v-else-if="selectedResult" class="bg-shell-card border border-shell-border rounded-lg p-6">
         <h3 class="text-sm font-semibold mb-4 uppercase tracking-wider text-shell-text">提交详情</h3>
-        <div class="grid grid-cols-2 gap-3 text-sm">
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
           <div>
-            <span class="text-shell-text">状态</span>
+            <span class="text-shell-text">验证状态</span>
             <p class="font-medium">{{ resultStatusLabel(selectedResult.status) }}</p>
+          </div>
+          <div>
+            <span class="text-shell-text">执行模式</span>
+            <p :class="selectedResult.executionMode === 'local_compute' ? 'text-blue-400' : 'text-shell-text'" class="font-mono">
+              {{ executionModeLabel(selectedResult.executionMode) }}
+            </p>
+          </div>
+          <div>
+            <span class="text-shell-text">结算状态</span>
+            <p :class="settlementColor(selectedResult.settlementStatus)">
+              {{ settlementLabel(selectedResult.settlementStatus) }}
+            </p>
           </div>
           <div>
             <span class="text-shell-text">Canary 触发</span>
@@ -192,9 +258,9 @@ function formatDate(dateStr: string | null) {
             </p>
           </div>
           <div>
-            <span class="text-shell-text">有效</span>
-            <p :class="selectedResult.isValid ? 'text-shell-green' : 'text-red-400'">
-              {{ selectedResult.isValid ? '是' : '否' }}
+            <span class="text-shell-text">是否被抽检</span>
+            <p :class="selectedResult.spotCheckSelected ? 'text-yellow-400' : 'text-shell-text'">
+              {{ selectedResult.spotCheckSelected ? '是 ⚡' : '否' }}
             </p>
           </div>
           <div>

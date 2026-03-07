@@ -52,6 +52,40 @@ export async function login(walletAddress: string, signature: string, nonce: str
   })
 }
 
+// ── Email Auth ──
+
+export async function registerEmail(email: string, password: string, referralCode?: string) {
+  return request<{ message: string }>('/auth/register-email', {
+    method: 'POST',
+    body: JSON.stringify({ email, password, referralCode }),
+  })
+}
+
+export async function verifyEmailToken(token: string) {
+  return request<{ token: string; user: UserData }>(`/auth/verify-email?token=${encodeURIComponent(token)}`)
+}
+
+export async function loginWithEmail(email: string, password: string) {
+  return request<{ token: string; user: UserData }>('/auth/login-email', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  })
+}
+
+export async function bindEmailToAccount(email: string, password: string) {
+  return request<{ message: string }>('/auth/bind-email', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  })
+}
+
+export async function bindWalletToAccount(walletAddress: string, signature: string, message: string) {
+  return request<{ success: boolean; walletAddress: string }>('/auth/bind-wallet', {
+    method: 'POST',
+    body: JSON.stringify({ walletAddress, signature, message }),
+  })
+}
+
 // ── Leaderboard ──
 
 export interface LeaderboardEntry {
@@ -70,6 +104,7 @@ export async function getLeaderboard(limit = 50, offset = 0) {
 
 export interface UserData {
   walletAddress: string
+  email?: string
   agentName?: string
   tier: string
   shellPoints: number
@@ -97,6 +132,9 @@ export async function getMyReferral() {
 
 // ── Submissions ──
 
+export type ExecutionMode = 'sandbox_verified' | 'local_compute'
+export type SettlementStatus = 'immediate' | 'pending' | 'settled' | 'rejected' | 'timeout_refund' | 'arbitrated_settled' | 'arbitrated_rejected'
+
 export interface Submission {
   id: string
   taskId: string
@@ -105,6 +143,10 @@ export interface Submission {
   pointsAwarded: number
   verifiedAt: string | null
   submittedAt: string
+  executionMode: ExecutionMode
+  verificationStatus: string
+  settlementStatus: SettlementStatus
+  spotCheckSelected: boolean
 }
 
 export async function getMySubmissions(limit = 20) {
@@ -122,6 +164,10 @@ export interface SubmissionResult {
   pointsAwarded: number
   verifiedAt: string | null
   submittedAt: string
+  executionMode: ExecutionMode
+  verificationStatus: string
+  settlementStatus: SettlementStatus
+  spotCheckSelected: boolean
 }
 
 export async function getSubmissionResult(submissionId: string) {
@@ -206,6 +252,34 @@ export interface BindingEntry {
   createdAt: string
   totalEarned: number
 }
+
+// ── Mining Health (Reputation + Deposit) ──
+
+export interface MiningHealth {
+  reputation: {
+    totalSubmissions: number
+    validSubmissions: number
+    invalidSubmissions: number
+    fabricationCount: number
+    validityRateBps: number
+    reputationScore: number
+    spotCheckRateBps: number
+  }
+  deposits: {
+    currentlyHeld: number
+    heldTotal: number
+    forfeited: number
+    forfeitedTotal: number
+    released: number
+    releasedTotal: number
+  }
+}
+
+export async function getMiningHealth() {
+  return request<MiningHealth>('/miners/reputation/me')
+}
+
+// ── Referral ──
 
 export async function getReferralOverview() {
   return request<ReferralOverview>('/referral/me')

@@ -9,3 +9,7 @@ dist/
 .idea/
 *.tsbuildinfo
 drizzle/
+.vercel
+# Miner wallet key files — NEVER commit these
+miner-wallet.json
+*.json.key

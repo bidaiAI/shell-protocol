@@ -27,6 +27,11 @@ const routes = [
     component: () => import('./pages/TaskCenter.vue'),
   },
   {
+    path: '/verify-email',
+    name: 'verify-email',
+    component: () => import('./pages/VerifyEmail.vue'),
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
     component: () => import('./pages/NotFound.vue'),

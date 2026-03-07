@@ -3,21 +3,26 @@ import { ref, onMounted } from 'vue'
 import { useWallet } from '../lib/wallet'
 import {
   getMyStats, getMySubmissions, getReferralOverview, getReferralCommissions, getReferralBindings,
+  getMiningHealth,
   type UserData, type Submission, type ReferralOverview, type CommissionEntry, type BindingEntry,
+  type MiningHealth,
 } from '../lib/api'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const { isAuthenticated, address } = useWallet()
+const { isAuthenticated, address, displayName, userEmail, authMethod, bindWallet } = useWallet()
 
 const user = ref<UserData | null>(null)
 const referralOverview = ref<ReferralOverview | null>(null)
 const commissions = ref<CommissionEntry[]>([])
 const bindings = ref<BindingEntry[]>([])
 const submissions = ref<Submission[]>([])
+const miningHealth = ref<MiningHealth | null>(null)
 const loading = ref(true)
 const showCommissions = ref(false)
 const showBindings = ref(false)
+const bindWalletError = ref('')
+const bindWalletSuccess = ref(false)
 
 onMounted(async () => {
   if (!isAuthenticated.value) {
@@ -30,20 +35,36 @@ onMounted(async () => {
 async function loadDashboard() {
   loading.value = true
   try {
-    const [stats, refData, subs] = await Promise.all([
+    const [stats, refData, subs, health] = await Promise.all([
       getMyStats(),
       getReferralOverview(),
       getMySubmissions(10),
+      getMiningHealth().catch(() => null),
     ])
     user.value = stats
     referralOverview.value = refData
     submissions.value = subs.submissions
+    miningHealth.value = health
   }
   catch (err) {
     console.error('Failed to load dashboard:', err)
   }
   finally {
     loading.value = false
+  }
+}
+
+async function handleBindWallet() {
+  bindWalletError.value = ''
+  bindWalletSuccess.value = false
+  try {
+    await bindWallet()
+    bindWalletSuccess.value = true
+    await loadDashboard()
+  }
+  catch (err) {
+    bindWalletError.value = err instanceof Error ? err.message : '绑定失败'
+    setTimeout(() => { bindWalletError.value = '' }, 5000)
   }
 }
 
@@ -65,6 +86,33 @@ function tierDot(tier: string) {
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+
+function spotCheckRateText(bps: number) {
+  return `${(bps / 100).toFixed(0)}%`
+}
+
+function executionModeLabel(mode: string) {
+  return mode === 'local_compute' ? '本地执行' : '沙盒验证'
+}
+
+function settlementLabel(status: string) {
+  const map: Record<string, string> = {
+    immediate: '即时', pending: '待结算', settled: '已结算',
+    rejected: '拒绝', timeout_refund: '退款',
+    arbitrated_settled: '仲裁通过', arbitrated_rejected: '仲裁拒绝',
+  }
+  return map[status] || status
+}
+
+function settlementColor(status: string) {
+  switch (status) {
+    case 'settled': case 'immediate': case 'arbitrated_settled': return 'text-shell-green'
+    case 'pending': return 'text-yellow-400'
+    case 'rejected': case 'arbitrated_rejected': return 'text-red-400'
+    case 'timeout_refund': return 'text-blue-400'
+    default: return 'text-shell-text'
+  }
 }
 
 const referralLink = ref('')
@@ -156,11 +204,74 @@ function bindingStatusText(status: string) {
         </div>
       </div>
 
+      <!-- Mining Health Panel -->
+      <div v-if="miningHealth" class="bg-shell-card border border-shell-border rounded-lg p-5 mb-8">
+        <h2 class="text-xs font-semibold text-shell-text mb-4 uppercase tracking-wider">挖矿健康度</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div>
+            <div class="text-xs text-shell-text mb-1">信誉分数</div>
+            <div class="text-xl font-bold font-mono" :class="miningHealth.reputation.reputationScore >= 500 ? 'text-shell-green' : miningHealth.reputation.reputationScore >= 200 ? 'text-yellow-400' : 'text-red-400'">
+              {{ miningHealth.reputation.reputationScore }}
+              <span class="text-xs text-shell-text font-normal">/ 1000</span>
+            </div>
+          </div>
+          <div>
+            <div class="text-xs text-shell-text mb-1">抽检率</div>
+            <div class="text-xl font-bold font-mono text-white">
+              {{ spotCheckRateText(miningHealth.reputation.spotCheckRateBps) }}
+            </div>
+          </div>
+          <div>
+            <div class="text-xs text-shell-text mb-1">提交有效率</div>
+            <div class="text-xl font-bold font-mono" :class="miningHealth.reputation.validityRateBps >= 6000 ? 'text-shell-green' : 'text-yellow-400'">
+              {{ (miningHealth.reputation.validityRateBps / 100).toFixed(1) }}%
+            </div>
+          </div>
+          <div>
+            <div class="text-xs text-shell-text mb-1">保证金</div>
+            <div class="text-lg font-bold font-mono text-white">
+              <span v-if="miningHealth.deposits.currentlyHeld > 0" class="text-yellow-400">
+                {{ miningHealth.deposits.heldTotal }} 冻结中
+              </span>
+              <span v-else class="text-shell-green">无冻结</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reputation Progress Bar -->
+        <div class="mt-4">
+          <div class="flex justify-between text-xs text-shell-text mb-1">
+            <span>{{ miningHealth.reputation.validSubmissions }} 有效 / {{ miningHealth.reputation.totalSubmissions }} 总提交</span>
+            <span v-if="miningHealth.reputation.fabricationCount > 0" class="text-red-400">
+              ⚠ {{ miningHealth.reputation.fabricationCount }} 次造假记录
+            </span>
+          </div>
+          <div class="w-full h-1.5 bg-black rounded-full overflow-hidden">
+            <div
+              class="h-full rounded-full bg-shell-green transition-all"
+              :style="{ width: `${Math.min(miningHealth.reputation.validityRateBps / 100, 100)}%` }"
+            ></div>
+          </div>
+        </div>
+      </div>
+
       <!-- Wallet & Referral -->
       <div class="grid sm:grid-cols-2 gap-4 mb-8">
         <div class="bg-shell-card border border-shell-border rounded-lg p-5">
-          <div class="text-xs text-shell-text mb-2">钱包</div>
-          <div class="font-mono text-sm text-white break-all">{{ address }}</div>
+          <div class="text-xs text-shell-text mb-2">账号</div>
+          <div v-if="userEmail" class="text-sm text-white mb-1">{{ userEmail }}</div>
+          <div v-if="address" class="font-mono text-sm text-white break-all">{{ address }}</div>
+          <div v-if="!address" class="mt-2">
+            <div class="text-xs text-yellow-400 mb-2">绑定 Solana 钱包以参与未来 $SHELL 代币兑换</div>
+            <button
+              class="bg-shell-green text-black px-3 py-1 text-xs font-semibold rounded hover:bg-shell-green-dim transition-colors"
+              @click="handleBindWallet"
+            >
+              绑定钱包
+            </button>
+            <span v-if="bindWalletError" class="text-red-400 text-xs ml-2">{{ bindWalletError }}</span>
+            <span v-if="bindWalletSuccess" class="text-shell-green text-xs ml-2">绑定成功</span>
+          </div>
           <div class="text-xs text-shell-text mt-2">
             注册时间 {{ user.createdAt ? formatDate(user.createdAt) : '—' }}
           </div>
@@ -280,7 +391,8 @@ function bindingStatusText(status: string) {
             <thead>
               <tr class="border-b border-shell-border text-shell-text text-left">
                 <th class="px-4 py-3">状态</th>
-                <th class="px-4 py-3 hidden sm:table-cell">任务</th>
+                <th class="px-4 py-3 hidden sm:table-cell">模式</th>
+                <th class="px-4 py-3 hidden sm:table-cell">结算</th>
                 <th class="px-4 py-3 text-right">积分</th>
                 <th class="px-4 py-3 text-right">时间</th>
               </tr>
@@ -308,8 +420,16 @@ function bindingStatusText(status: string) {
                     验证中...
                   </span>
                 </td>
-                <td class="px-4 py-3 font-mono text-xs text-shell-text hidden sm:table-cell">
-                  {{ sub.taskId.slice(0, 8) }}
+                <td class="px-4 py-3 hidden sm:table-cell">
+                  <span class="text-xs font-mono" :class="sub.executionMode === 'local_compute' ? 'text-blue-400' : 'text-shell-text'">
+                    {{ executionModeLabel(sub.executionMode) }}
+                  </span>
+                  <span v-if="sub.spotCheckSelected" class="text-yellow-400 text-xs ml-1">⚡</span>
+                </td>
+                <td class="px-4 py-3 hidden sm:table-cell">
+                  <span class="text-xs" :class="settlementColor(sub.settlementStatus)">
+                    {{ settlementLabel(sub.settlementStatus) }}
+                  </span>
                 </td>
                 <td class="px-4 py-3 text-right font-mono" :class="sub.pointsAwarded > 0 ? 'text-shell-green' : 'text-shell-text'">
                   {{ sub.pointsAwarded > 0 ? `+${sub.pointsAwarded}` : '0' }}
@@ -328,7 +448,7 @@ function bindingStatusText(status: string) {
     </template>
 
     <div v-else class="text-center text-shell-text py-12">
-      请连接钱包以查看控制面板。
+      请登录以查看控制面板。
     </div>
   </div>
 </template>

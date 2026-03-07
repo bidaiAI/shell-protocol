@@ -1,9 +1,23 @@
 {
-  "name": "@shell/miner-cli",
-  "version": "0.1.0",
+  "name": "@openshell-cc/miner-cli",
+  "version": "0.1.1",
   "type": "module",
+  "description": "Mine $SHELL by red-teaming AI agents",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/openshell-cc/shell-protocol.git",
+    "directory": "packages/miner-cli"
+  },
+  "files": [
+    "dist",
+    ".env.example",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "bin": {
-    "shell-miner": "./dist/index.js"
+    "miner-cli": "./dist/index.js"
   },
   "scripts": {
     "dev": "tsx src/index.ts",
