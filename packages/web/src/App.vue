@@ -2,9 +2,11 @@
 import { ref, watch } from 'vue'
 import { RouterLink, RouterView, useRouter } from 'vue-router'
 import { useWallet } from './lib/wallet'
+import { useLang } from './lib/i18n'
 import AuthModal from './components/AuthModal.vue'
 
 const { disconnect, isAuthenticated, displayName } = useWallet()
+const { lang, setLang } = useLang()
 
 const showAuthModal = ref(false)
 const menuOpen = ref(false)
@@ -29,28 +31,28 @@ watch(() => router.currentRoute.value.path, () => { menuOpen.value = false })
               class="text-shell-text hover:text-white transition-colors"
               active-class="!text-shell-green"
             >
-              排行榜
+              {{ lang === 'en' ? 'Leaderboard' : '排行榜' }}
             </RouterLink>
             <RouterLink
               to="/tasks"
               class="text-shell-text hover:text-white transition-colors"
               active-class="!text-shell-green"
             >
-              任务动态
+              {{ lang === 'en' ? 'Task Feed' : '任务动态' }}
             </RouterLink>
             <RouterLink
               to="/task-center"
               class="text-shell-text hover:text-white transition-colors"
               active-class="!text-shell-green"
             >
-              任务中心
+              {{ lang === 'en' ? 'Task Center' : '任务中心' }}
             </RouterLink>
             <RouterLink
               to="/disclosures"
               class="text-shell-text hover:text-white transition-colors"
               active-class="!text-shell-green"
             >
-              漏洞公示
+              {{ lang === 'en' ? 'Disclosures' : '漏洞公示' }}
             </RouterLink>
             <RouterLink
               v-if="isAuthenticated"
@@ -58,7 +60,7 @@ watch(() => router.currentRoute.value.path, () => { menuOpen.value = false })
               class="text-shell-text hover:text-white transition-colors"
               active-class="!text-shell-green"
             >
-              控制面板
+              {{ lang === 'en' ? 'Dashboard' : '控制面板' }}
             </RouterLink>
           </div>
         </div>
@@ -88,11 +90,25 @@ watch(() => router.currentRoute.value.path, () => { menuOpen.value = false })
             </a>
           </div>
 
+          <!-- Language toggle -->
+          <div class="flex items-center border border-shell-border rounded text-xs font-mono overflow-hidden">
+            <button
+              @click="setLang('en')"
+              :class="lang === 'en' ? 'bg-shell-green text-black' : 'text-shell-text hover:text-white'"
+              class="px-2 py-1 transition-colors"
+            >EN</button>
+            <button
+              @click="setLang('zh')"
+              :class="lang === 'zh' ? 'bg-shell-green text-black' : 'text-shell-text hover:text-white'"
+              class="px-2 py-1 transition-colors"
+            >中</button>
+          </div>
+
           <!-- Hamburger button (mobile only) -->
           <button
             class="sm:hidden text-shell-text hover:text-white p-1"
             @click="menuOpen = !menuOpen"
-            aria-label="菜单"
+            aria-label="Menu"
           >
             <svg v-if="!menuOpen" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -107,7 +123,7 @@ watch(() => router.currentRoute.value.path, () => { menuOpen.value = false })
               class="bg-shell-green text-black px-4 py-1.5 text-sm font-semibold rounded hover:bg-shell-green-dim transition-colors"
               @click="showAuthModal = true"
             >
-              登录
+              {{ lang === 'en' ? 'Login' : '登录' }}
             </button>
           </div>
           <div v-else class="flex items-center gap-3">
@@ -116,7 +132,7 @@ watch(() => router.currentRoute.value.path, () => { menuOpen.value = false })
               class="text-shell-text text-sm hover:text-white transition-colors"
               @click="disconnect"
             >
-              断开
+              {{ lang === 'en' ? 'Disconnect' : '断开' }}
             </button>
           </div>
         </div>
@@ -130,28 +146,28 @@ watch(() => router.currentRoute.value.path, () => { menuOpen.value = false })
             class="text-shell-text hover:text-white py-1.5 transition-colors"
             active-class="!text-shell-green"
           >
-            排行榜
+            {{ lang === 'en' ? 'Leaderboard' : '排行榜' }}
           </RouterLink>
           <RouterLink
             to="/tasks"
             class="text-shell-text hover:text-white py-1.5 transition-colors"
             active-class="!text-shell-green"
           >
-            任务动态
+            {{ lang === 'en' ? 'Task Feed' : '任务动态' }}
           </RouterLink>
           <RouterLink
             to="/task-center"
             class="text-shell-text hover:text-white py-1.5 transition-colors"
             active-class="!text-shell-green"
           >
-            任务中心
+            {{ lang === 'en' ? 'Task Center' : '任务中心' }}
           </RouterLink>
           <RouterLink
             to="/disclosures"
             class="text-shell-text hover:text-white py-1.5 transition-colors"
             active-class="!text-shell-green"
           >
-            漏洞公示
+            {{ lang === 'en' ? 'Disclosures' : '漏洞公示' }}
           </RouterLink>
           <RouterLink
             v-if="isAuthenticated"
@@ -159,7 +175,7 @@ watch(() => router.currentRoute.value.path, () => { menuOpen.value = false })
             class="text-shell-text hover:text-white py-1.5 transition-colors"
             active-class="!text-shell-green"
           >
-            控制面板
+            {{ lang === 'en' ? 'Dashboard' : '控制面板' }}
           </RouterLink>
         </div>
       </div>
@@ -172,7 +188,7 @@ watch(() => router.currentRoute.value.path, () => { menuOpen.value = false })
 
     <!-- Footer -->
     <footer class="border-t border-shell-border py-6 text-center text-shell-text text-xs">
-      <p>$SHELL Protocol &mdash; 去中心化 AI 红队测试网络</p>
+      <p>$SHELL Protocol &mdash; {{ lang === 'en' ? 'Decentralized AI Red-Team Validation Network' : '去中心化 AI 红队测试网络' }}</p>
     </footer>
 
     <!-- Auth Modal -->
