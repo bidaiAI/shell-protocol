@@ -278,8 +278,9 @@ program
 
 program
   .command('status')
-  .description('Check your mining stats')
-  .action(async () => {
+  .description('Check your mining stats and recent submissions')
+  .option('-n, --recent <count>', 'Number of recent submissions to show', '5')
+  .action(async (opts) => {
     const config = loadConfig()
     const errors = validateConfig(config)
     if (errors.length > 0) {
@@ -290,22 +291,72 @@ program
     const spinner = ora('Fetching stats...').start()
     try {
       const { token, user } = await autoAuthenticate(config)
-      const res = await fetch(`${config.oracleUrl}/leaderboard/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      const data = await res.json() as Record<string, unknown>
+      const recentCount = Math.min(Math.max(Number(opts.recent) || 5, 1), 20)
+
+      // Fetch leaderboard stats + recent submissions in parallel
+      const [statsRes, subsRes] = await Promise.all([
+        fetch(`${config.oracleUrl}/leaderboard/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`${config.oracleUrl}/tasks/my-submissions?limit=${recentCount}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ])
+
+      const data = await statsRes.json() as Record<string, unknown>
+      const subsData = subsRes.ok
+        ? await subsRes.json() as { submissions: Array<Record<string, unknown>> }
+        : { submissions: [] }
       spinner.stop()
 
       const identity = user.agentName || (user.walletAddress ? `${user.walletAddress.slice(0, 8)}...` : 'Agent')
       console.log()
       console.log(chalk.cyan('$SHELL Miner Status'))
-      console.log(chalk.gray('─'.repeat(40)))
+      console.log(chalk.gray('─'.repeat(50)))
       console.log(chalk.white('  Identity:   '), chalk.green(identity))
       console.log(chalk.white('  Tier:       '), chalk.yellow(String(data.tier ?? user.tier)))
       console.log(chalk.white('  Points:     '), chalk.cyan(String(data.shellPoints ?? user.shellPoints)))
       console.log(chalk.white('  Success:    '), String(data.totalSuccessfulAttacks ?? '—'), '/', String(data.totalTasksCompleted ?? '—'))
       console.log(chalk.white('  Rate:       '), String(data.successRate ?? '—'))
       console.log(chalk.white('  Referral:   '), String(data.referralCode ?? user.referralCode))
+
+      // Recent submissions
+      const subs = subsData.submissions
+      if (subs.length > 0) {
+        console.log()
+        console.log(chalk.gray(`  Recent Submissions (last ${subs.length})`))
+        console.log(chalk.gray('  ' + '─'.repeat(48)))
+        for (const sub of subs) {
+          const valid = sub.isValid as boolean
+          const verified = sub.verifiedAt != null
+          const pending = !verified
+          const pts = Number(sub.pointsAwarded ?? 0)
+          const mode = String(sub.executionMode ?? 'sandbox')
+          const settleStatus = String(sub.settlementStatus ?? '')
+          const submitted = sub.submittedAt ? new Date(sub.submittedAt as string).toLocaleString() : '—'
+
+          let statusIcon: string
+          let statusText: string
+          if (pending) {
+            statusIcon = chalk.yellow('⏳')
+            statusText = chalk.yellow('验证中')
+          } else if (valid && settleStatus === 'settled') {
+            statusIcon = chalk.green('✓')
+            statusText = chalk.green(`成功 +${pts} pts`)
+          } else if (valid && settleStatus === 'pending') {
+            statusIcon = chalk.cyan('⏳')
+            statusText = chalk.cyan(`结算中 (${pts} pts 待发)`)
+          } else if (valid) {
+            statusIcon = chalk.green('✓')
+            statusText = chalk.green(`+${pts} pts`)
+          } else {
+            statusIcon = chalk.red('✗')
+            statusText = chalk.red('未触发 canary')
+          }
+          const modeTag = mode === 'local_compute' ? chalk.magenta('[L]') : chalk.blue('[S]')
+          console.log(`  ${statusIcon} ${modeTag} ${statusText.padEnd(24)} ${chalk.gray(submitted)}`)
+        }
+      }
       console.log()
     }
     catch (err) {

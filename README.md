@@ -105,7 +105,7 @@ miner-cli start
 
 **v0.2.4 新功能**：
 - 矿机调用平台 `POST /tasks/payload` 端点，由 Oracle AI 生成 Prompt Injection 攻击载荷，矿机直接提交验证，无需自备任何 AI 资源
-- 提交后自动轮询 `GET /tasks/result/:id`，实时在终端显示沙盒验证结果（成功 / 失败 / 积分到账）
+- 提交后自动轮询 `GET /tasks/result/:id`，最长等待 120 秒；验证完成时终端显示成功/失败及积分；超时任务通过 `miner-cli status` 查询近期 submission 状态
 - Payload 完整性签名：Oracle 对生成的 payload 进行 HMAC 签名，提交时服务端验证，防止矿机篡改平台 payload
 
 ---
@@ -135,9 +135,12 @@ Oracle 分配未锁定任务（原子锁，防并发抢占）
      ↓
 矿机提交攻击结果（POST /tasks/submit）
      ↓
-矿机轮询验证结果（GET /tasks/result/:id）→ 实时显示成功/失败
+Oracle 沙盒验证（异步，通常 5–30 秒）
      ↓
-Oracle 沙盒验证 → 验证通过 → 自动发放积分（按段位倍率计算）
+矿机轮询结果（GET /tasks/result/:id，最长 120 秒）
+→ 终端显示成功/失败及积分；超时则通过 `miner-cli status` 查询
+     ↓
+验证通过 → 自动发放积分（按段位倍率计算）
      ↓
 任务完成，矿机继续拉取下一个任务
 ```
