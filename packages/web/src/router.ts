@@ -27,6 +27,11 @@ const routes = [
     component: () => import('./pages/TaskCenter.vue'),
   },
   {
+    path: '/disclosures',
+    name: 'disclosures',
+    component: () => import('./pages/Disclosures.vue'),
+  },
+  {
     path: '/verify-email',
     name: 'verify-email',
     component: () => import('./pages/VerifyEmail.vue'),

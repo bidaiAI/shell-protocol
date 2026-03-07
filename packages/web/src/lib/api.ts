@@ -250,6 +250,29 @@ export async function getRecentFeed(limit = 20) {
   return request<{ feed: FeedEntry[] }>(`/feed/recent?limit=${limit}`)
 }
 
+// ── Disclosures (White Hat Hall of Fame) ──
+
+export interface DisclosureEntry {
+  id?: string
+  anonymousId: string
+  displayName: string
+  severity: 'critical' | 'high' | 'medium' | 'low'
+  remediationStatus: 'patched' | 'in_progress' | 'unpatched'
+  publicSummary: string
+  rewardPoints: number
+  rewardTier?: string
+  confirmedAt: string
+  disclosedAt: string
+  proofLinks?: string[]
+  targetSystem?: string
+  attackTypes?: string[]
+  isFeatured?: boolean
+}
+
+export async function getDisclosures() {
+  return request<{ contributions: DisclosureEntry[] }>('/contributions/disclosed')
+}
+
 // ── Agent Search ──
 
 export interface AgentSearchResult {

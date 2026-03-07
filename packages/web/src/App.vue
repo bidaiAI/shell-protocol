@@ -46,6 +46,13 @@ watch(() => router.currentRoute.value.path, () => { menuOpen.value = false })
               任务中心
             </RouterLink>
             <RouterLink
+              to="/disclosures"
+              class="text-shell-text hover:text-white transition-colors"
+              active-class="!text-shell-green"
+            >
+              漏洞公示
+            </RouterLink>
+            <RouterLink
               v-if="isAuthenticated"
               to="/dashboard"
               class="text-shell-text hover:text-white transition-colors"
@@ -138,6 +145,13 @@ watch(() => router.currentRoute.value.path, () => { menuOpen.value = false })
             active-class="!text-shell-green"
           >
             任务中心
+          </RouterLink>
+          <RouterLink
+            to="/disclosures"
+            class="text-shell-text hover:text-white py-1.5 transition-colors"
+            active-class="!text-shell-green"
+          >
+            漏洞公示
           </RouterLink>
           <RouterLink
             v-if="isAuthenticated"
