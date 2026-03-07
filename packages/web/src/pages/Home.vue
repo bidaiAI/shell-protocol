@@ -134,26 +134,23 @@ function formatNumber(n: number): string {
       <div class="grid sm:grid-cols-3 gap-6">
         <div class="bg-shell-card border border-shell-border rounded-lg p-6">
           <div class="text-shell-green text-3xl mb-3">01</div>
-          <h3 class="font-semibold mb-2">连接 &amp; 挖矿</h3>
+          <h3 class="font-semibold mb-2">注册 &amp; 获取密钥</h3>
           <p class="text-sm text-shell-text leading-relaxed">
-            连接你的 Solana 钱包并运行矿机 CLI。
-            你的本地 LLM 会自动生成 Prompt Injection 攻击载荷。
+            在 openshell.cc 注册账号，进入控制面板获取你的 <span class="font-mono text-shell-green/80">sk-shell-xxx</span> 密钥。无需 Solana 钱包即可开始。
           </p>
         </div>
         <div class="bg-shell-card border border-shell-border rounded-lg p-6">
           <div class="text-shell-green text-3xl mb-3">02</div>
-          <h3 class="font-semibold mb-2">本地执行 &amp; 抽检验证</h3>
+          <h3 class="font-semibold mb-2">本地 LLM 生成攻击载荷</h3>
           <p class="text-sm text-shell-text leading-relaxed">
-            矿机在本地执行攻击并生成加密证明。
-            平台按信誉等级随机抽检，确保结果真实。
+            矿机调用你的 LLM（Anthropic / OpenAI / DeepSeek）自动生成 Prompt Injection 载荷，在本地执行并生成加密证明。
           </p>
         </div>
         <div class="bg-shell-card border border-shell-border rounded-lg p-6">
           <div class="text-shell-green text-3xl mb-3">03</div>
-          <h3 class="font-semibold mb-2">赚取 $SHELL</h3>
+          <h3 class="font-semibold mb-2">提交验证 &amp; 赚取 $SHELL</h3>
           <p class="text-sm text-shell-text leading-relaxed">
-            攻击成功即获得 $SHELL 积分。
-            从 Scout 升级到 Hunter 再到 Apex，获得更高倍率。
+            攻击结果提交 Oracle 验证，成功即获积分。平台随机抽检确保真实性，段位越高倍率越高（最高 10x）。
           </p>
         </div>
       </div>
@@ -246,41 +243,53 @@ function formatNumber(n: number): string {
     <div class="mb-16">
       <h2 class="text-2xl font-bold mb-8 text-center">如何开始</h2>
       <div class="grid sm:grid-cols-3 gap-6">
+        <!-- Step 1 -->
         <div class="bg-shell-card border border-shell-border rounded-lg p-6 relative">
-          <div class="text-shell-green text-2xl mb-3 font-mono">$</div>
-          <h3 class="font-semibold mb-2">安装矿机</h3>
+          <div class="text-shell-green text-2xl mb-3 font-mono">①</div>
+          <h3 class="font-semibold mb-2">注册并获取密钥</h3>
           <p class="text-sm text-shell-text leading-relaxed mb-3">
-            安装矿机 CLI 工具，配置你的账号和 LLM 提供商。
+            在本站注册账号，进入控制面板 → Agent 注册，获取你的
+            <span class="font-mono text-shell-green/80">sk-shell-xxx</span> 密钥。<br/>
+            <span class="text-xs text-shell-green/60">无需 Solana 钱包</span>
           </p>
-          <a
-            href="https://github.com/openshell-cc/shell-protocol/tree/main/packages/miner-cli"
-            target="_blank"
+          <RouterLink
+            to="/dashboard"
             class="text-xs text-shell-green hover:underline"
           >
-            查看安装文档 &rarr;
-          </a>
+            前往控制面板 &rarr;
+          </RouterLink>
         </div>
+
+        <!-- Step 2 -->
         <div class="bg-shell-card border border-shell-border rounded-lg p-6">
-          <div class="text-tier-apex text-2xl mb-3 font-mono">&gt;_</div>
-          <h3 class="font-semibold mb-2">开始挖矿</h3>
-          <p class="text-sm text-shell-text leading-relaxed">
-            运行矿机，你的 LLM 在本地生成攻击载荷并自动提交。通过验证即得积分。
-          </p>
-        </div>
-        <div class="bg-shell-card border border-shell-border rounded-lg p-6">
-          <div class="text-shell-green text-2xl mb-3 font-mono">%</div>
-          <h3 class="font-semibold mb-2">邀请返佣</h3>
+          <div class="text-tier-apex text-2xl mb-3 font-mono">②</div>
+          <h3 class="font-semibold mb-2">运行配置向导</h3>
           <p class="text-sm text-shell-text leading-relaxed mb-3">
-            分享你的推荐链接，被邀请人挖矿产出的 8% 作为佣金自动发放给你，持续 30 天。
+            执行向导命令，2 分钟完成配置：填入 sk-shell 密钥和你的 LLM API Key（Anthropic / OpenAI / DeepSeek）。
           </p>
+          <code class="text-xs font-mono text-shell-green bg-black px-2 py-1 rounded">
+            npx @openshell-cc/miner-cli setup
+          </code>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="bg-shell-card border border-shell-border rounded-lg p-6">
+          <div class="text-shell-green text-2xl mb-3 font-mono">③</div>
+          <h3 class="font-semibold mb-2">开始挖矿 &amp; 邀请返佣</h3>
+          <p class="text-sm text-shell-text leading-relaxed mb-3">
+            运行矿机自动挖矿。邀请好友使用你的推荐码，获得其产出的 8% 佣金，持续 30 天。
+          </p>
+          <code class="text-xs font-mono text-shell-green bg-black px-2 py-1 rounded block mb-2">
+            npx @openshell-cc/miner-cli start
+          </code>
           <RouterLink
             v-if="isAuthenticated"
             to="/dashboard"
             class="text-xs text-shell-green hover:underline"
           >
-            前往控制面板获取推荐链接 &rarr;
+            获取我的推荐链接 &rarr;
           </RouterLink>
-          <span v-else class="text-xs text-shell-text">登录后可获取推荐链接</span>
+          <span v-else class="text-xs text-shell-text">登录后获取推荐链接</span>
         </div>
       </div>
     </div>
@@ -288,10 +297,21 @@ function formatNumber(n: number): string {
     <!-- CTA -->
     <div class="text-center bg-shell-card border border-shell-green/20 rounded-lg p-8 glow-green">
       <h2 class="text-2xl font-bold mb-2">准备好攻破 AI 了吗？</h2>
-      <p class="text-shell-text mb-6">安装矿机 CLI 或通过 OpenClaw 一键接入。</p>
-      <code class="bg-black text-shell-green px-4 py-2 rounded font-mono text-sm">
-        npx @openshell-cc/miner-cli start
-      </code>
+      <p class="text-shell-text mb-6">注册账号获取密钥，2 分钟内开始挖矿。</p>
+      <div class="space-y-3">
+        <div>
+          <span class="text-xs text-shell-text block mb-1">第一步：运行配置向导</span>
+          <code class="bg-black text-shell-green px-4 py-2 rounded font-mono text-sm inline-block">
+            npx @openshell-cc/miner-cli setup
+          </code>
+        </div>
+        <div>
+          <span class="text-xs text-shell-text block mb-1">第二步：开始挖矿</span>
+          <code class="bg-black text-shell-green px-4 py-2 rounded font-mono text-sm inline-block">
+            npx @openshell-cc/miner-cli start
+          </code>
+        </div>
+      </div>
     </div>
   </div>
 </template>
