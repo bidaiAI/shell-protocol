@@ -1,4 +1,4 @@
-import type { MinerConfig } from './config.js'
+import type { MinerConfig, TaskExecutionMode } from './config.js'
 
 export interface TaskData {
   id: string
@@ -28,8 +28,12 @@ export interface TaskData {
 export async function pollForTask(
   config: MinerConfig,
   token: string,
+  supportedModes: TaskExecutionMode[],
 ): Promise<TaskData | null> {
-  const res = await fetch(`${config.oracleUrl}/tasks/poll`, {
+  const query = supportedModes.length > 0
+    ? `?modes=${encodeURIComponent(supportedModes.join(','))}`
+    : ''
+  const res = await fetch(`${config.oracleUrl}/tasks/poll${query}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -42,6 +46,29 @@ export async function pollForTask(
 
   const data = await res.json() as { task: TaskData | null }
   return data.task
+}
+
+/** Ask Oracle to generate a platform-managed payload for an assigned task. */
+export async function requestPayloadFromOracle(
+  config: MinerConfig,
+  token: string,
+  taskId: string,
+): Promise<{ payload: string; taskType: TaskData['taskType']; rewardPoints: number; source: string }> {
+  const res = await fetch(`${config.oracleUrl}/tasks/payload`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ taskId }),
+  })
+
+  if (!res.ok) {
+    const errBody = await res.text().catch(() => '')
+    throw new Error(`Payload generation failed (${res.status}): ${errBody || res.statusText}`)
+  }
+
+  return res.json() as Promise<{ payload: string; taskType: TaskData['taskType']; rewardPoints: number; source: string }>
 }
 
 /** Submit a payload for a task (sandbox_verified path) */

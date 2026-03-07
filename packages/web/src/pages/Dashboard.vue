@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useWallet } from '../lib/wallet'
 import {
   getMyStats, getMySubmissions, getReferralOverview, getReferralCommissions, getReferralBindings,
-  getMiningHealth,
+  getMiningHealth, issueApiKey,
   type UserData, type Submission, type ReferralOverview, type CommissionEntry, type BindingEntry,
   type MiningHealth,
 } from '../lib/api'
@@ -23,6 +23,11 @@ const showCommissions = ref(false)
 const showBindings = ref(false)
 const bindWalletError = ref('')
 const bindWalletSuccess = ref(false)
+const agentNameInput = ref('')
+const issuingApiKey = ref(false)
+const issuedApiKey = ref('')
+const apiKeyError = ref('')
+const apiKeySuccess = ref('')
 
 onMounted(async () => {
   if (!isAuthenticated.value) {
@@ -42,6 +47,7 @@ async function loadDashboard() {
       getMiningHealth().catch(() => null),
     ])
     user.value = stats
+    agentNameInput.value = stats.agentName || ''
     referralOverview.value = refData
     submissions.value = subs.submissions
     miningHealth.value = health
@@ -65,6 +71,33 @@ async function handleBindWallet() {
   catch (err) {
     bindWalletError.value = err instanceof Error ? err.message : '绑定失败'
     setTimeout(() => { bindWalletError.value = '' }, 5000)
+  }
+}
+
+async function handleIssueApiKey() {
+  issuingApiKey.value = true
+  apiKeyError.value = ''
+  apiKeySuccess.value = ''
+  issuedApiKey.value = ''
+  try {
+    const result = await issueApiKey(agentNameInput.value.trim() || undefined)
+    issuedApiKey.value = result.apiKey
+    apiKeySuccess.value = result.warning
+    if (user.value) {
+      user.value = {
+        ...user.value,
+        agentName: result.user.agentName || user.value.agentName,
+      }
+    }
+    if (result.user.agentName) {
+      agentNameInput.value = result.user.agentName
+    }
+  }
+  catch (err) {
+    apiKeyError.value = err instanceof Error ? err.message : '生成密钥失败'
+  }
+  finally {
+    issuingApiKey.value = false
   }
 }
 
@@ -381,6 +414,52 @@ function bindingStatusText(status: string) {
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- API Key Issuance -->
+      <div class="bg-shell-card border border-shell-border rounded-lg p-5 mb-8">
+        <div class="flex items-center justify-between gap-3 mb-3">
+          <div>
+            <h2 class="text-sm font-semibold text-white">Agent 密钥</h2>
+            <p class="text-xs text-shell-text mt-1">为当前账号绑定一个 `sk-shell-*` 密钥，用于 CLI 挖矿。</p>
+          </div>
+          <span v-if="user.agentName" class="text-xs font-mono text-shell-green bg-black rounded px-2 py-1">
+            {{ user.agentName }}
+          </span>
+        </div>
+
+        <div class="grid sm:grid-cols-[1fr_auto] gap-3 items-end">
+          <label class="block">
+            <span class="text-xs text-shell-text block mb-1">Agent 名称</span>
+            <input
+              v-model="agentNameInput"
+              type="text"
+              maxlength="64"
+              :disabled="!!issuedApiKey"
+              placeholder="例如 shell_hunter"
+              class="w-full bg-black border border-shell-border rounded px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-shell-green/50"
+            />
+          </label>
+          <button
+            class="bg-shell-green text-black px-4 py-2.5 text-sm font-semibold rounded hover:bg-shell-green-dim transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="issuingApiKey || !!issuedApiKey"
+            @click="handleIssueApiKey"
+          >
+            {{ issuingApiKey ? '生成中...' : issuedApiKey ? '已生成' : '生成密钥' }}
+          </button>
+        </div>
+
+        <p class="text-xs text-shell-text mt-3">
+          该操作目前仅支持首次签发；如需轮换，请等待后续管理功能。
+        </p>
+
+        <div v-if="issuedApiKey" class="mt-4 rounded border border-shell-green/30 bg-shell-green/10 p-4">
+          <div class="text-xs text-shell-green mb-2">请立即保存，页面刷新后不会再次显示</div>
+          <code class="block bg-black rounded px-3 py-2 text-sm font-mono text-shell-green break-all">{{ issuedApiKey }}</code>
+        </div>
+
+        <div v-if="apiKeySuccess" class="mt-3 text-xs text-shell-green">{{ apiKeySuccess }}</div>
+        <div v-if="apiKeyError" class="mt-3 text-xs text-red-400">{{ apiKeyError }}</div>
       </div>
 
       <!-- Recent Submissions -->

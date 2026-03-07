@@ -1,6 +1,6 @@
 # $SHELL Miner CLI
 
-通过红队测试 AI Agent 来挖掘 $SHELL 积分。矿机会自动从 Oracle 拉取攻击任务，使用你的 LLM 生成攻击载荷，并提交结果。
+通过红队测试 AI Agent 来挖掘 $SHELL 积分。矿机会自动从 Oracle 拉取任务，由平台 AI 默认生成攻击 payload，你只负责接收任务、提交验证并赚取积分。
 
 ## 安装方式
 
@@ -47,16 +47,16 @@ npx @openshell-cc/miner-cli start
 | 变量 | 说明 |
 |------|------|
 | `ORACLE_URL` | $SHELL Oracle 地址（默认：`https://oracle.openshell.cc`） |
-| `WALLET_PRIVATE_KEY` | Solana 钱包私钥（base58 格式），用于签名认证 |
-| `LLM_API_KEY` | 你的 LLM 提供商 API 密钥 |
+| `SHELL_API_KEY` | $SHELL 控制面板签发的矿工密钥 |
 
 ### 可选
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
-| `LLM_PROVIDER` | `anthropic` | LLM 提供商：`anthropic` / `openai` / `deepseek` |
-| `LLM_MODEL` | 各提供商默认值 | 指定模型名称 |
-| `EXECUTION_MODE` | `auto` | `auto` / `local_only` / `sandbox_only` |
+| `LLM_PROVIDER` | `anthropic` | 高级本地模式的模型提供商（可选） |
+| `LLM_MODEL` | 各提供商默认值 | 高级本地模式指定模型 |
+| `LLM_API_KEY` | 空 | 高级本地计算的可选配置 |
+| `EXECUTION_MODE` | `sandbox_only` | `auto` / `local_only` / `sandbox_only` |
 | `POLLING_INTERVAL_MS` | `5000` | 拉取任务间隔（毫秒） |
 
 ### 获取 Solana 钱包私钥
@@ -82,11 +82,11 @@ cat miner-wallet.json
 
 | 模式 | 说明 |
 |------|------|
-| `auto` | 接受 Oracle 分配的任何任务（local_compute 或 sandbox_verified） |
-| `local_only` | 仅接受 `local_compute` 任务，跳过沙盒任务 |
-| `sandbox_only` | 仅接受 `sandbox_verified` 任务，跳过本地计算任务 |
+| `sandbox_only` | 默认推荐。平台 AI 生成 payload，零第三方 API Key |
+| `auto` | 接受 Oracle 分配的任何任务（有本地模型时推荐） |
+| `local_only` | 仅接受 `local_compute` 任务，需要本地模型配置 |
 
-**推荐**：使用 `auto` 以获得最多任务。
+**推荐**：先用 `sandbox_only` 零 API 跑通；有本地模型后再切到 `auto`。
 
 ---
 
@@ -105,7 +105,13 @@ node dist/index.js status
 
 ---
 
-## 支持的 LLM 提供商
+## 默认参与方式
+
+- 默认不需要配置 OpenAI / Anthropic / DeepSeek API Key
+- Claude 订阅用户、OpenClaw 用户、antigravity 用户、Cursor 用户都可以先通过平台托管模式参与
+- 如果后续你想处理高级本地任务，再填写自己的本地模型配置
+
+## 支持的高级本地模型提供商
 
 | 提供商 | `LLM_PROVIDER` | 默认模型 | 获取 API Key |
 |--------|----------------|----------|-------------|

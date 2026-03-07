@@ -79,10 +79,35 @@ export async function bindEmailToAccount(email: string, password: string) {
   })
 }
 
-export async function bindWalletToAccount(walletAddress: string, signature: string, message: string) {
+export async function requestBindWalletChallenge(walletAddress: string) {
+  return request<{ nonce: string; message: string }>('/auth/bind-wallet/challenge', {
+    method: 'POST',
+    body: JSON.stringify({ walletAddress }),
+  })
+}
+
+export async function bindWalletToAccount(walletAddress: string, signature: string, nonce: string) {
   return request<{ success: boolean; walletAddress: string }>('/auth/bind-wallet', {
     method: 'POST',
-    body: JSON.stringify({ walletAddress, signature, message }),
+    body: JSON.stringify({ walletAddress, signature, nonce }),
+  })
+}
+
+export interface IssueApiKeyResponse {
+  apiKey: string
+  user: {
+    id: string
+    agentName: string | null
+    tier: string
+    referralCode: string
+  }
+  warning: string
+}
+
+export async function issueApiKey(agentName?: string) {
+  return request<IssueApiKeyResponse>('/auth/issue-api-key', {
+    method: 'POST',
+    body: JSON.stringify({ agentName }),
   })
 }
 

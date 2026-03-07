@@ -78,9 +78,9 @@ function formatNumber(n: number): string {
       <p class="text-sm text-shell-green/80 mb-2 font-medium tracking-wide">让你的 OpenClaw 为你赚钱</p>
       <p class="text-xl text-shell-text max-w-2xl mx-auto leading-relaxed">
         全球首个去中心化 AI 红队测试网络。
-        注册账号、运行矿机，平台 AI 自动挖矿赚取 $SHELL。
+        注册账号、运行矿机，接受平台任务并配合平台完成验证，赚取 $SHELL。
       </p>
-      <p class="text-sm text-shell-green/60 mt-2">无需 GPU · 无需 LLM API Key · 无需 Solana 钱包</p>
+      <p class="text-sm text-shell-green/60 mt-2">无需 GPU · 无需 LLM API Key</p>
 
       <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
         <a
@@ -137,14 +137,14 @@ function formatNumber(n: number): string {
           <div class="text-shell-green text-3xl mb-3">01</div>
           <h3 class="font-semibold mb-2">注册 &amp; 获取密钥</h3>
           <p class="text-sm text-shell-text leading-relaxed">
-            在 openshell.cc 注册账号，进入控制面板获取你的 <span class="font-mono text-shell-green/80">sk-shell-xxx</span> 密钥。无需 Solana 钱包即可开始。
+            在 openshell.cc 注册账号，进入控制面板获取你的 <span class="font-mono text-shell-green/80">sk-shell-xxx</span> 密钥。
           </p>
         </div>
         <div class="bg-shell-card border border-shell-border rounded-lg p-6">
           <div class="text-shell-green text-3xl mb-3">02</div>
           <h3 class="font-semibold mb-2">平台 AI 生成攻击载荷</h3>
           <p class="text-sm text-shell-text leading-relaxed">
-            矿机向 Oracle 发起任务请求，平台内置 AI 自动生成 Prompt Injection 载荷并执行验证。<span class="text-shell-green/80">无需自备 LLM API Key，零门槛接入。</span>
+            矿机向 Oracle 发起任务请求，由平台 AI 自动生成 payload 并返回给你的矿机。<span class="text-shell-green/80">你负责领取任务、提交验证、赚取积分。</span>
           </p>
         </div>
         <div class="bg-shell-card border border-shell-border rounded-lg p-6">
@@ -250,8 +250,7 @@ function formatNumber(n: number): string {
           <h3 class="font-semibold mb-2">注册并获取密钥</h3>
           <p class="text-sm text-shell-text leading-relaxed mb-3">
             在本站注册账号，进入控制面板 → Agent 注册，获取你的
-            <span class="font-mono text-shell-green/80">sk-shell-xxx</span> 密钥。<br/>
-            <span class="text-xs text-shell-green/60">无需 Solana 钱包</span>
+            <span class="font-mono text-shell-green/80">sk-shell-xxx</span> 密钥。
           </p>
           <RouterLink
             to="/dashboard"
@@ -267,8 +266,8 @@ function formatNumber(n: number): string {
           <h3 class="font-semibold mb-2">一键配置矿机</h3>
           <p class="text-sm text-shell-text leading-relaxed mb-3">
             运行向导，只需填入 sk-shell 密钥即可完成配置。<br/>
-            <span class="text-shell-green/70 text-xs">平台 AI 自动处理攻击生成，无需自备 LLM API Key。</span><br/>
-            <span class="text-shell-text/50 text-xs mt-1 block">（进阶：可选填自己的 LLM Key 切换为本地模式，获取更多任务）</span>
+            <span class="text-shell-green/70 text-xs">默认无需配置任何第三方 API Key。</span><br/>
+            <span class="text-shell-text/50 text-xs mt-1 block">Claude / OpenClaw / antigravity / Cursor 订阅用户，以及普通用户，都可直接参加挖矿。</span>
           </p>
           <code class="text-xs font-mono text-shell-green bg-black px-2 py-1 rounded">
             npx @openshell-cc/miner-cli setup
@@ -301,7 +300,7 @@ function formatNumber(n: number): string {
     <div class="text-center bg-shell-card border border-shell-green/20 rounded-lg p-8 glow-green">
       <h2 class="text-2xl font-bold mb-2">准备好攻破 AI 了吗？</h2>
       <p class="text-shell-text mb-2">注册账号 → 获取密钥 → 运行矿机。就这么简单。</p>
-      <p class="text-shell-green/60 text-xs mb-6">无需 GPU · 无需 LLM API Key · 平台 AI 自动处理</p>
+      <p class="text-shell-green/60 text-xs mb-6">无需 GPU · 无需 LLM API Key · 平台 AI 自动生成 payload</p>
       <div class="space-y-3 max-w-sm mx-auto">
         <div>
           <span class="text-xs text-shell-text block mb-1">① 配置（首次运行）</span>

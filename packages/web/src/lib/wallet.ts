@@ -1,5 +1,13 @@
 import { ref, computed } from 'vue'
-import { requestNonce, login, setToken, loginWithEmail as apiLoginEmail, registerEmail as apiRegisterEmail, bindWalletToAccount } from './api'
+import {
+  requestNonce,
+  login,
+  setToken,
+  loginWithEmail as apiLoginEmail,
+  registerEmail as apiRegisterEmail,
+  bindWalletToAccount,
+  requestBindWalletChallenge,
+} from './api'
 
 export interface WalletState {
   connected: boolean
@@ -112,13 +120,12 @@ export function useWallet() {
     const resp = await phantom.connect()
     const walletAddress = resp.publicKey.toString()
 
-    // Sign a binding message
-    const message = `Bind wallet ${walletAddress} to $SHELL account`
+    const { nonce, message } = await requestBindWalletChallenge(walletAddress)
     const encoded = new TextEncoder().encode(message)
     const { signature } = await phantom.signMessage(encoded, 'utf8')
     const sig58 = encodeBase58(signature)
 
-    await bindWalletToAccount(walletAddress, sig58, message)
+    await bindWalletToAccount(walletAddress, sig58, nonce)
 
     walletState.value = {
       connected: true,

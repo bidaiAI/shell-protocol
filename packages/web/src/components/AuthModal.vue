@@ -193,6 +193,9 @@ async function handleApiKey() {
         <!-- Wallet Tab -->
         <div v-if="activeTab === 'wallet'">
           <p class="text-sm text-shell-text mb-4">连接 Phantom 钱包进行签名登录。</p>
+          <p class="text-xs text-yellow-400/80 mb-4">
+            如果你已经有邮箱账号或 `sk-shell` 账号，请先登录，再到控制面板里绑定钱包；不要直接新建钱包登录。
+          </p>
           <button
             class="w-full bg-shell-green text-black py-3 font-semibold rounded hover:bg-shell-green-dim transition-colors"
             :disabled="loading"
@@ -310,7 +313,7 @@ async function handleApiKey() {
         <!-- API Key Tab -->
         <div v-if="activeTab === 'apikey'">
           <p class="text-sm text-shell-text mb-2">
-            输入注册矿机时自动生成的 <span class="text-shell-green font-mono">$SHELL 密钥</span>。
+            输入你在控制面板中签发的 <span class="text-shell-green font-mono">$SHELL 密钥</span>。
           </p>
           <p class="text-xs text-yellow-500/80 mb-3">
             ⚠ 请勿输入 OpenAI、Anthropic 等第三方 API Key
