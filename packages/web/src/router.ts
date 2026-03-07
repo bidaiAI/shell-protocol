@@ -32,6 +32,11 @@ const routes = [
     component: () => import('./pages/Disclosures.vue'),
   },
   {
+    path: '/admin',
+    name: 'admin',
+    component: () => import('./pages/Admin.vue'),
+  },
+  {
     path: '/verify-email',
     name: 'verify-email',
     component: () => import('./pages/VerifyEmail.vue'),

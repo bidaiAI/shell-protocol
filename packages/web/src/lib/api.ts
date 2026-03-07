@@ -366,3 +366,63 @@ export async function getReferralCommissions(limit = 20, offset = 0) {
 export async function getReferralBindings() {
   return request<{ bindings: BindingEntry[] }>('/referral/bindings')
 }
+
+// ── Admin API (requires ADMIN_SECRET bearer token) ──
+
+export interface AdminUser {
+  id: string
+  email: string | null
+  agentName: string | null
+  tier: string
+  shellPoints: number
+  miningAccessEnabled: boolean
+  miningAccessGrantedAt: string | null
+  miningAccessNote: string | null
+  isBanned: boolean
+  isFrozen: boolean
+  createdAt: string
+  authMethod: string
+}
+
+function adminRequest<T>(path: string, secret: string, options: RequestInit = {}): Promise<T> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${secret}`,
+    ...(options.headers as Record<string, string> || {}),
+  }
+  return fetch(`${BASE_URL}${path}`, { ...options, headers }).then(async (res) => {
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      throw new ApiError(res.status, body.error || res.statusText)
+    }
+    return res.json() as Promise<T>
+  })
+}
+
+export async function adminListUsers(
+  secret: string,
+  opts: { status?: 'enabled' | 'disabled'; q?: string; limit?: number; offset?: number } = {},
+) {
+  const params = new URLSearchParams()
+  if (opts.status) params.set('status', opts.status)
+  if (opts.q) params.set('q', opts.q)
+  if (opts.limit) params.set('limit', String(opts.limit))
+  if (opts.offset) params.set('offset', String(opts.offset))
+  return adminRequest<{ users: AdminUser[]; total: number; limit: number; offset: number }>(
+    `/admin/mining-access/users?${params}`, secret,
+  )
+}
+
+export async function adminGrantMining(secret: string, userId: string, note?: string) {
+  return adminRequest<{ success: boolean; message: string }>(
+    `/admin/mining-access/${userId}/grant`, secret,
+    { method: 'POST', body: JSON.stringify({ note }) },
+  )
+}
+
+export async function adminRevokeMining(secret: string, userId: string, note?: string) {
+  return adminRequest<{ success: boolean; message: string }>(
+    `/admin/mining-access/${userId}/revoke`, secret,
+    { method: 'POST', body: JSON.stringify({ note }) },
+  )
+}
