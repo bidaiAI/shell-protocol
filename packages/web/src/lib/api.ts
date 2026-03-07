@@ -160,6 +160,9 @@ export interface UserData {
   slashCount: number
   createdAt: string
   successRate: string
+  /** Whether this user has been granted mining (whitelist) access */
+  miningAccessEnabled?: boolean
+  miningAccessGrantedAt?: string | null
 }
 
 export async function getMyStats() {

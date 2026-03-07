@@ -211,6 +211,43 @@ function bindingStatusText(status: string) {
     <div v-if="loading" class="text-center text-shell-text py-12">加载中...</div>
 
     <template v-else-if="user">
+
+      <!-- ── Mining Access Waitlist Banner ── -->
+      <div v-if="!user.miningAccessEnabled"
+        class="mb-8 border border-amber-400/40 bg-amber-400/5 rounded-xl p-5">
+        <div class="flex items-start gap-3">
+          <span class="text-2xl flex-shrink-0 mt-0.5">⏳</span>
+          <div class="flex-1">
+            <h2 class="text-sm font-bold text-amber-300 mb-1">挖矿资格正在分批开放</h2>
+            <p class="text-xs text-shell-text/70 leading-relaxed mb-3">
+              你的账号已成功注册并进入等待名单。当前挖矿资格正在分批开放中，我们会在开通时发送通知。
+              在此期间，你可以提前配置 Agent 密钥，以便资格开通后立即开始挖矿。
+            </p>
+            <div class="flex flex-wrap gap-2 text-xs">
+              <span class="bg-amber-400/10 border border-amber-400/30 text-amber-300 px-2 py-1 rounded font-mono">
+                ✓ 账号已激活
+              </span>
+              <span class="bg-amber-400/10 border border-amber-400/30 text-amber-300 px-2 py-1 rounded font-mono">
+                ⏳ 等待挖矿授权
+              </span>
+              <span class="bg-shell-card border border-shell-border text-shell-text/60 px-2 py-1 rounded font-mono">
+                推荐积极加入 X @openshell_cc 获取开放通知
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Mining Access Active Badge ── -->
+      <div v-else
+        class="mb-6 border border-shell-green/30 bg-shell-green/5 rounded-xl px-4 py-3 flex items-center gap-2.5">
+        <span class="text-shell-green text-base">⛏</span>
+        <span class="text-xs text-shell-green font-semibold">挖矿资格已开通</span>
+        <span v-if="user.miningAccessGrantedAt" class="text-xs text-shell-text/40 ml-auto">
+          授权于 {{ formatDate(user.miningAccessGrantedAt) }}
+        </span>
+      </div>
+
       <!-- Stats Grid -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         <div class="bg-shell-card border border-shell-border rounded-lg p-4">
@@ -428,6 +465,7 @@ function bindingStatusText(status: string) {
           </span>
         </div>
 
+        <!-- Key generation form — always shown so users can prepare ahead of whitelist -->
         <div class="grid sm:grid-cols-[1fr_auto] gap-3 items-end">
           <label class="block">
             <span class="text-xs text-shell-text block mb-1">Agent 名称</span>
@@ -452,6 +490,11 @@ function bindingStatusText(status: string) {
         <p class="text-xs text-shell-text mt-3">
           该操作目前仅支持首次签发；如需轮换，请等待后续管理功能。
         </p>
+
+        <!-- Waitlist notice inside key section -->
+        <div v-if="!user.miningAccessEnabled" class="mt-3 text-xs text-amber-400/70 bg-amber-400/5 border border-amber-400/20 rounded px-3 py-2">
+          ⏳ 可提前生成密钥备用，挖矿资格开通后即可直接运行 <code class="font-mono text-amber-300">miner-cli start</code>
+        </div>
 
         <div v-if="issuedApiKey" class="mt-4 rounded border border-shell-green/30 bg-shell-green/10 p-4">
           <div class="text-xs text-shell-green mb-2">请立即保存，页面刷新后不会再次显示</div>
