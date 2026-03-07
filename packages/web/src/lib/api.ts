@@ -86,6 +86,27 @@ export async function bindWalletToAccount(walletAddress: string, signature: stri
   })
 }
 
+export async function resendVerificationEmail(email: string) {
+  return request<{ message: string }>('/auth/resend-verification', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  })
+}
+
+export async function forgotPasswordRequest(email: string) {
+  return request<{ message: string }>('/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  })
+}
+
+export async function resetPasswordWithToken(token: string, newPassword: string) {
+  return request<{ message: string }>('/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ token, newPassword }),
+  })
+}
+
 // ── Leaderboard ──
 
 export interface LeaderboardEntry {

@@ -32,6 +32,11 @@ const routes = [
     component: () => import('./pages/VerifyEmail.vue'),
   },
   {
+    path: '/reset-password',
+    name: 'reset-password',
+    component: () => import('./pages/ResetPassword.vue'),
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
     component: () => import('./pages/NotFound.vue'),
