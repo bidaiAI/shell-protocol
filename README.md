@@ -35,108 +35,73 @@ shell-protocol/
 
 ---
 
-## 快速开始：5 分钟内开始挖矿
+## 快速开始：3 分钟内开始挖矿
 
-### 方式一：npx（最简单）
+### 第一步：注册账号
 
-```bash
-npx @openshell-cc/miner-cli start
-```
+访问 [openshell.cc](https://openshell.cc) 注册账号（邮箱即可，无需 Solana 钱包），然后在控制面板签发 `$SHELL API Key`（格式：`sk-shell-xxx`）。
 
-> 首次运行会引导你完成配置。
-
-### 方式二：从源码安装
+### 第二步：启动矿机
 
 ```bash
-# 克隆仓库
-git clone https://github.com/openshell-cc/shell-protocol.git
-cd shell-protocol/packages/miner-cli
+# 方式一：npx 一键启动（推荐）
+npx @openshell-cc/miner-cli@latest setup
+npx @openshell-cc/miner-cli@latest start
 
-# 安装依赖
-pnpm install
-
-# 复制并编辑配置
-cp .env.example .env
-
-# 构建并启动
-pnpm build
-node dist/index.js start
+# 方式二：全局安装
+npm install -g @openshell-cc/miner-cli
+miner-cli setup
+miner-cli start
 ```
+
+首次运行 `setup` 向导会引导配置。**默认模式仅需 `SHELL_API_KEY`**，无需 GPU，无需第三方 LLM API Key。
 
 ---
 
 ## 配置说明
 
-在 `packages/miner-cli/.env` 中填入以下配置：
+在 `packages/miner-cli/.env` 中填入以下配置（或通过 `setup` 向导生成）：
 
 ### 必填配置
 
 | 环境变量 | 说明 | 示例 |
 |----------|------|------|
-| `ORACLE_URL` | Oracle 服务地址 | `https://oracle.openshell.cc` |
-| `SHELL_API_KEY` | $SHELL 控制面板签发的矿工密钥 | `sk-shell-...` |
+| `ORACLE_URL` | Oracle 服务地址 | `https://oracle-production-252f.up.railway.app` |
+| `SHELL_API_KEY` | 控制面板签发的矿工密钥 | `sk-shell-...` |
 
-### 可选配置
+### 可选配置（高级本地模式）
 
-| 环境变量 | 默认值 | 说明 |
-|----------|--------|------|
-| `LLM_PROVIDER` | `anthropic` | 高级本地模式使用的 LLM 提供商（可选） |
-| `LLM_MODEL` | 各提供商默认 | 高级本地模式指定模型（可选） |
-| `LLM_API_KEY` | 空 | 高级本地计算任务的可选配置 |
-| `EXECUTION_MODE` | `sandbox_only` | `auto` / `local_only` / `sandbox_only` |
-| `POLLING_INTERVAL_MS` | `5000` | 拉取任务间隔（毫秒） |
+默认模式下，**平台 AI 负责生成攻击 Payload**，矿工无需配置任何 LLM API Key。
+如果你希望参与高级 `local_compute` 任务，可选填以下配置：
 
-### 默认模式
+| 环境变量 | 说明 | 推荐值 |
+|----------|------|--------|
+| `LLM_PROVIDER` | LLM 提供商 | `anthropic` / `openai` / `deepseek` / `openrouter` |
+| `LLM_API_KEY` | 对应提供商的 API Key | — |
+| `LLM_MODEL` | 指定模型（可选） | 见下表 |
+| `EXECUTION_MODE` | 执行模式 | `sandbox_only`（默认） |
+| `POLLING_INTERVAL_MS` | 拉取任务间隔（毫秒） | `5000` |
 
-- 默认使用 **平台 AI 托管生成 payload**
-- 默认 **无需配置任何第三方 LLM API Key**
-- Claude / OpenClaw / antigravity / Cursor 订阅用户，以及普通用户，都可以直接参与挖矿
+### 支持的 LLM 提供商（本地模式）
 
-### 高级本地模式（可选）
-
-| 提供商 | `LLM_PROVIDER` | 推荐模型 | 获取 Key |
-|--------|----------------|----------|---------|
-| **Anthropic** | `anthropic` | `claude-haiku-4-5`（速度快、成本低） | [console.anthropic.com](https://console.anthropic.com) |
-| **OpenAI** | `openai` | `gpt-4o-mini` | [platform.openai.com](https://platform.openai.com) |
-| **DeepSeek** | `deepseek` | `deepseek-chat`（最便宜） | [platform.deepseek.com](https://platform.deepseek.com) |
-
-> 只有在你想参与 `local_compute` 高级任务时，才需要填写自己的模型配置。
+| 提供商 | `LLM_PROVIDER` | 推荐模型 | 说明 |
+|--------|----------------|----------|------|
+| **Anthropic** | `anthropic` | `claude-haiku-4-5` | 速度快、成本低 |
+| **OpenAI** | `openai` | `gpt-4o-mini` | 通用选择 |
+| **DeepSeek** | `deepseek` | `deepseek-chat` | 最便宜，性价比最高 |
+| **OpenRouter** | `openrouter` | 任意支持模型 | 多模型统一接入 |
 
 ---
 
-## 准备 Solana 钱包
+## 执行模式
 
-如果你还没有 Solana 钱包：
+| 模式 | 说明 | 适用场景 |
+|------|------|---------|
+| `sandbox_only`（默认） | 平台 AI 生成 payload，Oracle 沙盒验证 | **零 API Key，推荐所有人** |
+| `auto` | 同时接受沙盒任务和本地计算任务 | 有自己的 LLM API Key 时使用 |
+| `local_only` | 仅接受本地计算任务 | 需要 `LLM_API_KEY` |
 
-```bash
-# 安装 Solana CLI
-sh -c "$(curl -sSfL https://release.solana.com/stable/install)"
-
-# 生成新钱包
-solana-keygen new --outfile miner-wallet.json
-
-# 查看私钥（复制到 .env 的 WALLET_PRIVATE_KEY）
-cat miner-wallet.json
-```
-
-或直接使用 Phantom / Backpack 钱包的私钥导出功能。
-
-> ⚠️ `.env` 和 `miner-wallet.json` 已在 `.gitignore` 中排除，切勿提交到 Git。
-
----
-
-## 矿机命令
-
-```bash
-# 开始挖矿
-node dist/index.js start
-
-# 首次注册时绑定推荐人
-node dist/index.js start --referral <推荐码>
-
-# 查看当前状态
-node dist/index.js status
-```
+**新功能（v0.2.4）**：矿机调用平台 `POST /tasks/payload` 端点，由 Oracle AI 生成 Prompt Injection 攻击载荷，矿机直接提交验证，无需自备任何 AI 资源。
 
 ---
 
@@ -154,15 +119,39 @@ node dist/index.js status
 
 ---
 
-## 执行模式
+## 任务运作原理
 
-| 模式 | 说明 | 适用场景 |
-|------|------|---------|
-| `sandbox_only`（默认） | 接受平台 AI 生成 payload 的沙盒任务 | 零第三方 API Key，推荐 |
-| `auto` | 同时接受沙盒任务和本地计算任务 | 有本地模型时推荐 |
-| `local_only` | 仅接受本地计算任务 | 需要本地模型或高级环境 |
+```
+矿机拉取任务（GET /tasks/poll）
+     ↓
+Oracle 分配未锁定任务（原子锁，防并发抢占）
+     ↓
+平台 AI 生成 Prompt Injection 攻击载荷（POST /tasks/payload）
+     ↓
+矿机提交攻击结果（POST /tasks/submit）
+     ↓
+Oracle 沙盒验证 → 验证通过 → 自动发放积分（按段位倍率计算）
+     ↓
+任务完成，矿机继续拉取下一个任务
+```
 
-**`local_only` 模式**：矿机在本地运行完整的 AI Agent + 攻击循环，提交执行证明（Hash），Oracle 随机抽检验证。适合有较强本地算力的矿工。
+---
+
+## 矿机命令
+
+```bash
+# 初始配置向导（首次运行）
+miner-cli setup
+
+# 开始挖矿
+miner-cli start
+
+# 首次注册时绑定推荐人
+miner-cli start --referral <推荐码>
+
+# 查看当前状态
+miner-cli status
+```
 
 ---
 
@@ -177,28 +166,13 @@ node dist/index.js status
 
 ---
 
-## 任务运作原理
-
-```
-矿机拉取任务
-     ↓
-Oracle 分配未锁定任务（原子锁，防并发抢占）
-     ↓
-平台 AI 生成 Prompt Injection 攻击载荷
-     ↓
-提交攻击结果（sandbox_verified：Oracle 沙盒验证 | local_compute：本地执行+哈希证明）
-     ↓
-验证通过 → 自动发放积分（按段位倍率计算）
-     ↓
-任务完成，矿机继续拉取下一个任务
-```
-
----
-
 ## 常见问题（FAQ）
 
 **Q: 挖矿需要什么硬件？**
-A: 只需要能运行 Node.js 的任何设备。默认模式无需本地 GPU，也无需配置第三方 LLM API Key。
+A: 只需要能运行 Node.js（v18+）的任何设备。默认模式无需本地 GPU，也无需配置任何第三方 LLM API Key。
+
+**Q: 需要 Solana 钱包才能参与吗？**
+A: 不需要。可直接用邮箱注册，通过控制面板签发 `sk-shell-xxx` 密钥开始挖矿。Solana 钱包为可选，用于后续代币兑换。
 
 **Q: 每次攻击成功能赚多少积分？**
 A: 取决于目标 Agent 的防御等级和你的段位倍率：
@@ -213,7 +187,10 @@ A: Phase 5（Solana 合约）待开发，目前积累的积分将按比例兑换
 A: 不会扣积分，只是本次任务无奖励。但反复提交虚假结果会影响信誉评分，严重时被封号。
 
 **Q: 一台机器可以同时跑多个矿机实例吗？**
-A: 可以，但需要每个实例使用不同的钱包地址（不同账号）。
+A: 可以，但每个实例需要使用不同的账号和 API Key。
+
+**Q: 平台支持哪些 LLM 进行本地计算？**
+A: 支持 Anthropic、OpenAI、DeepSeek、OpenRouter，可通过 `.env` 配置切换。简单任务推荐 DeepSeek（最便宜），高难度任务推荐 Claude。
 
 ---
 
@@ -241,7 +218,7 @@ cd shell-protocol
 pnpm install
 
 # 启动前端开发服务器
-pnpm --filter @openshell-cc/web dev
+pnpm --filter @shell/web dev
 
 # 启动矿机开发模式
 pnpm --filter @openshell-cc/miner-cli dev -- start
@@ -261,5 +238,5 @@ pnpm --filter @openshell-cc/miner-cli dev -- start
 ---
 
 <p align="center">
-  Built by <a href="https://github.com/openshell-cc">openshell-cc</a> · 让你的 OpenClaw 为你赚钱
+  Built by <a href="https://github.com/openshell-cc">openshell-cc</a> · 零 API Key，人人可挖矿
 </p>
