@@ -1,6 +1,6 @@
 {
   "name": "@openshell-cc/miner-cli",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "type": "module",
   "description": "Mine $SHELL by red-teaming AI agents",
   "repository": {
@@ -17,7 +17,7 @@
     "access": "public"
   },
   "bin": {
-    "miner-cli": "./dist/index.js"
+    "miner-cli": "dist/index.js"
   },
   "scripts": {
     "dev": "tsx src/index.ts",
