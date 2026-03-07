@@ -141,9 +141,9 @@ function formatNumber(n: number): string {
         </div>
         <div class="bg-shell-card border border-shell-border rounded-lg p-6">
           <div class="text-shell-green text-3xl mb-3">02</div>
-          <h3 class="font-semibold mb-2">本地 LLM 生成攻击载荷</h3>
+          <h3 class="font-semibold mb-2">LLM API 生成攻击载荷</h3>
           <p class="text-sm text-shell-text leading-relaxed">
-            矿机调用你的 LLM（Anthropic / OpenAI / DeepSeek）自动生成 Prompt Injection 载荷，在本地执行并生成加密证明。
+            矿机调用你的 LLM API（Anthropic / OpenAI / DeepSeek）生成 Prompt Injection 载荷，在本地执行验证并生成加密证明。无需 GPU，只需 API Key 按量付费。
           </p>
         </div>
         <div class="bg-shell-card border border-shell-border rounded-lg p-6">
@@ -263,9 +263,12 @@ function formatNumber(n: number): string {
         <!-- Step 2 -->
         <div class="bg-shell-card border border-shell-border rounded-lg p-6">
           <div class="text-tier-apex text-2xl mb-3 font-mono">②</div>
-          <h3 class="font-semibold mb-2">运行配置向导</h3>
+          <h3 class="font-semibold mb-2">配置矿机</h3>
           <p class="text-sm text-shell-text leading-relaxed mb-3">
-            执行向导命令，2 分钟完成配置：填入 sk-shell 密钥和你的 LLM API Key（Anthropic / OpenAI / DeepSeek）。
+            运行向导，填入两个密钥：<br/>
+            · <span class="text-shell-green/80 font-mono text-xs">sk-shell-xxx</span> — 你的平台身份<br/>
+            · <span class="text-yellow-400/80 font-mono text-xs">LLM API Key</span> — 调用 AI 生成攻击（推荐 DeepSeek，成本最低）<br/>
+            <span class="text-xs text-shell-text/60 mt-1 block">无需本地 GPU，矿机程序在你电脑上跑，LLM 按量付费调用 API。</span>
           </p>
           <code class="text-xs font-mono text-shell-green bg-black px-2 py-1 rounded">
             npx @openshell-cc/miner-cli setup
