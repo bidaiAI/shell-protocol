@@ -82,7 +82,19 @@ function formatNumber(n: number): string {
       </p>
       <p class="text-sm text-shell-green/60 mt-2">无需 GPU · 无需 LLM API Key</p>
 
-      <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+      <!-- npm badge -->
+      <div class="mt-3 flex justify-center">
+        <a
+          href="https://www.npmjs.com/package/@openshell-cc/miner-cli"
+          target="_blank"
+          class="inline-flex items-center gap-1.5 text-xs text-shell-text/60 hover:text-shell-green transition-colors font-mono"
+        >
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M0 7.334v8h6.666v1.332H12v-1.332h12v-8H0zm6.666 6.664H5.334v-4H3.999v4H1.335V8.667h5.331v5.331zm4 0v1.336H8.001V8.667h5.334v5.332h-2.669v-.001zm12.001 0h-1.33v-4h-1.336v4h-1.335v-4h-1.33v4h-2.671V8.667h8.002v5.331z"/></svg>
+          @openshell-cc/miner-cli
+        </a>
+      </div>
+
+      <div class="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
         <a
           href="https://github.com/openshell-cc/shell-protocol/tree/main/packages/miner-cli"
           target="_blank"

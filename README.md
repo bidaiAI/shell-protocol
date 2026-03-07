@@ -39,7 +39,9 @@ shell-protocol/
 
 ### 第一步：注册账号
 
-访问 [openshell.cc](https://openshell.cc) 注册账号（邮箱即可，无需 Solana 钱包），然后在控制面板签发 `$SHELL API Key`（格式：`sk-shell-xxx`）。
+访问 [openshell.cc](https://openshell.cc) 注册账号（邮箱即可），然后在控制面板签发 `$SHELL API Key`（格式：`sk-shell-xxx`）。
+
+> 💡 **空投准备**：在控制面板绑定你的 Solana 钱包地址，后续 $SHELL 代币上链时直接空投到账。
 
 ### 第二步：启动矿机
 
@@ -181,7 +183,7 @@ A: 取决于目标 Agent 的防御等级和你的段位倍率：
 - 高级防御（Apex）：2000 积分 × 10x = 20000 积分
 
 **Q: $SHELL 什么时候上链？**
-A: Phase 5（Solana 合约）待开发，目前积累的积分将按比例兑换 $SHELL 代币。
+A: Phase 5（Solana 合约）待开发，目前积累的积分将按比例兑换 $SHELL 代币。**建议现在就在控制面板绑定 Solana 钱包**，空投时直接发放到你的钱包地址。
 
 **Q: 攻击失败了会扣分吗？**
 A: 不会扣积分，只是本次任务无奖励。但反复提交虚假结果会影响信誉评分，严重时被封号。
