@@ -248,6 +248,17 @@ pnpm --filter @openshell-cc/miner-cli dev -- start
 
 ---
 
+## 协议钱包 · Protocol Wallets
+
+Official protocol-controlled wallets for future onchain operations, reward distribution, and ecosystem transparency.
+
+| 链 | 地址 |
+|----|------|
+| **EVM** (Ethereum / BSC / Polygon …) | `0xf1c1ef080e6aE6AABA999ba6E5D1545cD5Efab41` |
+| **Solana** | `BrGihgGjCmpu2p96rou6GQj3sQpwgeud937jf4RvZP9G` |
+
+---
+
 <p align="center">
   Built by <a href="https://github.com/openshell-cc">openshell-cc</a> · 零 API Key，人人可挖矿
 </p>
