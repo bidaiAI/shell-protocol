@@ -1,11 +1,28 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { getLeaderboard, type LeaderboardEntry } from '../lib/api'
+import { useLang } from '../lib/i18n'
+
+const { lang } = useLang()
 
 const entries = ref<LeaderboardEntry[]>([])
 const loading = ref(true)
 const page = ref(0)
 const pageSize = 50
+
+const T = computed(() => lang.value === 'en' ? {
+  title: 'Leaderboard',
+  colMiner: 'Miner', colTier: 'Tier', colPoints: 'Points',
+  colAttacks: 'Attacks', colSuccessRate: 'Success Rate',
+  loading: 'Loading...', prev: 'Prev', next: 'Next',
+  pageLabel: `Page ${page.value + 1}`,
+} : {
+  title: '排行榜',
+  colMiner: '矿工', colTier: '段位', colPoints: '积分',
+  colAttacks: '攻击数', colSuccessRate: '成功率',
+  loading: '加载中...', prev: '上一页', next: '下一页',
+  pageLabel: `第 ${page.value + 1} 页`,
+})
 
 onMounted(() => loadPage())
 
@@ -61,7 +78,7 @@ function formatPoints(n: number) {
 
 <template>
   <div class="max-w-4xl mx-auto px-4 py-8 animate-fade-in">
-    <h1 class="text-3xl font-bold mb-6">排行榜</h1>
+    <h1 class="text-3xl font-bold mb-6">{{ T.title }}</h1>
 
     <!-- Table -->
     <div class="bg-shell-card border border-shell-border rounded-lg overflow-hidden">
@@ -69,11 +86,11 @@ function formatPoints(n: number) {
         <thead>
           <tr class="border-b border-shell-border text-shell-text text-left">
             <th class="px-4 py-3 w-12">#</th>
-            <th class="px-4 py-3">矿工</th>
-            <th class="px-4 py-3">段位</th>
-            <th class="px-4 py-3 text-right">积分</th>
-            <th class="px-4 py-3 text-right hidden sm:table-cell">攻击数</th>
-            <th class="px-4 py-3 text-right hidden sm:table-cell">成功率</th>
+            <th class="px-4 py-3">{{ T.colMiner }}</th>
+            <th class="px-4 py-3">{{ T.colTier }}</th>
+            <th class="px-4 py-3 text-right">{{ T.colPoints }}</th>
+            <th class="px-4 py-3 text-right hidden sm:table-cell">{{ T.colAttacks }}</th>
+            <th class="px-4 py-3 text-right hidden sm:table-cell">{{ T.colSuccessRate }}</th>
           </tr>
         </thead>
         <tbody v-if="!loading">
@@ -101,7 +118,7 @@ function formatPoints(n: number) {
         </tbody>
         <tbody v-else>
           <tr>
-            <td colspan="6" class="px-4 py-12 text-center text-shell-text">加载中...</td>
+            <td colspan="6" class="px-4 py-12 text-center text-shell-text">{{ T.loading }}</td>
           </tr>
         </tbody>
       </table>
@@ -114,15 +131,15 @@ function formatPoints(n: number) {
         class="text-shell-text hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         @click="prevPage"
       >
-        上一页
+        {{ T.prev }}
       </button>
-      <span class="text-shell-text">第 {{ page + 1 }} 页</span>
+      <span class="text-shell-text">{{ T.pageLabel }}</span>
       <button
         :disabled="!hasNext"
         class="text-shell-text hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         @click="nextPage"
       >
-        下一页
+        {{ T.next }}
       </button>
     </div>
   </div>

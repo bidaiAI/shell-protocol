@@ -2,8 +2,56 @@
 import { ref, onMounted, computed } from 'vue'
 import { getMySubmissions, getSubmissionResult, setToken, type Submission, type SubmissionResult } from '../lib/api'
 import { useWallet } from '../lib/wallet'
+import { useLang } from '../lib/i18n'
 
 const { isAuthenticated } = useWallet()
+const { lang } = useLang()
+
+const T = computed(() => lang.value === 'en' ? {
+  title: 'Task Center',
+  authHint: 'Connect your wallet or enter your $SHELL API key to view submission history.',
+  authHint2: 'Your $SHELL key (sk-shell-xxx) is generated when you register a miner. It is NOT a third-party API key.',
+  keyLogin: '$SHELL Key Login',
+  loginBtn: 'Login',
+  submissionHistory: 'Submission History',
+  loading: 'Loading...',
+  noSubmissions: 'No submissions yet. Start the miner to begin mining!',
+  colTime: 'Submitted', colStatus: 'Status', colMode: 'Mode',
+  colSettlement: 'Settlement', colPoints: 'Points', colAction: 'Action',
+  details: 'Details',
+  detailTitle: 'Submission Details',
+  verifyStatus: 'Verification Status', execMode: 'Execution Mode',
+  settlement: 'Settlement', canary: 'Canary Triggered',
+  spotCheck: 'Spot Check', pointsAwarded: 'Points Awarded',
+  submittedAt: 'Submitted At', verifiedAt: 'Verified At',
+  close: 'Close',
+  statusSuccess: 'Attack Success', statusFail: 'Attack Failed',
+  statusVerified: 'Verified', statusPending: 'Verifying...',
+  localExec: 'Local Compute', sandboxExec: 'Sandbox',
+  yes: 'Yes', no: 'No',
+} : {
+  title: '任务中心',
+  authHint: '连接钱包或输入你的 $SHELL 密钥查看提交记录。',
+  authHint2: '$SHELL 密钥（sk-shell-xxx）在注册矿机时自动生成，非第三方 API Key。',
+  keyLogin: '$SHELL 密钥登录',
+  loginBtn: '登录',
+  submissionHistory: '提交历史',
+  loading: '加载中...',
+  noSubmissions: '暂无提交记录。运行矿机开始挖矿吧！',
+  colTime: '提交时间', colStatus: '状态', colMode: '模式',
+  colSettlement: '结算', colPoints: '积分', colAction: '操作',
+  details: '详情',
+  detailTitle: '提交详情',
+  verifyStatus: '验证状态', execMode: '执行模式',
+  settlement: '结算状态', canary: 'Canary 触发',
+  spotCheck: '是否被抽检', pointsAwarded: '获得积分',
+  submittedAt: '提交时间', verifiedAt: '验证时间',
+  close: '关闭',
+  statusSuccess: '攻击成功', statusFail: '攻击失败',
+  statusVerified: '已验证', statusPending: '验证中...',
+  localExec: '本地执行', sandboxExec: '沙盒验证',
+  yes: '是', no: '否',
+})
 
 // API Key auth for non-wallet users
 const apiKeyInput = ref('')
@@ -50,14 +98,18 @@ async function loginWithApiKey() {
 
   for (const [prefix, provider] of THIRD_PARTY_PREFIXES) {
     if (key.startsWith(prefix)) {
-      apiKeyError.value = `这是 ${provider} 的密钥，请勿在此输入！$SHELL 密钥以 sk-shell- 开头。`
+      apiKeyError.value = lang.value === 'en'
+        ? `This is a ${provider} key — do not enter it here! $SHELL keys start with sk-shell-.`
+        : `这是 ${provider} 的密钥，请勿在此输入！$SHELL 密钥以 sk-shell- 开头。`
       apiKeyInput.value = ''
       return
     }
   }
 
   if (!key.startsWith('sk-shell-')) {
-    apiKeyError.value = '格式错误 — $SHELL 密钥以 sk-shell- 开头，请检查是否粘贴正确'
+    apiKeyError.value = lang.value === 'en'
+      ? 'Invalid format — $SHELL keys start with sk-shell-'
+      : '格式错误 — $SHELL 密钥以 sk-shell- 开头，请检查是否粘贴正确'
     return
   }
   setToken(key)
@@ -66,7 +118,7 @@ async function loginWithApiKey() {
     apiKeyAuthed.value = true
   }
   catch {
-    apiKeyError.value = 'API Key 无效或已过期'
+    apiKeyError.value = lang.value === 'en' ? 'Invalid or expired API Key' : 'API Key 无效或已过期'
     setToken(null)
   }
 }
@@ -86,13 +138,21 @@ async function viewResult(submissionId: string) {
 }
 
 function statusLabel(sub: Submission) {
-  if (sub.verifiedAt && sub.isValid && sub.canaryTriggered) return { text: '攻击成功', class: 'text-shell-green' }
-  if (sub.verifiedAt && !sub.isValid) return { text: '攻击失败', class: 'text-red-400' }
-  if (sub.verifiedAt) return { text: '已验证', class: 'text-shell-text' }
-  return { text: '验证中...', class: 'text-yellow-400' }
+  if (sub.verifiedAt && sub.isValid && sub.canaryTriggered) return { text: T.value.statusSuccess, class: 'text-shell-green' }
+  if (sub.verifiedAt && !sub.isValid) return { text: T.value.statusFail, class: 'text-red-400' }
+  if (sub.verifiedAt) return { text: T.value.statusVerified, class: 'text-shell-text' }
+  return { text: T.value.statusPending, class: 'text-yellow-400' }
 }
 
 function resultStatusLabel(status: string) {
+  if (lang.value === 'en') {
+    switch (status) {
+      case 'verified': return 'Verified'
+      case 'infra_error': return 'Infra Error (will retry)'
+      case 'pending': return 'Pending...'
+      default: return status
+    }
+  }
   switch (status) {
     case 'verified': return '已验证'
     case 'infra_error': return '基础设施错误（将重试）'
@@ -102,18 +162,22 @@ function resultStatusLabel(status: string) {
 }
 
 function executionModeLabel(mode: string) {
-  return mode === 'local_compute' ? '本地执行' : '沙盒验证'
+  return mode === 'local_compute' ? T.value.localExec : T.value.sandboxExec
 }
 
 function settlementLabel(status: string) {
+  if (lang.value === 'en') {
+    const map: Record<string, string> = {
+      immediate: 'Immediate', pending: 'Pending', settled: 'Settled',
+      rejected: 'Rejected', timeout_refund: 'Timeout Refund',
+      arbitrated_settled: 'Arbitrated (Pass)', arbitrated_rejected: 'Arbitrated (Fail)',
+    }
+    return map[status] || status
+  }
   const map: Record<string, string> = {
-    immediate: '即时结算',
-    pending: '待结算',
-    settled: '已结算',
-    rejected: '已拒绝',
-    timeout_refund: '超时退款',
-    arbitrated_settled: '仲裁通过',
-    arbitrated_rejected: '仲裁拒绝',
+    immediate: '即时结算', pending: '待结算', settled: '已结算',
+    rejected: '已拒绝', timeout_refund: '超时退款',
+    arbitrated_settled: '仲裁通过', arbitrated_rejected: '仲裁拒绝',
   }
   return map[status] || status
 }
@@ -130,21 +194,20 @@ function settlementColor(status: string) {
 
 function formatDate(dateStr: string | null) {
   if (!dateStr) return '—'
-  return new Date(dateStr).toLocaleString('zh-CN')
+  return new Date(dateStr).toLocaleString(lang.value === 'en' ? 'en-US' : 'zh-CN')
 }
 </script>
 
 <template>
   <div class="max-w-4xl mx-auto px-4 py-8 animate-fade-in">
-    <h1 class="text-3xl font-bold mb-6">任务中心</h1>
+    <h1 class="text-3xl font-bold mb-6">{{ T.title }}</h1>
 
-    <!-- Not authenticated — show both options -->
+    <!-- Not authenticated -->
     <div v-if="!authed" class="bg-shell-card border border-shell-border rounded-lg p-8">
-      <p class="text-shell-text mb-4 text-center">连接钱包或输入你的 $SHELL 密钥查看提交记录。</p>
-      <p class="text-shell-text/60 mb-6 text-center text-xs">$SHELL 密钥（sk-shell-xxx）在注册矿机时自动生成，非第三方 API Key。</p>
-
+      <p class="text-shell-text mb-4 text-center">{{ T.authHint }}</p>
+      <p class="text-shell-text/60 mb-6 text-center text-xs">{{ T.authHint2 }}</p>
       <div class="max-w-sm mx-auto">
-        <div class="text-xs text-shell-text mb-2 uppercase tracking-wider">$SHELL 密钥登录</div>
+        <div class="text-xs text-shell-text mb-2 uppercase tracking-wider">{{ T.keyLogin }}</div>
         <div class="flex gap-2">
           <input
             v-model="apiKeyInput"
@@ -157,7 +220,7 @@ function formatDate(dateStr: string | null) {
             class="bg-shell-green text-black px-4 py-2 text-sm font-semibold rounded hover:bg-shell-green-dim transition-colors"
             @click="loginWithApiKey"
           >
-            登录
+            {{ T.loginBtn }}
           </button>
         </div>
         <p v-if="apiKeyError" class="text-red-400 text-xs mt-2">{{ apiKeyError }}</p>
@@ -168,24 +231,21 @@ function formatDate(dateStr: string | null) {
     <div v-else>
       <div class="bg-shell-card border border-shell-border rounded-lg overflow-hidden mb-6">
         <div class="px-4 py-3 border-b border-shell-border text-xs text-shell-text font-semibold uppercase tracking-wider">
-          提交历史
+          {{ T.submissionHistory }}
         </div>
-
-        <div v-if="loading" class="px-4 py-8 text-center text-shell-text">加载中...</div>
-
+        <div v-if="loading" class="px-4 py-8 text-center text-shell-text">{{ T.loading }}</div>
         <div v-else-if="submissions.length === 0" class="px-4 py-8 text-center text-shell-text text-sm">
-          暂无提交记录。运行矿机开始挖矿吧！
+          {{ T.noSubmissions }}
         </div>
-
         <table v-else class="w-full text-sm">
           <thead>
             <tr class="border-b border-shell-border text-shell-text text-left text-xs">
-              <th class="px-4 py-2">提交时间</th>
-              <th class="px-4 py-2">状态</th>
-              <th class="px-4 py-2 hidden sm:table-cell">模式</th>
-              <th class="px-4 py-2 hidden sm:table-cell">结算</th>
-              <th class="px-4 py-2 text-right">积分</th>
-              <th class="px-4 py-2 text-right">操作</th>
+              <th class="px-4 py-2">{{ T.colTime }}</th>
+              <th class="px-4 py-2">{{ T.colStatus }}</th>
+              <th class="px-4 py-2 hidden sm:table-cell">{{ T.colMode }}</th>
+              <th class="px-4 py-2 hidden sm:table-cell">{{ T.colSettlement }}</th>
+              <th class="px-4 py-2 text-right">{{ T.colPoints }}</th>
+              <th class="px-4 py-2 text-right">{{ T.colAction }}</th>
             </tr>
           </thead>
           <tbody>
@@ -204,7 +264,7 @@ function formatDate(dateStr: string | null) {
                 <span class="text-xs font-mono" :class="sub.executionMode === 'local_compute' ? 'text-blue-400' : 'text-shell-text'">
                   {{ executionModeLabel(sub.executionMode) }}
                 </span>
-                <span v-if="sub.spotCheckSelected" class="text-yellow-400 text-xs ml-1" title="被抽检">⚡</span>
+                <span v-if="sub.spotCheckSelected" class="text-yellow-400 text-xs ml-1" title="Spot checked">⚡</span>
               </td>
               <td class="px-4 py-2.5 hidden sm:table-cell">
                 <span class="text-xs" :class="settlementColor(sub.settlementStatus)">
@@ -216,11 +276,8 @@ function formatDate(dateStr: string | null) {
                 <span v-else class="text-shell-text">0</span>
               </td>
               <td class="px-4 py-2.5 text-right">
-                <button
-                  class="text-xs text-shell-green hover:underline"
-                  @click="viewResult(sub.id)"
-                >
-                  详情
+                <button class="text-xs text-shell-green hover:underline" @click="viewResult(sub.id)">
+                  {{ T.details }}
                 </button>
               </td>
             </tr>
@@ -230,57 +287,54 @@ function formatDate(dateStr: string | null) {
 
       <!-- Result detail panel -->
       <div v-if="loadingResult" class="bg-shell-card border border-shell-border rounded-lg p-6 text-center text-shell-text">
-        加载中...
+        {{ T.loading }}
       </div>
       <div v-else-if="selectedResult" class="bg-shell-card border border-shell-border rounded-lg p-6">
-        <h3 class="text-sm font-semibold mb-4 uppercase tracking-wider text-shell-text">提交详情</h3>
+        <h3 class="text-sm font-semibold mb-4 uppercase tracking-wider text-shell-text">{{ T.detailTitle }}</h3>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
           <div>
-            <span class="text-shell-text">验证状态</span>
+            <span class="text-shell-text">{{ T.verifyStatus }}</span>
             <p class="font-medium">{{ resultStatusLabel(selectedResult.status) }}</p>
           </div>
           <div>
-            <span class="text-shell-text">执行模式</span>
+            <span class="text-shell-text">{{ T.execMode }}</span>
             <p :class="selectedResult.executionMode === 'local_compute' ? 'text-blue-400' : 'text-shell-text'" class="font-mono">
               {{ executionModeLabel(selectedResult.executionMode) }}
             </p>
           </div>
           <div>
-            <span class="text-shell-text">结算状态</span>
+            <span class="text-shell-text">{{ T.settlement }}</span>
             <p :class="settlementColor(selectedResult.settlementStatus)">
               {{ settlementLabel(selectedResult.settlementStatus) }}
             </p>
           </div>
           <div>
-            <span class="text-shell-text">Canary 触发</span>
+            <span class="text-shell-text">{{ T.canary }}</span>
             <p :class="selectedResult.canaryTriggered ? 'text-shell-green' : 'text-red-400'">
-              {{ selectedResult.canaryTriggered ? '是' : '否' }}
+              {{ selectedResult.canaryTriggered ? T.yes : T.no }}
             </p>
           </div>
           <div>
-            <span class="text-shell-text">是否被抽检</span>
+            <span class="text-shell-text">{{ T.spotCheck }}</span>
             <p :class="selectedResult.spotCheckSelected ? 'text-yellow-400' : 'text-shell-text'">
-              {{ selectedResult.spotCheckSelected ? '是 ⚡' : '否' }}
+              {{ selectedResult.spotCheckSelected ? `${T.yes} ⚡` : T.no }}
             </p>
           </div>
           <div>
-            <span class="text-shell-text">获得积分</span>
+            <span class="text-shell-text">{{ T.pointsAwarded }}</span>
             <p class="font-mono text-shell-green">{{ selectedResult.pointsAwarded }}</p>
           </div>
           <div>
-            <span class="text-shell-text">提交时间</span>
+            <span class="text-shell-text">{{ T.submittedAt }}</span>
             <p class="text-xs">{{ formatDate(selectedResult.submittedAt) }}</p>
           </div>
           <div>
-            <span class="text-shell-text">验证时间</span>
+            <span class="text-shell-text">{{ T.verifiedAt }}</span>
             <p class="text-xs">{{ formatDate(selectedResult.verifiedAt) }}</p>
           </div>
         </div>
-        <button
-          class="mt-4 text-xs text-shell-text hover:text-white transition-colors"
-          @click="selectedResult = null"
-        >
-          关闭
+        <button class="mt-4 text-xs text-shell-text hover:text-white transition-colors" @click="selectedResult = null">
+          {{ T.close }}
         </button>
       </div>
     </div>
