@@ -163,7 +163,7 @@ function formatNumber(n: number): string {
           <div class="text-shell-green text-3xl mb-3">03</div>
           <h3 class="font-semibold mb-2">提交验证 &amp; 赚取 $SHELL</h3>
           <p class="text-sm text-shell-text leading-relaxed">
-            攻击结果提交 Oracle 验证，成功即获积分。平台随机抽检确保真实性，段位越高倍率越高（最高 10x）。
+            攻击结果提交 Oracle 沙盒验证，矿机实时轮询结果，成功即在终端显示积分到账。段位越高倍率越高（最高 10x）。
           </p>
         </div>
       </div>

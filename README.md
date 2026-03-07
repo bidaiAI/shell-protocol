@@ -68,7 +68,7 @@ miner-cli start
 
 | 环境变量 | 说明 | 示例 |
 |----------|------|------|
-| `ORACLE_URL` | Oracle 服务地址 | `https://oracle-production-252f.up.railway.app` |
+| `ORACLE_URL` | Oracle 服务地址 | `https://oracle.openshell.cc` |
 | `SHELL_API_KEY` | 控制面板签发的矿工密钥 | `sk-shell-...` |
 
 ### 可选配置（高级本地模式）
@@ -103,7 +103,10 @@ miner-cli start
 | `auto` | 同时接受沙盒任务和本地计算任务 | 有自己的 LLM API Key 时使用 |
 | `local_only` | 仅接受本地计算任务 | 需要 `LLM_API_KEY` |
 
-**新功能（v0.2.4）**：矿机调用平台 `POST /tasks/payload` 端点，由 Oracle AI 生成 Prompt Injection 攻击载荷，矿机直接提交验证，无需自备任何 AI 资源。
+**v0.2.4 新功能**：
+- 矿机调用平台 `POST /tasks/payload` 端点，由 Oracle AI 生成 Prompt Injection 攻击载荷，矿机直接提交验证，无需自备任何 AI 资源
+- 提交后自动轮询 `GET /tasks/result/:id`，实时在终端显示沙盒验证结果（成功 / 失败 / 积分到账）
+- Payload 完整性签名：Oracle 对生成的 payload 进行 HMAC 签名，提交时服务端验证，防止矿机篡改平台 payload
 
 ---
 
@@ -131,6 +134,8 @@ Oracle 分配未锁定任务（原子锁，防并发抢占）
 平台 AI 生成 Prompt Injection 攻击载荷（POST /tasks/payload）
      ↓
 矿机提交攻击结果（POST /tasks/submit）
+     ↓
+矿机轮询验证结果（GET /tasks/result/:id）→ 实时显示成功/失败
      ↓
 Oracle 沙盒验证 → 验证通过 → 自动发放积分（按段位倍率计算）
      ↓
@@ -234,6 +239,7 @@ pnpm --filter @openshell-cc/miner-cli dev -- start
 
 - 🌐 官网：[openshell.cc](https://openshell.cc)
 - 📦 npm：[@openshell-cc/miner-cli](https://www.npmjs.com/package/@openshell-cc/miner-cli)
+- 🔐 漏洞公示：[openshell.cc/disclosures](https://openshell.cc/disclosures)
 - 🐦 X：[@openshell_cc](https://x.com/openshell_cc)
 - 💻 GitHub：[openshell-cc](https://github.com/openshell-cc)
 

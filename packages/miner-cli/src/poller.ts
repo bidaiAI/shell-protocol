@@ -53,7 +53,7 @@ export async function requestPayloadFromOracle(
   config: MinerConfig,
   token: string,
   taskId: string,
-): Promise<{ payload: string; taskType: TaskData['taskType']; rewardPoints: number; source: string }> {
+): Promise<{ payload: string; payloadHash?: string; taskType: TaskData['taskType']; rewardPoints: number; source: string }> {
   const res = await fetch(`${config.oracleUrl}/tasks/payload`, {
     method: 'POST',
     headers: {
@@ -68,7 +68,7 @@ export async function requestPayloadFromOracle(
     throw new Error(`Payload generation failed (${res.status}): ${errBody || res.statusText}`)
   }
 
-  return res.json() as Promise<{ payload: string; taskType: TaskData['taskType']; rewardPoints: number; source: string }>
+  return res.json() as Promise<{ payload: string; payloadHash?: string; taskType: TaskData['taskType']; rewardPoints: number; source: string }>
 }
 
 /** Submit a payload for a task (sandbox_verified path) */
@@ -77,6 +77,7 @@ export async function submitPayload(
   token: string,
   taskId: string,
   payload: string,
+  payloadHash?: string,
 ): Promise<SubmitResult> {
   const res = await fetch(`${config.oracleUrl}/tasks/submit`, {
     method: 'POST',
@@ -84,14 +85,66 @@ export async function submitPayload(
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
     },
-    body: JSON.stringify({ taskId, payload }),
+    body: JSON.stringify({ taskId, payload, ...(payloadHash ? { payloadHash } : {}) }),
   })
 
   if (!res.ok) {
-    throw new Error(`Submit failed: ${res.statusText}`)
+    const errBody = await res.text().catch(() => '')
+    throw new Error(`Submit failed (${res.status}): ${errBody || res.statusText}`)
   }
 
   return res.json() as Promise<SubmitResult>
+}
+
+export interface SubmissionResult {
+  submissionId: string
+  status: 'pending' | 'verified' | 'infra_error'
+  canaryTriggered: boolean
+  isValid: boolean
+  pointsAwarded: number
+  verifiedAt: string | null
+  verificationStatus: string | null
+  settlementStatus: string | null
+  spotCheckSelected: boolean
+}
+
+/**
+ * Poll Oracle for the final result of a submission.
+ * Retries for up to maxWaitMs (default 120s) with exponential backoff.
+ * Returns null if timed out or infra_error.
+ */
+export async function pollSubmissionResult(
+  config: MinerConfig,
+  token: string,
+  submissionId: string,
+  maxWaitMs = 120_000,
+): Promise<SubmissionResult | null> {
+  const deadline = Date.now() + maxWaitMs
+  let delay = 3_000 // start at 3 s
+
+  while (Date.now() < deadline) {
+    await new Promise(resolve => setTimeout(resolve, delay))
+    delay = Math.min(delay * 1.5, 15_000) // cap at 15 s
+
+    try {
+      const res = await fetch(`${config.oracleUrl}/tasks/result/${submissionId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      if (!res.ok) continue
+
+      const data = await res.json() as SubmissionResult
+
+      if (data.status === 'verified' || data.status === 'infra_error') {
+        return data
+      }
+      // status === 'pending' → keep polling
+    } catch {
+      // Network blip — keep polling
+    }
+  }
+
+  return null // Timed out
 }
 
 /** Submit a local_compute result with structured proof */

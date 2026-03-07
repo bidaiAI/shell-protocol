@@ -7,7 +7,7 @@ import { writeFileSync, existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { loadConfig, validateConfig, isFirstRun, isPlatformManaged, getSupportedTaskModes, type MinerConfig } from './config.js'
 import { autoAuthenticate, type AuthResult } from './auth.js'
-import { pollForTask, requestPayloadFromOracle, submitPayload, submitLocalComputeResult, type TaskData, type SubmitResult } from './poller.js'
+import { pollForTask, requestPayloadFromOracle, submitPayload, submitLocalComputeResult, pollSubmissionResult, type TaskData, type SubmitResult } from './poller.js'
 import { generatePayload } from './llm/provider.js'
 import { executeLocally } from './local-sandbox/executor.js'
 import { buildSubmissionBody } from './local-sandbox/proof.js'
@@ -367,13 +367,40 @@ async function handleSandboxVerified(
 ): Promise<SubmitResult> {
   const genSpinner = ora('Generating attack payload...').start()
   const response = await requestPayloadFromOracle(config, token, task.id)
-  const payload = response.payload
-  genSpinner.succeed(`Platform AI generated payload (${payload.length} chars)`)
+  const { payload, payloadHash } = response
+  const sourceTag = response.source === 'cache' ? ' (cached)' : ''
+  genSpinner.succeed(`Platform AI generated payload (${payload.length} chars)${sourceTag}`)
 
   const subSpinner = ora('Submitting to Oracle sandbox...').start()
-  const result = await submitPayload(config, token, task.id, payload)
+  const submitResult = await submitPayload(config, token, task.id, payload, payloadHash)
   subSpinner.stop()
-  return result
+
+  // P1a: If submission is queued for async verification, poll for the real result
+  if (submitResult.result === 'submitted' && submitResult.submissionId) {
+    const pollSpinner = ora('Sandbox verifying... (up to 120s)').start()
+    const final = await pollSubmissionResult(config, token, submitResult.submissionId)
+    pollSpinner.stop()
+
+    if (!final || final.status === 'infra_error') {
+      // Timed out or infra error — return the original submitted result so the
+      // caller shows "Submitted for verification" rather than a false failure
+      console.log(chalk.gray('  ℹ Verification still pending — check back with `shell-miner status`'))
+      return submitResult
+    }
+
+    // Map SubmissionResult → SubmitResult shape for unified display
+    return {
+      result: final.isValid ? 'success' : 'failed',
+      message: final.isValid
+        ? `Sandbox verified! Attack successful.`
+        : `Sandbox did not detect a canary trigger.`,
+      pointsAwarded: final.pointsAwarded ?? 0,
+      submissionId: final.submissionId,
+      spotCheckSelected: final.spotCheckSelected,
+    }
+  }
+
+  return submitResult
 }
 
 function buildPrompts(task: TaskData): { systemPrompt: string, userPrompt: string } {
