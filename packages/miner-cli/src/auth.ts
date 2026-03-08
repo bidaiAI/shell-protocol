@@ -1,6 +1,7 @@
 import nacl from 'tweetnacl'
 import bs58 from 'bs58'
 import type { MinerConfig } from './config.js'
+import { getDeviceFingerprint } from './config.js'
 
 export interface AuthResult {
   token: string
@@ -36,7 +37,10 @@ export async function authenticate(config: MinerConfig, referralCode?: string): 
   // Step 1: Get nonce
   const nonceRes = await fetch(`${config.oracleUrl}/auth/nonce`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Device-Fingerprint': getDeviceFingerprint(),
+    },
     body: JSON.stringify({ walletAddress }),
   })
 
@@ -52,7 +56,10 @@ export async function authenticate(config: MinerConfig, referralCode?: string): 
   // Step 3: Login
   const loginRes = await fetch(`${config.oracleUrl}/auth/login`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Device-Fingerprint': getDeviceFingerprint(),
+    },
     body: JSON.stringify({ walletAddress, signature, nonce, referralCode }),
   })
 
@@ -87,7 +94,10 @@ export async function authenticate(config: MinerConfig, referralCode?: string): 
 /** Authenticate with the Oracle using sk-shell-xxx API Key */
 export async function authenticateWithApiKey(config: MinerConfig): Promise<AuthResult> {
   const res = await fetch(`${config.oracleUrl}/leaderboard/me`, {
-    headers: { Authorization: `Bearer ${config.shellApiKey}` },
+    headers: {
+      Authorization: `Bearer ${config.shellApiKey}`,
+      'X-Device-Fingerprint': getDeviceFingerprint(),
+    },
   })
 
   if (!res.ok) {

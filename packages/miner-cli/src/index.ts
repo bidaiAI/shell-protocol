@@ -3,17 +3,13 @@ import { Command } from 'commander'
 import chalk from 'chalk'
 import ora from 'ora'
 import { createInterface } from 'node:readline'
-import { writeFileSync, existsSync } from 'node:fs'
+import { writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { loadConfig, validateConfig, isFirstRun, isPlatformManaged, getSupportedTaskModes, type MinerConfig } from './config.js'
+import { loadConfig, validateConfig, isFirstRun, isPlatformManaged, getSupportedTaskModes, getDeviceFingerprint, type MinerConfig } from './config.js'
 import { autoAuthenticate, type AuthResult } from './auth.js'
 import { pollForTask, requestPayloadFromOracle, submitPayload, submitLocalComputeResult, pollSubmissionResult, type TaskData, type SubmitResult } from './poller.js'
-import { generatePayload } from './llm/provider.js'
 import { executeLocally } from './local-sandbox/executor.js'
 import { buildSubmissionBody } from './local-sandbox/proof.js'
-import * as tier1 from './llm/prompts/tier1-token-injection.js'
-import * as tier2 from './llm/prompts/tier2-social-engineering.js'
-import * as tier3 from './llm/prompts/tier3-memory-poisoning.js'
 
 const BANNER = chalk.cyan(`
   ███████╗██╗  ██╗███████╗██╗     ██╗
@@ -29,7 +25,7 @@ const program = new Command()
 program
   .name('shell-miner')
   .description('$SHELL Protocol Miner CLI — Mine $SHELL by red-teaming AI agents')
-  .version('0.2.1')
+  .version('0.3.0')
 
 // ── Setup command (interactive first-run wizard) ──────────────────────────────
 
@@ -56,8 +52,11 @@ program
 
     // Step 2: Optional advanced local model
     console.log()
-    console.log(chalk.bold('Step 2: 高级本地模型（可选）'))
-    console.log(chalk.cyan('  直接回车即可') + chalk.gray(' — 默认使用平台 AI 生成 payload，无需第三方 API Key'))
+    console.log(chalk.bold('Step 2: 选择挖矿模式'))
+    console.log(chalk.gray('  • sandbox_only — 轻量模式：平台 AI 全程处理，零成本'))
+    console.log(chalk.gray('  • auto         — 全模式挖矿：攻击 + 验证（需要 LLM API Key）'))
+    console.log()
+    console.log(chalk.cyan('  直接回车即可') + chalk.gray(' — 默认 sandbox_only，无需第三方 API Key'))
     console.log(chalk.gray('  如果你想参与高级本地计算任务，可填写自己的 LLM Key：'))
     console.log(chalk.gray('    Anthropic → console.anthropic.com  (claude-haiku-4-5)'))
     console.log(chalk.gray('    DeepSeek  → platform.deepseek.com  (deepseek-chat, 最便宜)'))
@@ -210,11 +209,6 @@ program
         pollSpinner.succeed(`${modeTag} Task: ${chalk.yellow(task.taskType)} | Chain: ${chalk.blue(task.targetChain)} | Difficulty: ${'★'.repeat(task.difficulty)} | Reward: ${chalk.cyan(task.rewardPoints)} pts`)
 
         // Execution mode routing
-        if (config.executionMode === 'local_only' && !isLocalCompute) {
-          console.log(chalk.gray('  [local_only] Skipping sandbox task...'))
-          await sleep(config.pollingIntervalMs)
-          continue
-        }
         if (config.executionMode === 'sandbox_only' && isLocalCompute) {
           console.log(chalk.gray('  [sandbox_only] Skipping local_compute task...'))
           await sleep(config.pollingIntervalMs)
@@ -296,10 +290,16 @@ program
       // Fetch leaderboard stats + recent submissions in parallel
       const [statsRes, subsRes] = await Promise.all([
         fetch(`${config.oracleUrl}/leaderboard/me`, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'X-Device-Fingerprint': getDeviceFingerprint(),
+          },
         }),
         fetch(`${config.oracleUrl}/tasks/my-submissions?limit=${recentCount}`, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'X-Device-Fingerprint': getDeviceFingerprint(),
+          },
         }),
       ])
 
@@ -380,11 +380,11 @@ async function handleLocalCompute(
   token: string,
   task: TaskData,
 ): Promise<SubmitResult> {
-  const genSpinner = ora('Generating attack payload...').start()
-  const { systemPrompt, userPrompt } = buildPrompts(task)
-  const payloadResponse = await generatePayload(config, systemPrompt, userPrompt)
-  const payload = payloadResponse.text
-  genSpinner.succeed(`Payload generated (${payloadResponse.tokensUsed.input + payloadResponse.tokensUsed.output} tokens)`)
+  const genSpinner = ora('Requesting attack payload from Oracle...').start()
+  const response = await requestPayloadFromOracle(config, token, task.id)
+  const { payload } = response
+  const sourceTag = response.source === 'cache' ? ' (cached)' : ''
+  genSpinner.succeed(`Platform AI generated payload (${payload.length} chars)${sourceTag}`)
 
   const execSpinner = ora('Executing locally against target agent...').start()
   const executionResult = await executeLocally(
@@ -452,35 +452,6 @@ async function handleSandboxVerified(
   }
 
   return submitResult
-}
-
-function buildPrompts(task: TaskData): { systemPrompt: string, userPrompt: string } {
-  const profile = task.targetAgentProfile
-  const taskInfo = {
-    targetAgentType: profile.name,
-    targetChain: task.targetChain,
-    defenseLevel: profile.defenseLevel,
-    objective: `Trigger unauthorized action on ${profile.name}`,
-    injectionSurface: task.injectionSurface,
-  }
-
-  switch (task.taskType) {
-    case 'token_injection':
-      return { systemPrompt: tier1.SYSTEM_PROMPT, userPrompt: tier1.buildUserPrompt(taskInfo) }
-    case 'social_engineering':
-      return { systemPrompt: tier2.SYSTEM_PROMPT, userPrompt: tier2.buildUserPrompt(taskInfo) }
-    case 'memory_poisoning':
-      return { systemPrompt: tier3.SYSTEM_PROMPT, userPrompt: tier3.buildUserPrompt(taskInfo) }
-    case 'full_chain':
-    default:
-      return {
-        systemPrompt: tier1.SYSTEM_PROMPT,
-        userPrompt: tier1.buildUserPrompt({
-          ...taskInfo,
-          objective: `Full chain exploit: reconnaissance → injection → exploitation on ${profile.name}`,
-        }),
-      }
-  }
 }
 
 function sleep(ms: number) {

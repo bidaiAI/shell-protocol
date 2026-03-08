@@ -1,4 +1,5 @@
 import type { MinerConfig, TaskExecutionMode } from './config.js'
+import { getDeviceFingerprint } from './config.js'
 
 export interface TaskData {
   id: string
@@ -36,6 +37,7 @@ export async function pollForTask(
   const res = await fetch(`${config.oracleUrl}/tasks/poll${query}`, {
     headers: {
       Authorization: `Bearer ${token}`,
+      'X-Device-Fingerprint': getDeviceFingerprint(),
     },
   })
 
@@ -59,6 +61,7 @@ export async function requestPayloadFromOracle(
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
+      'X-Device-Fingerprint': getDeviceFingerprint(),
     },
     body: JSON.stringify({ taskId }),
   })
@@ -84,6 +87,7 @@ export async function submitPayload(
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
+      'X-Device-Fingerprint': getDeviceFingerprint(),
     },
     body: JSON.stringify({ taskId, payload, ...(payloadHash ? { payloadHash } : {}) }),
   })
@@ -128,7 +132,10 @@ export async function pollSubmissionResult(
 
     try {
       const res = await fetch(`${config.oracleUrl}/tasks/result/${submissionId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'X-Device-Fingerprint': getDeviceFingerprint(),
+        },
       })
 
       if (!res.ok) continue
@@ -158,6 +165,7 @@ export async function submitLocalComputeResult(
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
+      'X-Device-Fingerprint': getDeviceFingerprint(),
     },
     body: JSON.stringify(body),
   })

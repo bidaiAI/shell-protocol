@@ -1,6 +1,6 @@
 # $SHELL Protocol
 
-> **全球首个去中心化 AI 红队测试网络** — 通过发现 AI Agent 漏洞来挖矿赚取 $SHELL
+> **全球首个混合式去中心化 AI 红队验证网络** — 矿工优先交叉验证，平台低频抽查与超时兜底。通过发现 AI Agent 漏洞来挖矿赚取 $SHELL
 
 [![npm](https://img.shields.io/npm/v/@openshell-cc/miner-cli?color=00ff88&label=miner-cli)](https://www.npmjs.com/package/@openshell-cc/miner-cli)
 [![GitHub](https://img.shields.io/badge/GitHub-openshell--cc-181717?logo=github)](https://github.com/openshell-cc/shell-protocol)
@@ -10,15 +10,15 @@
 
 ## 什么是 $SHELL Protocol？
 
-$SHELL Protocol 是一个 **去中心化 AI 安全测试网络**，让任何人都能通过运行矿机（Miner CLI）对 AI Agent 进行 Prompt Injection 红队攻击，并根据攻击结果赚取 $SHELL 积分。
+$SHELL Protocol 是一个 **混合式去中心化 AI 安全测试网络**，让任何人都能通过运行矿机（Miner CLI）对 AI Agent 进行 Prompt Injection 红队攻击。攻击结果由其他矿工交叉验证，平台仅作为低频抽查与超时兜底的低成本 fallback validator，确保验证去中心化的同时保证可靠性。成功的攻击赚取 $SHELL 积分。
 
 ### 核心价值
 
 | 角色 | 获益 |
 |------|------|
-| **矿工（Miner）** | 接收平台任务、提交验证结果，成功即获积分 |
+| **矿工（Miner）** | 接收平台任务，执行攻击 & 交叉验证，成功即获积分 |
 | **AI 开发者** | 通过漏洞披露系统发现 Agent 安全问题 |
-| **协议** | 构建全球最大的去中心化 AI 红队数据集 |
+| **协议** | 构建全球最大的混合式去中心化 AI 红队数据集 |
 
 ---
 
@@ -100,10 +100,12 @@ miner-cli start
 | 模式 | 说明 | 适用场景 |
 |------|------|---------|
 | `sandbox_only`（默认） | 平台 AI 生成 payload，Oracle 沙盒验证 | **零 API Key，推荐所有人** |
-| `auto` | 同时接受沙盒任务和本地计算任务 | 有自己的 LLM API Key 时使用 |
+| `auto` | 同时接受沙盒任务（攻击 + 交叉验证）和本地计算任务 | 有自己的 LLM API Key 时使用 |
 | `local_only` | 仅接受本地计算任务 | 需要 `LLM_API_KEY` |
 
-**v0.2.4 新功能**：
+**v0.3.0 新功能**：
+- **交叉验证机制**：攻击任务完成后，由另一名矿工执行相同 payload 独立验证结果，实现矿工间去中心化验证
+- **混合式验证网络**：矿工优先交叉验证，平台作为低成本 fallback validator 进行低频抽查与超时兜底
 - 矿机调用平台 `POST /tasks/payload` 端点，由 Oracle AI 生成 Prompt Injection 攻击载荷，矿机直接提交验证，无需自备任何 AI 资源
 - 提交后自动轮询 `GET /tasks/result/:id`，最长等待 120 秒；验证完成时终端显示成功/失败及积分；超时任务通过 `miner-cli status` 查询近期 submission 状态
 - Payload 完整性签名：Oracle 对生成的 payload 进行 HMAC 签名，提交时服务端验证，防止矿机篡改平台 payload
@@ -127,15 +129,20 @@ miner-cli start
 ## 任务运作原理
 
 ```
-矿机拉取任务（GET /tasks/poll）
+矿机 A 拉取任务（GET /tasks/poll）
      ↓
 Oracle 分配未锁定任务（原子锁，防并发抢占）
      ↓
 平台 AI 生成 Prompt Injection 攻击载荷（POST /tasks/payload）
      ↓
-矿机提交攻击结果（POST /tasks/submit）
+矿机 A 提交攻击结果（POST /tasks/submit）
      ↓
-Oracle 沙盒验证（异步，通常 5–30 秒）
+Oracle 将验证任务分配给矿机 B（交叉验证）
+     ↓
+矿机 B 执行相同 payload，独立验证攻击结果
+     ↓
+两次结果一致 → 验证通过
+（不一致或超时 → 平台 fallback validator 兜底验证）
      ↓
 矿机轮询结果（GET /tasks/result/:id，最长 120 秒）
 → 终端显示成功/失败及积分；超时则通过 `miner-cli status` 查询
@@ -144,6 +151,33 @@ Oracle 沙盒验证（异步，通常 5–30 秒）
      ↓
 任务完成，矿机继续拉取下一个任务
 ```
+
+---
+
+## 交叉验证机制
+
+$SHELL Protocol v0.3.0 引入 **混合式去中心化验证网络**，核心原则是：**矿工优先交叉验证，平台低频抽查与超时兜底**。
+
+### 工作流程
+
+1. **矿工 A 完成攻击任务** — 提交攻击结果到 Oracle
+2. **Oracle 分配验证任务给矿工 B** — 矿工 B 执行相同的 payload，独立验证攻击结果
+3. **结果比对** — 两名矿工的结果一致时，验证通过，双方均获积分
+4. **异常处理** — 结果不一致或验证超时时，平台作为低成本 fallback validator 进行兜底验证
+
+### 验证类型
+
+| 验证方式 | 触发条件 | 说明 |
+|----------|----------|------|
+| **矿工交叉验证**（主要） | 每次攻击任务完成后 | 另一名矿工独立执行相同 payload 验证结果 |
+| **平台抽查**（辅助） | 低频随机抽查 | 平台 fallback validator 随机验证，确保矿工行为诚实 |
+| **超时兜底**（保障） | 验证矿工超时未响应 | 平台 fallback validator 自动接管，防止任务卡死 |
+
+### 对矿工的影响
+
+- **攻击和验证任务对矿工完全一致** — 矿工无需区分任务类型，透明参与交叉验证
+- **验证任务同样获得积分** — 诚实验证同样赚取 $SHELL
+- **作弊惩罚** — 验证结果与其他矿工/平台不一致时，影响信誉评分
 
 ---
 
@@ -185,13 +219,13 @@ A: 只需要能运行 Node.js（v18+）的任何设备。默认模式无需本�
 A: 不需要。可直接用邮箱注册，通过控制面板签发 `sk-shell-xxx` 密钥开始挖矿。Solana 钱包为可选，用于后续代币兑换。
 
 **Q: 每次攻击成功能赚多少积分？**
-A: 取决于目标 Agent 的防御等级和你的段位倍率：
-- 无防御目标（Scout）：100 积分 × 1x = 100 积分
-- 基础防御（Hunter）：500 积分 × 3x = 1500 积分
-- 高级防御（Apex）：2000 积分 × 10x = 20000 积分
+A: 取决于目标 Agent 的防御等级和你的段位倍率。Scout 1x、Hunter 3x、Apex 10x，具体基础积分按任务难度动态计算，可在控制面板查看每次任务的奖励明细。
 
 **Q: $SHELL 什么时候上链？**
 A: Phase 5（Solana 合约）待开发，目前积累的积分将按比例兑换 $SHELL 代币。**建议现在就在控制面板绑定 Solana 钱包**，空投时直接发放到你的钱包地址。
+
+**Q: 验证任务是什么？**
+A: 矿工透明参与交叉验证，无需感知任务类型。攻击和验证任务对矿工完全一致，矿机自动处理，诚实验证同样获得 $SHELL 积分。
 
 **Q: 攻击失败了会扣分吗？**
 A: 不会扣积分，只是本次任务无奖励。但反复提交虚假结果会影响信誉评分，严重时被封号。

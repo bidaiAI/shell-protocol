@@ -1,6 +1,9 @@
 import 'dotenv/config'
+import { randomUUID } from 'node:crypto'
+import { readFileSync, writeFileSync, existsSync } from 'node:fs'
+import { resolve } from 'node:path'
 
-export type ExecutionMode = 'auto' | 'local_only' | 'sandbox_only'
+export type ExecutionMode = 'auto' | 'sandbox_only'
 export type TaskExecutionMode = 'sandbox_verified' | 'local_compute'
 
 export interface MinerConfig {
@@ -63,10 +66,10 @@ export function validateConfig(config: MinerConfig): string[] {
     errors.push('ORACLE_URL must be a valid URL')
   }
 
-  if (config.executionMode === 'local_only' && !config.llmApiKey) {
+  if (config.executionMode === 'auto' && !config.llmApiKey) {
     errors.push(
-      'EXECUTION_MODE=local_only requires LLM_API_KEY.\n'
-      + '  Without a local model key, the miner can only run platform-managed sandbox tasks.',
+      'EXECUTION_MODE=auto requires LLM_API_KEY.\n'
+      + '  Without a local model key, use EXECUTION_MODE=sandbox_only.',
     )
   }
 
@@ -85,14 +88,29 @@ export function isPlatformManaged(config: MinerConfig): boolean {
 
 /** Task execution modes this miner can safely accept from Oracle. */
 export function getSupportedTaskModes(config: MinerConfig): TaskExecutionMode[] {
-  const modes: TaskExecutionMode[] = []
+  const modes: TaskExecutionMode[] = ['sandbox_verified']
 
-  if (config.executionMode !== 'local_only') {
-    modes.push('sandbox_verified')
-  }
-  if (config.executionMode !== 'sandbox_only' && !!config.llmApiKey) {
+  if (config.executionMode === 'auto' && !!config.llmApiKey) {
     modes.push('local_compute')
   }
 
-  return modes.length > 0 ? modes : ['sandbox_verified']
+  return modes
+}
+
+// ── Device Fingerprint ────────────────────────────────────────────────────────
+
+const FINGERPRINT_FILE = '.shell-device-id'
+
+/** Get or create a persistent device fingerprint (UUID). */
+export function getDeviceFingerprint(): string {
+  const fp = resolve(process.cwd(), FINGERPRINT_FILE)
+
+  if (existsSync(fp)) {
+    const stored = readFileSync(fp, 'utf-8').trim()
+    if (stored) return stored
+  }
+
+  const id = randomUUID()
+  writeFileSync(fp, id, 'utf-8')
+  return id
 }
