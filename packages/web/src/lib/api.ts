@@ -484,3 +484,56 @@ export async function adminListInviteCodes(secret: string) {
     '/admin/invite-codes', secret,
   )
 }
+
+// ── Red Team Reports ──
+
+export interface RedTeamAgent {
+  agentName: string
+  agentModel: string | null
+  defenseLevel: string
+  injectionSurface: string
+  breachCount: number
+  uniqueAttackers: number
+  firstBreachAt: string
+  latestBreachAt: string
+  isPromoted: boolean
+}
+
+export interface RedTeamReport {
+  id: string
+  payload: string
+  triggeredActions: string[]
+  pointsAwarded: number
+  verifiedAt: string
+  executionMode: string
+  taskType: string
+  difficulty: number
+  defenseLevel: string
+  injectionSurface: string
+  canaryActions: string[]
+  minerName: string
+  minerTier: string
+}
+
+export interface RedTeamAccess {
+  agentName: string
+  hasAccess: boolean
+  reason: 'has_mining_history' | 'no_mining_history'
+}
+
+export async function getRedTeamAgents() {
+  return request<{ agents: RedTeamAgent[] }>('/redteam/agents')
+}
+
+export async function getRedTeamReports(agentName: string, limit = 20, offset = 0) {
+  return request<{
+    agentName: string
+    isPromoted: boolean
+    totalBreaches: number
+    reports: RedTeamReport[]
+  }>(`/redteam/reports/${encodeURIComponent(agentName)}?limit=${limit}&offset=${offset}`)
+}
+
+export async function getRedTeamAccess(agentName: string) {
+  return request<RedTeamAccess>(`/redteam/reports/${encodeURIComponent(agentName)}/access`)
+}

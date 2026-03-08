@@ -32,6 +32,11 @@ const routes = [
     component: () => import('./pages/Disclosures.vue'),
   },
   {
+    path: '/red-team',
+    name: 'red-team',
+    component: () => import('./pages/RedTeamReports.vue'),
+  },
+  {
     path: '/admin',
     name: 'admin',
     component: () => import('./pages/Admin.vue'),
