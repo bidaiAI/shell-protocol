@@ -2,7 +2,8 @@
 import { ref, computed, onMounted } from 'vue'
 import {
   adminListUsers, adminGrantMining, adminRevokeMining,
-  type AdminUser, ApiError,
+  adminGenerateInviteCodes, adminListInviteCodes,
+  type AdminUser, type AdminInviteCode, ApiError,
 } from '../lib/api'
 
 // ── Auth ──────────────────────────────────────────────────────
@@ -17,13 +18,19 @@ function login() {
   sessionStorage.setItem('admin_secret', secret.value)
   authError.value = ''
   loadUsers()
+  loadInviteCodes()
 }
 function logout() {
   secret.value = ''
   sessionStorage.removeItem('admin_secret')
 }
 
-// ── Data ──────────────────────────────────────────────────────
+// ── Tab ──────────────────────────────────────────────────────
+const activeTab = ref<'users' | 'invites'>('users')
+
+// ═══════════════════════════════════════════════════════════════
+//  TAB 1: Users
+// ═══════════════════════════════════════════════════════════════
 const users = ref<AdminUser[]>([])
 const total = ref(0)
 const loading = ref(false)
@@ -69,9 +76,14 @@ async function loadUsers(resetPage = false) {
   }
 }
 
-onMounted(() => { if (isAuthenticated.value) loadUsers() })
+onMounted(() => {
+  if (isAuthenticated.value) {
+    loadUsers()
+    loadInviteCodes()
+  }
+})
 
-// ── Actions ───────────────────────────────────────────────────
+// ── User Actions ────────────────────────────────────────────
 const actingId = ref<string | null>(null)
 const actionMsg = ref('')
 
@@ -101,6 +113,89 @@ async function revoke(user: AdminUser) {
   finally { actingId.value = null }
 }
 
+// ═══════════════════════════════════════════════════════════════
+//  TAB 2: Invite Codes
+// ═══════════════════════════════════════════════════════════════
+const inviteCodes = ref<AdminInviteCode[]>([])
+const inviteLoading = ref(false)
+const inviteError = ref('')
+const inviteMsg = ref('')
+
+// Generate form
+const genCount = ref(10)
+const genExpireDays = ref(7)
+const genNote = ref('')
+const generating = ref(false)
+const generatedCodes = ref<string[]>([])
+const copiedAll = ref(false)
+
+// Stats
+const inviteTotal = computed(() => inviteCodes.value.length)
+const inviteUsed = computed(() => inviteCodes.value.filter(c => c.usedBy).length)
+const inviteAvailable = computed(() => inviteCodes.value.filter(c => !c.usedBy && (!c.expiresAt || new Date(c.expiresAt) > new Date())).length)
+const inviteExpired = computed(() => inviteCodes.value.filter(c => !c.usedBy && c.expiresAt && new Date(c.expiresAt) <= new Date()).length)
+
+async function loadInviteCodes() {
+  if (!secret.value) return
+  inviteLoading.value = true
+  inviteError.value = ''
+  try {
+    const res = await adminListInviteCodes(secret.value)
+    inviteCodes.value = res.codes
+  }
+  catch (e) {
+    inviteError.value = e instanceof Error ? e.message : '加载邀请码失败'
+  }
+  finally {
+    inviteLoading.value = false
+  }
+}
+
+async function generateCodes() {
+  generating.value = true
+  inviteMsg.value = ''
+  generatedCodes.value = []
+  copiedAll.value = false
+  try {
+    const res = await adminGenerateInviteCodes(secret.value, {
+      count: genCount.value,
+      expiresInDays: genExpireDays.value || undefined,
+      note: genNote.value.trim() || undefined,
+    })
+    generatedCodes.value = res.codes
+    inviteMsg.value = `成功生成 ${res.count} 个邀请码`
+    // Reload list
+    await loadInviteCodes()
+  }
+  catch (e) {
+    inviteError.value = e instanceof Error ? e.message : '生成邀请码失败'
+  }
+  finally {
+    generating.value = false
+  }
+}
+
+async function copyAllCodes() {
+  const text = generatedCodes.value.join('\n')
+  try {
+    await navigator.clipboard.writeText(text)
+    copiedAll.value = true
+    setTimeout(() => { copiedAll.value = false }, 2000)
+  }
+  catch { /* fallback: select text */ }
+}
+
+async function copySingleCode(code: string) {
+  try { await navigator.clipboard.writeText(code) }
+  catch { /* ignore */ }
+}
+
+function codeStatus(code: AdminInviteCode): 'used' | 'expired' | 'available' {
+  if (code.usedBy) return 'used'
+  if (code.expiresAt && new Date(code.expiresAt) <= new Date()) return 'expired'
+  return 'available'
+}
+
 // ── Helpers ───────────────────────────────────────────────────
 function formatDate(iso: string | null) {
   if (!iso) return '—'
@@ -127,8 +222,8 @@ function onSearchInput() {
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-xl font-bold text-shell-green font-mono">Admin · 挖矿白名单管理</h1>
-        <p class="text-xs text-shell-text/50 mt-0.5">管理用户挖矿权限 — 本页面不公开</p>
+        <h1 class="text-xl font-bold text-shell-green font-mono">Admin · 管理面板</h1>
+        <p class="text-xs text-shell-text/50 mt-0.5">挖矿白名单 & 邀请码管理 — 本页面不公开</p>
       </div>
       <button v-if="isAuthenticated" @click="logout"
         class="text-xs text-shell-text/40 hover:text-red-400 transition-colors border border-shell-border px-3 py-1 rounded">
@@ -161,172 +256,363 @@ function onSearchInput() {
     <!-- ── MAIN PANEL ── -->
     <template v-else>
 
-      <!-- Stats bar -->
-      <div class="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-6">
-        <div class="bg-shell-card border border-shell-border rounded-lg p-3 text-center">
-          <div class="text-2xl font-bold text-white font-mono">{{ total }}</div>
-          <div class="text-xs text-shell-text/50 mt-0.5">总注册</div>
+      <!-- Tab switcher -->
+      <div class="flex border border-shell-border rounded-lg overflow-hidden text-sm font-mono mb-6 w-fit">
+        <button
+          @click="activeTab = 'users'"
+          class="px-5 py-2 transition-colors"
+          :class="activeTab === 'users' ? 'bg-shell-green text-black font-bold' : 'text-shell-text/60 hover:text-white'"
+        >用户管理</button>
+        <button
+          @click="activeTab = 'invites'; loadInviteCodes()"
+          class="px-5 py-2 transition-colors"
+          :class="activeTab === 'invites' ? 'bg-shell-green text-black font-bold' : 'text-shell-text/60 hover:text-white'"
+        >邀请码</button>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!--  TAB: Users                                           -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <div v-if="activeTab === 'users'">
+
+        <!-- Stats bar -->
+        <div class="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-6">
+          <div class="bg-shell-card border border-shell-border rounded-lg p-3 text-center">
+            <div class="text-2xl font-bold text-white font-mono">{{ total }}</div>
+            <div class="text-xs text-shell-text/50 mt-0.5">总注册</div>
+          </div>
+          <div class="bg-shell-card border border-shell-green/30 rounded-lg p-3 text-center">
+            <div class="text-2xl font-bold text-shell-green font-mono">{{ enabledCount }}</div>
+            <div class="text-xs text-shell-text/50 mt-0.5">已开通</div>
+          </div>
+          <div class="bg-shell-card border border-amber-400/30 rounded-lg p-3 text-center">
+            <div class="text-2xl font-bold text-amber-300 font-mono">{{ disabledCount }}</div>
+            <div class="text-xs text-shell-text/50 mt-0.5">等待名单</div>
+          </div>
+          <div class="hidden sm:block bg-shell-card border border-shell-border rounded-lg p-3 text-center">
+            <div class="text-2xl font-bold text-white font-mono">{{ totalPages }}</div>
+            <div class="text-xs text-shell-text/50 mt-0.5">页 / {{ PAGE_SIZE }}条</div>
+          </div>
         </div>
-        <div class="bg-shell-card border border-shell-green/30 rounded-lg p-3 text-center">
-          <div class="text-2xl font-bold text-shell-green font-mono">{{ enabledCount }}</div>
-          <div class="text-xs text-shell-text/50 mt-0.5">已开通</div>
+
+        <!-- Action message -->
+        <div v-if="actionMsg" class="mb-4 text-xs text-shell-green bg-shell-green/10 border border-shell-green/20 rounded px-3 py-2">
+          {{ actionMsg }}
         </div>
-        <div class="bg-shell-card border border-amber-400/30 rounded-lg p-3 text-center">
-          <div class="text-2xl font-bold text-amber-300 font-mono">{{ disabledCount }}</div>
-          <div class="text-xs text-shell-text/50 mt-0.5">等待名单</div>
+
+        <!-- Filters -->
+        <div class="flex flex-wrap gap-2 mb-4">
+          <!-- Status tabs -->
+          <div class="flex border border-shell-border rounded-lg overflow-hidden text-xs font-mono">
+            <button
+              v-for="opt in [['all','全部'],['disabled','等待中'],['enabled','已开通']] as [string,string][]"
+              :key="opt[0]"
+              @click="filterStatus = opt[0] as any; loadUsers(true)"
+              class="px-3 py-1.5 transition-colors"
+              :class="filterStatus === opt[0]
+                ? 'bg-shell-green text-black font-bold'
+                : 'text-shell-text/60 hover:text-white'"
+            >{{ opt[1] }}</button>
+          </div>
+
+          <!-- Search -->
+          <input
+            v-model="searchQ"
+            @input="onSearchInput"
+            type="text"
+            placeholder="搜索 邮箱 / Agent名称 / userId…"
+            class="flex-1 min-w-48 bg-black border border-shell-border rounded-lg px-3 py-1.5 text-xs font-mono focus:outline-none focus:border-shell-green/50"
+          />
+
+          <button @click="loadUsers(true)"
+            class="text-xs text-shell-text/60 hover:text-shell-green border border-shell-border px-3 py-1.5 rounded-lg transition-colors">
+            刷新
+          </button>
         </div>
-        <div class="hidden sm:block bg-shell-card border border-shell-border rounded-lg p-3 text-center">
-          <div class="text-2xl font-bold text-white font-mono">{{ totalPages }}</div>
-          <div class="text-xs text-shell-text/50 mt-0.5">页 / {{ PAGE_SIZE }}条</div>
+
+        <!-- Error -->
+        <div v-if="error" class="mb-4 text-xs text-red-400 bg-red-400/10 border border-red-400/20 rounded px-3 py-2">
+          {{ error }}
+        </div>
+
+        <!-- Loading -->
+        <div v-if="loading" class="text-center text-shell-text/30 py-12 font-mono text-sm">加载中...</div>
+
+        <!-- Empty -->
+        <div v-else-if="users.length === 0"
+          class="text-center text-shell-text/25 py-16 font-mono text-sm border border-dashed border-shell-border rounded-xl">
+          暂无注册用户
+        </div>
+
+        <!-- Table -->
+        <div v-else class="border border-shell-border rounded-xl overflow-hidden">
+          <table class="w-full text-xs">
+            <thead>
+              <tr class="border-b border-shell-border bg-shell-card/50 text-shell-text/40 text-left">
+                <th class="px-3 py-2.5">用户</th>
+                <th class="px-3 py-2.5 hidden sm:table-cell">注册方式</th>
+                <th class="px-3 py-2.5 hidden md:table-cell">段位 / 积分</th>
+                <th class="px-3 py-2.5">挖矿状态</th>
+                <th class="px-3 py-2.5 hidden sm:table-cell">注册时间</th>
+                <th class="px-3 py-2.5 text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="u in users" :key="u.id"
+                class="border-b border-shell-border/40 hover:bg-shell-card/30 transition-colors"
+                :class="u.isBanned ? 'opacity-40' : ''"
+              >
+                <!-- User identity -->
+                <td class="px-3 py-2.5">
+                  <div class="font-mono text-white text-xs truncate max-w-[180px]">
+                    {{ u.email || u.agentName || u.id.slice(0, 8) + '…' }}
+                  </div>
+                  <div v-if="u.agentName && u.email" class="text-shell-text/40 text-xs">{{ u.agentName }}</div>
+                  <div class="text-shell-text/25 text-xs font-mono">{{ u.id.slice(0, 8) }}…</div>
+                </td>
+
+                <!-- Auth method -->
+                <td class="px-3 py-2.5 hidden sm:table-cell">
+                  <span class="font-mono text-shell-text/50">{{ authLabel(u.authMethod) }}</span>
+                </td>
+
+                <!-- Tier / Points -->
+                <td class="px-3 py-2.5 hidden md:table-cell">
+                  <span class="capitalize" :class="{
+                    'text-tier-apex': u.tier === 'apex',
+                    'text-tier-hunter': u.tier === 'hunter',
+                    'text-tier-scout': u.tier === 'scout',
+                  }">{{ u.tier }}</span>
+                  <span class="text-shell-text/30 ml-1">/ {{ u.shellPoints }}</span>
+                </td>
+
+                <!-- Mining status -->
+                <td class="px-3 py-2.5">
+                  <div v-if="u.miningAccessEnabled" class="text-shell-green font-mono">
+                    已开通
+                    <div v-if="u.miningAccessGrantedAt" class="text-shell-text/30 text-xs">{{ formatDate(u.miningAccessGrantedAt) }}</div>
+                  </div>
+                  <div v-else class="text-amber-400/60 font-mono">等待中</div>
+                  <div v-if="u.isBanned" class="text-red-400/60 text-xs">已封禁</div>
+                  <div v-if="u.isFrozen" class="text-yellow-400/60 text-xs">已冻结</div>
+                </td>
+
+                <!-- Register time -->
+                <td class="px-3 py-2.5 hidden sm:table-cell text-shell-text/40">
+                  {{ formatDate(u.createdAt) }}
+                </td>
+
+                <!-- Actions -->
+                <td class="px-3 py-2.5 text-right">
+                  <button
+                    v-if="!u.miningAccessEnabled"
+                    :disabled="actingId === u.id"
+                    @click="grant(u)"
+                    class="text-xs bg-shell-green text-black px-2.5 py-1 rounded font-semibold hover:bg-shell-green-dim transition-colors disabled:opacity-50 disabled:cursor-wait"
+                  >
+                    {{ actingId === u.id ? '…' : '开通' }}
+                  </button>
+                  <button
+                    v-else
+                    :disabled="actingId === u.id"
+                    @click="revoke(u)"
+                    class="text-xs border border-red-400/30 text-red-400/70 px-2.5 py-1 rounded hover:border-red-400 hover:text-red-400 transition-colors disabled:opacity-50 disabled:cursor-wait"
+                  >
+                    {{ actingId === u.id ? '…' : '撤销' }}
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div v-if="totalPages > 1" class="flex items-center justify-between mt-4 text-xs text-shell-text/40">
+          <span>第 {{ page + 1 }} / {{ totalPages }} 页 · 共 {{ total }} 条</span>
+          <div class="flex gap-2">
+            <button
+              :disabled="page === 0"
+              @click="page--; loadUsers()"
+              class="border border-shell-border px-3 py-1 rounded hover:border-shell-green/40 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >上一页</button>
+            <button
+              :disabled="page >= totalPages - 1"
+              @click="page++; loadUsers()"
+              class="border border-shell-border px-3 py-1 rounded hover:border-shell-green/40 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >下一页</button>
+          </div>
         </div>
       </div>
 
-      <!-- Action message -->
-      <div v-if="actionMsg" class="mb-4 text-xs text-shell-green bg-shell-green/10 border border-shell-green/20 rounded px-3 py-2">
-        ✓ {{ actionMsg }}
-      </div>
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!--  TAB: Invite Codes                                    -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <div v-if="activeTab === 'invites'">
 
-      <!-- Filters -->
-      <div class="flex flex-wrap gap-2 mb-4">
-        <!-- Status tabs -->
-        <div class="flex border border-shell-border rounded-lg overflow-hidden text-xs font-mono">
-          <button
-            v-for="opt in [['all','全部'],['disabled','等待中'],['enabled','已开通']] as [string,string][]"
-            :key="opt[0]"
-            @click="filterStatus = opt[0] as any; loadUsers(true)"
-            class="px-3 py-1.5 transition-colors"
-            :class="filterStatus === opt[0]
-              ? 'bg-shell-green text-black font-bold'
-              : 'text-shell-text/60 hover:text-white'"
-          >{{ opt[1] }}</button>
+        <!-- Stats bar -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <div class="bg-shell-card border border-shell-border rounded-lg p-3 text-center">
+            <div class="text-2xl font-bold text-white font-mono">{{ inviteTotal }}</div>
+            <div class="text-xs text-shell-text/50 mt-0.5">总生成</div>
+          </div>
+          <div class="bg-shell-card border border-shell-green/30 rounded-lg p-3 text-center">
+            <div class="text-2xl font-bold text-shell-green font-mono">{{ inviteAvailable }}</div>
+            <div class="text-xs text-shell-text/50 mt-0.5">可用</div>
+          </div>
+          <div class="bg-shell-card border border-cyan-400/30 rounded-lg p-3 text-center">
+            <div class="text-2xl font-bold text-cyan-300 font-mono">{{ inviteUsed }}</div>
+            <div class="text-xs text-shell-text/50 mt-0.5">已使用</div>
+          </div>
+          <div class="bg-shell-card border border-amber-400/30 rounded-lg p-3 text-center">
+            <div class="text-2xl font-bold text-amber-300 font-mono">{{ inviteExpired }}</div>
+            <div class="text-xs text-shell-text/50 mt-0.5">已过期</div>
+          </div>
         </div>
 
-        <!-- Search -->
-        <input
-          v-model="searchQ"
-          @input="onSearchInput"
-          type="text"
-          placeholder="搜索 邮箱 / Agent名称 / userId…"
-          class="flex-1 min-w-48 bg-black border border-shell-border rounded-lg px-3 py-1.5 text-xs font-mono focus:outline-none focus:border-shell-green/50"
-        />
-
-        <button @click="loadUsers(true)"
-          class="text-xs text-shell-text/60 hover:text-shell-green border border-shell-border px-3 py-1.5 rounded-lg transition-colors">
-          刷新
-        </button>
-      </div>
-
-      <!-- Error -->
-      <div v-if="error" class="mb-4 text-xs text-red-400 bg-red-400/10 border border-red-400/20 rounded px-3 py-2">
-        ⚠ {{ error }}
-      </div>
-
-      <!-- Loading -->
-      <div v-if="loading" class="text-center text-shell-text/30 py-12 font-mono text-sm">加载中...</div>
-
-      <!-- Empty -->
-      <div v-else-if="users.length === 0"
-        class="text-center text-shell-text/25 py-16 font-mono text-sm border border-dashed border-shell-border rounded-xl">
-        暂无注册用户
-      </div>
-
-      <!-- Table -->
-      <div v-else class="border border-shell-border rounded-xl overflow-hidden">
-        <table class="w-full text-xs">
-          <thead>
-            <tr class="border-b border-shell-border bg-shell-card/50 text-shell-text/40 text-left">
-              <th class="px-3 py-2.5">用户</th>
-              <th class="px-3 py-2.5 hidden sm:table-cell">注册方式</th>
-              <th class="px-3 py-2.5 hidden md:table-cell">段位 / 积分</th>
-              <th class="px-3 py-2.5">挖矿状态</th>
-              <th class="px-3 py-2.5 hidden sm:table-cell">注册时间</th>
-              <th class="px-3 py-2.5 text-right">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="u in users" :key="u.id"
-              class="border-b border-shell-border/40 hover:bg-shell-card/30 transition-colors"
-              :class="u.isBanned ? 'opacity-40' : ''"
+        <!-- Generate form -->
+        <div class="bg-shell-card border border-shell-border rounded-xl p-4 mb-6">
+          <h3 class="text-sm font-semibold text-white mb-3">批量生成邀请码</h3>
+          <div class="flex flex-wrap gap-3 items-end">
+            <label class="block">
+              <span class="text-xs text-shell-text/50 block mb-1">数量</span>
+              <input
+                v-model.number="genCount"
+                type="number" min="1" max="100"
+                class="w-20 bg-black border border-shell-border rounded px-2 py-1.5 text-sm font-mono focus:outline-none focus:border-shell-green/50"
+              />
+            </label>
+            <label class="block">
+              <span class="text-xs text-shell-text/50 block mb-1">有效期 (天)</span>
+              <input
+                v-model.number="genExpireDays"
+                type="number" min="0" max="365"
+                placeholder="0 = 永不过期"
+                class="w-28 bg-black border border-shell-border rounded px-2 py-1.5 text-sm font-mono focus:outline-none focus:border-shell-green/50"
+              />
+            </label>
+            <label class="block flex-1 min-w-36">
+              <span class="text-xs text-shell-text/50 block mb-1">备注 (可选)</span>
+              <input
+                v-model="genNote"
+                type="text"
+                placeholder="例如：第一批内测码"
+                class="w-full bg-black border border-shell-border rounded px-2 py-1.5 text-sm font-mono focus:outline-none focus:border-shell-green/50"
+              />
+            </label>
+            <button
+              :disabled="generating"
+              @click="generateCodes"
+              class="bg-shell-green text-black px-4 py-1.5 text-sm font-bold rounded hover:bg-shell-green-dim transition-colors disabled:opacity-50 disabled:cursor-wait"
             >
-              <!-- User identity -->
-              <td class="px-3 py-2.5">
-                <div class="font-mono text-white text-xs truncate max-w-[180px]">
-                  {{ u.email || u.agentName || u.id.slice(0, 8) + '…' }}
-                </div>
-                <div v-if="u.agentName && u.email" class="text-shell-text/40 text-xs">{{ u.agentName }}</div>
-                <div class="text-shell-text/25 text-xs font-mono">{{ u.id.slice(0, 8) }}…</div>
-              </td>
+              {{ generating ? '生成中…' : '生成' }}
+            </button>
+          </div>
 
-              <!-- Auth method -->
-              <td class="px-3 py-2.5 hidden sm:table-cell">
-                <span class="font-mono text-shell-text/50">{{ authLabel(u.authMethod) }}</span>
-              </td>
+          <!-- Generated codes result -->
+          <div v-if="generatedCodes.length > 0" class="mt-4 border border-shell-green/20 rounded-lg p-3 bg-shell-green/5">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs text-shell-green font-semibold">{{ inviteMsg }}</span>
+              <button
+                @click="copyAllCodes"
+                class="text-xs border border-shell-green/30 text-shell-green px-2 py-0.5 rounded hover:bg-shell-green/10 transition-colors"
+              >{{ copiedAll ? '已复制' : '复制全部' }}</button>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-1.5">
+              <button
+                v-for="code in generatedCodes" :key="code"
+                @click="copySingleCode(code)"
+                class="bg-black border border-shell-border rounded px-2 py-1 text-xs font-mono text-white hover:border-shell-green/50 hover:text-shell-green transition-colors text-center"
+                title="点击复制"
+              >{{ code }}</button>
+            </div>
+          </div>
+        </div>
 
-              <!-- Tier / Points -->
-              <td class="px-3 py-2.5 hidden md:table-cell">
-                <span class="capitalize" :class="{
-                  'text-tier-apex': u.tier === 'apex',
-                  'text-tier-hunter': u.tier === 'hunter',
-                  'text-tier-scout': u.tier === 'scout',
-                }">{{ u.tier }}</span>
-                <span class="text-shell-text/30 ml-1">/ {{ u.shellPoints }}</span>
-              </td>
+        <!-- Error -->
+        <div v-if="inviteError" class="mb-4 text-xs text-red-400 bg-red-400/10 border border-red-400/20 rounded px-3 py-2">
+          {{ inviteError }}
+        </div>
 
-              <!-- Mining status -->
-              <td class="px-3 py-2.5">
-                <div v-if="u.miningAccessEnabled" class="text-shell-green font-mono">
-                  ✓ 已开通
-                  <div v-if="u.miningAccessGrantedAt" class="text-shell-text/30 text-xs">{{ formatDate(u.miningAccessGrantedAt) }}</div>
-                </div>
-                <div v-else class="text-amber-400/60 font-mono">⏳ 等待中</div>
-                <div v-if="u.isBanned" class="text-red-400/60 text-xs">已封禁</div>
-                <div v-if="u.isFrozen" class="text-yellow-400/60 text-xs">已冻结</div>
-              </td>
+        <!-- Loading -->
+        <div v-if="inviteLoading" class="text-center text-shell-text/30 py-12 font-mono text-sm">加载中...</div>
 
-              <!-- Register time -->
-              <td class="px-3 py-2.5 hidden sm:table-cell text-shell-text/40">
-                {{ formatDate(u.createdAt) }}
-              </td>
+        <!-- Empty -->
+        <div v-else-if="inviteCodes.length === 0"
+          class="text-center text-shell-text/25 py-16 font-mono text-sm border border-dashed border-shell-border rounded-xl">
+          暂无邀请码 — 点击上方「生成」按钮创建
+        </div>
 
-              <!-- Actions -->
-              <td class="px-3 py-2.5 text-right">
-                <button
-                  v-if="!u.miningAccessEnabled"
-                  :disabled="actingId === u.id"
-                  @click="grant(u)"
-                  class="text-xs bg-shell-green text-black px-2.5 py-1 rounded font-semibold hover:bg-shell-green-dim transition-colors disabled:opacity-50 disabled:cursor-wait"
-                >
-                  {{ actingId === u.id ? '…' : '开通' }}
-                </button>
-                <button
-                  v-else
-                  :disabled="actingId === u.id"
-                  @click="revoke(u)"
-                  class="text-xs border border-red-400/30 text-red-400/70 px-2.5 py-1 rounded hover:border-red-400 hover:text-red-400 transition-colors disabled:opacity-50 disabled:cursor-wait"
-                >
-                  {{ actingId === u.id ? '…' : '撤销' }}
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+        <!-- Invite Code Table -->
+        <div v-else class="border border-shell-border rounded-xl overflow-hidden">
+          <table class="w-full text-xs">
+            <thead>
+              <tr class="border-b border-shell-border bg-shell-card/50 text-shell-text/40 text-left">
+                <th class="px-3 py-2.5">邀请码</th>
+                <th class="px-3 py-2.5">状态</th>
+                <th class="px-3 py-2.5 hidden sm:table-cell">使用者</th>
+                <th class="px-3 py-2.5 hidden md:table-cell">备注</th>
+                <th class="px-3 py-2.5 hidden sm:table-cell">创建时间</th>
+                <th class="px-3 py-2.5 hidden md:table-cell">过期时间</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="c in inviteCodes" :key="c.id"
+                class="border-b border-shell-border/40 hover:bg-shell-card/30 transition-colors"
+              >
+                <!-- Code -->
+                <td class="px-3 py-2.5">
+                  <button
+                    @click="copySingleCode(c.code)"
+                    class="font-mono text-white hover:text-shell-green transition-colors"
+                    title="点击复制"
+                  >{{ c.code }}</button>
+                </td>
 
-      <!-- Pagination -->
-      <div v-if="totalPages > 1" class="flex items-center justify-between mt-4 text-xs text-shell-text/40">
-        <span>第 {{ page + 1 }} / {{ totalPages }} 页 · 共 {{ total }} 条</span>
-        <div class="flex gap-2">
-          <button
-            :disabled="page === 0"
-            @click="page--; loadUsers()"
-            class="border border-shell-border px-3 py-1 rounded hover:border-shell-green/40 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >← 上一页</button>
-          <button
-            :disabled="page >= totalPages - 1"
-            @click="page++; loadUsers()"
-            class="border border-shell-border px-3 py-1 rounded hover:border-shell-green/40 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >下一页 →</button>
+                <!-- Status -->
+                <td class="px-3 py-2.5">
+                  <span v-if="codeStatus(c) === 'used'" class="text-cyan-300 font-mono">已使用</span>
+                  <span v-else-if="codeStatus(c) === 'expired'" class="text-amber-400/60 font-mono">已过期</span>
+                  <span v-else class="text-shell-green font-mono">可用</span>
+                </td>
+
+                <!-- Used by -->
+                <td class="px-3 py-2.5 hidden sm:table-cell">
+                  <template v-if="c.usedBy">
+                    <div class="font-mono text-white text-xs truncate max-w-[140px]">
+                      {{ c.usedByAgentName || c.usedByEmail || c.usedBy.slice(0, 8) + '…' }}
+                    </div>
+                    <div class="text-shell-text/30 text-xs">{{ formatDate(c.usedAt) }}</div>
+                  </template>
+                  <span v-else class="text-shell-text/25">—</span>
+                </td>
+
+                <!-- Note -->
+                <td class="px-3 py-2.5 hidden md:table-cell text-shell-text/40 truncate max-w-[120px]">
+                  {{ c.note || '—' }}
+                </td>
+
+                <!-- Created at -->
+                <td class="px-3 py-2.5 hidden sm:table-cell text-shell-text/40">
+                  {{ formatDate(c.createdAt) }}
+                </td>
+
+                <!-- Expires at -->
+                <td class="px-3 py-2.5 hidden md:table-cell text-shell-text/40">
+                  {{ c.expiresAt ? formatDate(c.expiresAt) : '永不' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Refresh button -->
+        <div class="mt-4 text-right">
+          <button @click="loadInviteCodes"
+            class="text-xs text-shell-text/60 hover:text-shell-green border border-shell-border px-3 py-1.5 rounded-lg transition-colors">
+            刷新列表
+          </button>
         </div>
       </div>
 

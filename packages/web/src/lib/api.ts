@@ -426,3 +426,34 @@ export async function adminRevokeMining(secret: string, userId: string, note?: s
     { method: 'POST', body: JSON.stringify({ note }) },
   )
 }
+
+// ── Admin Invite Codes ──
+
+export interface AdminInviteCode {
+  id: string
+  code: string
+  createdBy: string
+  usedBy: string | null
+  usedAt: string | null
+  expiresAt: string | null
+  note: string | null
+  createdAt: string
+  usedByAgentName?: string | null
+  usedByEmail?: string | null
+}
+
+export async function adminGenerateInviteCodes(
+  secret: string,
+  opts: { count?: number; expiresInDays?: number; note?: string } = {},
+) {
+  return adminRequest<{ success: boolean; count: number; codes: string[]; expiresAt: string | null }>(
+    '/admin/invite-codes', secret,
+    { method: 'POST', body: JSON.stringify(opts) },
+  )
+}
+
+export async function adminListInviteCodes(secret: string) {
+  return adminRequest<{ codes: AdminInviteCode[] }>(
+    '/admin/invite-codes', secret,
+  )
+}
