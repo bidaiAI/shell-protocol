@@ -13,15 +13,19 @@ const pageSize = 50
 const T = computed(() => lang.value === 'en' ? {
   title: 'Leaderboard',
   colMiner: 'Miner', colTier: 'Tier', colPoints: 'Points',
+  colMode: 'Mode',
   colAttacks: 'Attacks', colSuccessRate: 'Success Rate',
   loading: 'Loading...', prev: 'Prev', next: 'Next',
   pageLabel: `Page ${page.value + 1}`,
+  modeFree: 'Free', modeSelfLlm: 'Pro',
 } : {
   title: '排行榜',
   colMiner: '矿工', colTier: '段位', colPoints: '积分',
+  colMode: '模式',
   colAttacks: '攻击数', colSuccessRate: '成功率',
   loading: '加载中...', prev: '上一页', next: '下一页',
   pageLabel: `第 ${page.value + 1} 页`,
+  modeFree: '免费', modeSelfLlm: '高效',
 })
 
 onMounted(() => loadPage())
@@ -88,6 +92,7 @@ function formatPoints(n: number) {
             <th class="px-4 py-3 w-12">#</th>
             <th class="px-4 py-3">{{ T.colMiner }}</th>
             <th class="px-4 py-3">{{ T.colTier }}</th>
+            <th class="px-4 py-3 hidden sm:table-cell">{{ T.colMode }}</th>
             <th class="px-4 py-3 text-right">{{ T.colPoints }}</th>
             <th class="px-4 py-3 text-right hidden sm:table-cell">{{ T.colAttacks }}</th>
             <th class="px-4 py-3 text-right hidden sm:table-cell">{{ T.colSuccessRate }}</th>
@@ -107,6 +112,16 @@ function formatPoints(n: number) {
                 <span class="capitalize" :class="tierColor(entry.tier)">{{ entry.tier }}</span>
               </span>
             </td>
+            <td class="px-4 py-3 hidden sm:table-cell">
+              <span
+                v-if="entry.miningMode === 'self_llm'"
+                class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-500/20 text-purple-400"
+              >{{ T.modeSelfLlm }}</span>
+              <span
+                v-else
+                class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-cyan-500/20 text-cyan-400"
+              >{{ T.modeFree }}</span>
+            </td>
             <td class="px-4 py-3 text-right font-mono text-shell-green">{{ formatPoints(entry.shellPoints) }}</td>
             <td class="px-4 py-3 text-right hidden sm:table-cell">{{ entry.totalSuccessfulAttacks }}</td>
             <td class="px-4 py-3 text-right text-shell-text hidden sm:table-cell">
@@ -118,7 +133,7 @@ function formatPoints(n: number) {
         </tbody>
         <tbody v-else>
           <tr>
-            <td colspan="6" class="px-4 py-12 text-center text-shell-text">{{ T.loading }}</td>
+            <td colspan="7" class="px-4 py-12 text-center text-shell-text">{{ T.loading }}</td>
           </tr>
         </tbody>
       </table>

@@ -5,6 +5,36 @@ import { resolve } from 'node:path'
 
 export type ExecutionMode = 'auto' | 'sandbox_only'
 export type TaskExecutionMode = 'sandbox_verified' | 'local_compute'
+export type MiningMode = 'free' | 'self_llm'
+
+// Environment variables that indicate a user has their own LLM API key
+const LLM_KEY_ENV_VARS = ['LLM_API_KEY', 'ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'DEEPSEEK_API_KEY']
+
+/** Auto-infer mining mode based on whether user has an LLM API key */
+export function inferMiningMode(): MiningMode {
+  for (const key of LLM_KEY_ENV_VARS) {
+    if (process.env[key]) return 'self_llm'
+  }
+  return 'free'
+}
+
+/** Polling interval ranges by mining mode (in milliseconds) */
+const POLL_INTERVALS = {
+  free: { min: 20 * 60 * 1000, max: 40 * 60 * 1000 },       // 20-40 minutes
+  self_llm: { min: 60 * 1000, max: 120 * 1000 },              // 60-120 seconds
+} as const
+
+/** Get a random polling interval for the given mode */
+export function getRandomPollInterval(mode: MiningMode): number {
+  const range = POLL_INTERVALS[mode]
+  return range.min + Math.floor(Math.random() * (range.max - range.min))
+}
+
+/** Get human-readable poll interval label */
+export function getPollIntervalLabel(mode: MiningMode): string {
+  if (mode === 'free') return '20-40 minutes'
+  return '60-120 seconds'
+}
 
 export interface MinerConfig {
   oracleUrl: string
@@ -15,6 +45,7 @@ export interface MinerConfig {
   llmModel: string
   pollingIntervalMs: number
   executionMode: ExecutionMode
+  miningMode: MiningMode
 }
 
 export function loadConfig(): MinerConfig {
@@ -28,6 +59,7 @@ export function loadConfig(): MinerConfig {
 
   const llmApiKey = process.env.LLM_API_KEY || process.env.ANTHROPIC_API_KEY || ''
   const executionMode = (process.env.EXECUTION_MODE || 'sandbox_only') as ExecutionMode
+  const miningMode = inferMiningMode()
 
   return {
     oracleUrl: process.env.ORACLE_URL || 'https://oracle.openshell.cc',
@@ -36,8 +68,9 @@ export function loadConfig(): MinerConfig {
     llmProvider: provider,
     llmApiKey,
     llmModel: process.env.LLM_MODEL || defaultModels[provider],
-    pollingIntervalMs: Number(process.env.POLLING_INTERVAL_MS) || 60000,
+    pollingIntervalMs: Number(process.env.POLLING_INTERVAL_MS) || getRandomPollInterval(miningMode),
     executionMode,
+    miningMode,
   }
 }
 

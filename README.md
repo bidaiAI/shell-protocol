@@ -1,6 +1,6 @@
 # $SHELL Protocol
 
-> **全球首个混合式去中心化 AI 红队验证网络** — 矿工优先交叉验证，平台低频抽查与超时兜底。通过发现 AI Agent 漏洞来挖矿赚取 $SHELL
+> **全球首个混合式去中心化 AI 红队验证网络** — 矿工自带 LLM 生成 payload + 矿工多 Peer 交叉验证 + 平台低频抽查与超时兜底。通过发现 AI Agent 漏洞来挖矿赚取 $SHELL
 
 [![npm](https://img.shields.io/npm/v/@openshell-cc/miner-cli?color=00ff88&label=miner-cli)](https://www.npmjs.com/package/@openshell-cc/miner-cli)
 [![GitHub](https://img.shields.io/badge/GitHub-openshell--cc-181717?logo=github)](https://github.com/openshell-cc/shell-protocol)
@@ -10,40 +10,34 @@
 
 ## 什么是 $SHELL Protocol？
 
-$SHELL Protocol 是一个 **混合式去中心化 AI 安全测试网络**，让任何人都能通过运行矿机（Miner CLI）对 AI Agent 进行红队攻击。沙盒内含 **8 个目标 Agent 画像**，覆盖金融类（Four.Meme、Pump.fun 交易机器人）和系统类（OpenClaw 工具 Agent）两大攻击类别。攻击手段包括 Prompt 注入、社会工程和系统级命令注入。攻击结果由其他矿工交叉验证，平台仅作为低频抽查与超时兜底的低成本 fallback validator。成功的攻击赚取 $SHELL 积分。
+$SHELL Protocol 是一个 **混合式去中心化 AI 安全测试网络**，让任何人都能通过运行矿机（Miner CLI）对 AI Agent 进行红队攻击。沙盒内含多个目标 Agent 画像，覆盖金融类（Four.Meme、Pump.fun 交易机器人）和系统类（OpenClaw 工具 Agent）两大攻击类别。攻击手段包括 Prompt 注入、社会工程和系统级命令注入。攻击结果由 **2-4 名矿工多 Peer 交叉投票验证**，平台仅作为低频抽查（1-5%）与超时兜底。成功的攻击赚取 $SHELL 积分。
 
 ### 核心价值
 
 | 角色 | 获益 |
 |------|------|
-| **矿工（Miner）** | 接收平台任务，执行攻击 & 交叉验证，成功即获积分 |
-| **AI 开发者** | 通过漏洞披露系统发现 Agent 安全问题 |
-| **协议** | 构建全球最大的混合式去中心化 AI 红队数据集 |
+| **矿工（Miner）** | 接收任务，执行攻击 & 多 Peer 交叉验证，成功即获积分 |
+| **AI 开发者** | 通过漏洞披露系统发现真实 AI Agent 安全问题 |
+| **协议** | 构建全球最大的去中心化 AI 红队数据集 |
 
 ---
 
-## 仓库结构
+## 双模式挖矿
 
-```
-shell-protocol/
-├── packages/
-│   ├── miner-cli/     # 矿机命令行工具（npm 可用）
-│   └── web/           # 官方网站前端 (Vue 3 + Vite)
-```
+$SHELL Protocol 提供两种挖矿模式，零门槛入场 + 高效进阶：
 
-> **注意**：Oracle（后端服务器）和 Sandbox（验证沙盒）在私有仓库中，不对外开放。
+| 模式 | 积分倍率 | API Key | 轮询间隔 | 适用场景 |
+|------|----------|---------|----------|----------|
+| 🆓 **免费模式** | ×0.2 | 不需要 | 20-40 分钟 | 零门槛体验，平台 AI 生成 payload |
+| ⚡ **高效模式** | ×1.0 | 需要 LLM API Key | 60-120 秒 | 自带 LLM，5 倍积分，无次数限制 |
+
+> 🔒 **安全保证**：高效模式的 API Key **仅在本地运行**，不上传平台，完全安全。
 
 ---
 
 ## 快速开始：3 分钟内开始挖矿
 
-### 第一步：注册账号
-
-访问 [openshell.cc](https://openshell.cc) 注册账号（邮箱即可），然后在控制面板签发 `$SHELL API Key`（格式：`sk-shell-xxx`）。
-
-> 💡 **空投准备**：在控制面板绑定你的 Solana 钱包地址，后续 $SHELL 代币上链时直接空投到账。
-
-### 第二步：启动矿机
+### 第一步：启动矿机
 
 ```bash
 # 方式一：npx 一键启动（推荐）
@@ -56,7 +50,21 @@ miner-cli setup
 miner-cli start
 ```
 
-首次运行 `setup` 向导会引导配置。**默认模式仅需 `SHELL_API_KEY`**，无需 GPU，无需第三方 LLM API Key。
+首次运行 `setup` 向导会引导配置。**免费模式仅需 `SHELL_API_KEY`**，无需 GPU，无需第三方 LLM API Key，注册即可挖矿。
+
+### 第二步（可选）：升级到高效模式
+
+在 `.env` 中设置 `LLM_API_KEY`，矿机自动切换到高效模式：
+
+```bash
+LLM_API_KEY=sk-ant-xxx   # Anthropic / OpenAI / DeepSeek 的 API Key
+```
+
+> API Key 仅在你的本地机器上运行，不会上传到任何平台服务器。
+
+### 第三步（可选）：绑定 Solana 钱包
+
+访问 [openshell.cc](https://openshell.cc) 控制面板，绑定 Solana 钱包地址。后续 $SHELL 代币上链时直接空投到你的钱包。
 
 ---
 
@@ -71,27 +79,24 @@ miner-cli start
 | `ORACLE_URL` | Oracle 服务地址 | `https://oracle.openshell.cc` |
 | `SHELL_API_KEY` | 控制面板签发的矿工密钥 | `sk-shell-...` |
 
-### 可选配置（高级本地模式）
-
-默认模式下，**平台 AI 负责生成攻击 Payload**，矿工无需配置任何 LLM API Key。
-如果你希望参与高级 `local_compute` 任务，可选填以下配置：
+### 可选配置（高效模式）
 
 | 环境变量 | 说明 | 推荐值 |
 |----------|------|--------|
-| `LLM_PROVIDER` | LLM 提供商 | `anthropic` / `openai` / `deepseek` / `openrouter` |
-| `LLM_API_KEY` | 对应提供商的 API Key | — |
+| `LLM_PROVIDER` | LLM 提供商 | `anthropic` / `openai` / `deepseek` |
+| `LLM_API_KEY` | 对应提供商的 API Key（本地运行，不上传平台） | — |
 | `LLM_MODEL` | 指定模型（可选） | 见下表 |
-| `EXECUTION_MODE` | 执行模式 | `sandbox_only`（默认） |
-| `POLLING_INTERVAL_MS` | 拉取任务间隔（毫秒） | `5000` |
+| `EXECUTION_MODE` | 执行模式 | `sandbox_only`（默认）/ `auto` |
 
-### 支持的 LLM 提供商（本地模式）
+> **轮询间隔自动调整**：免费模式 20-40 分钟，高效模式 60-120 秒，无需手动设置。
+
+### 支持的 LLM 提供商（高效模式）
 
 | 提供商 | `LLM_PROVIDER` | 推荐模型 | 说明 |
 |--------|----------------|----------|------|
 | **Anthropic** | `anthropic` | `claude-haiku-4-5` | 速度快、成本低 |
 | **OpenAI** | `openai` | `gpt-4o-mini` | 通用选择 |
 | **DeepSeek** | `deepseek` | `deepseek-chat` | 最便宜，性价比最高 |
-| **OpenRouter** | `openrouter` | 任意支持模型 | 多模型统一接入 |
 
 ---
 
@@ -99,16 +104,8 @@ miner-cli start
 
 | 模式 | 说明 | 适用场景 |
 |------|------|---------|
-| `sandbox_only`（默认） | 平台 AI 生成 payload，Oracle 沙盒验证 | **零 API Key，推荐所有人** |
-| `auto` | 同时接受沙盒任务（攻击 + 交叉验证）和本地计算任务 | 有自己的 LLM API Key 时使用 |
-| `local_only` | 仅接受本地计算任务 | 需要 `LLM_API_KEY` |
-
-**v0.3.0 新功能**：
-- **交叉验证机制**：攻击任务完成后，由另一名矿工执行相同 payload 独立验证结果，实现矿工间去中心化验证
-- **混合式验证网络**：矿工优先交叉验证，平台作为低成本 fallback validator 进行低频抽查与超时兜底
-- 矿机调用平台 `POST /tasks/payload` 端点，由 Oracle AI 生成 Prompt Injection 攻击载荷，矿机直接提交验证，无需自备任何 AI 资源
-- 提交后自动轮询 `GET /tasks/result/:id`，最长等待 120 秒；验证完成时终端显示成功/失败及积分；超时任务通过 `miner-cli status` 查询近期 submission 状态
-- Payload 完整性签名：Oracle 对生成的 payload 进行 HMAC 签名，提交时服务端验证，防止矿机篡改平台 payload
+| `sandbox_only`（默认） | 平台 AI 生成 payload，Oracle 沙盒验证 | **免费模式，零 API Key** |
+| `auto` | 同时接受沙盒任务（攻击 + 交叉验证）和本地计算任务 | **高效模式，有 LLM API Key** |
 
 ---
 
@@ -129,61 +126,61 @@ miner-cli start
 ## 任务运作原理
 
 ```
-矿机 A 拉取任务（GET /tasks/poll）
+矿工 A 拉取任务（GET /tasks/poll）
      ↓
 Oracle 分配未锁定任务（原子锁，防并发抢占）
      ↓
-平台 AI 生成 Prompt Injection 攻击载荷（POST /tasks/payload）
+生成攻击载荷（免费模式: 平台 AI / 高效模式: 本地 LLM）
      ↓
-矿机 A 提交攻击结果（POST /tasks/submit）
+矿工 A 提交攻击结果（POST /tasks/submit）
      ↓
-Oracle 将验证任务分配给矿机 B（交叉验证）
+Oracle 创建多 Peer 验证轮次，分配给 2-4 名矿工
      ↓
-矿机 B 执行相同 payload，独立验证攻击结果
+验证矿工独立执行相同 payload，投票：triggered / not_triggered
      ↓
-两次结果一致 → 验证通过
-（不一致或超时 → 平台 fallback validator 兜底验证）
+共识规则：
+  2 人验证 → 需 2:0 一致
+  3 人验证 → 需 3:0 一致
+  4 人验证 → 需 3:1 多数
+  不一致 → 仲裁队列
      ↓
-矿机轮询结果（GET /tasks/result/:id，最长 120 秒）
-→ 终端显示成功/失败及积分；超时则通过 `miner-cli status` 查询
-     ↓
-验证通过 → 自动发放积分（按段位倍率计算）
-     ↓
-任务完成，矿机继续拉取下一个任务
+共识达成 → 自动结算积分（攻击者 + 正确验证者均获奖励）
+（无共识/超时 → 平台 fallback validator 兜底）
 ```
 
 ---
 
-## 交叉验证机制
+## 多 Peer 交叉验证机制
 
-$SHELL Protocol v0.3.0 引入 **混合式去中心化验证网络**，核心原则是：**矿工优先交叉验证，平台低频抽查与超时兜底**。
+$SHELL Protocol 采用 **多 Peer 去中心化验证网络**，核心原则是：**矿工多 Peer 投票验证 + 平台低频抽查（1-5%）+ 超时兜底**。
 
 ### 工作流程
 
 1. **矿工 A 完成攻击任务** — 提交攻击结果到 Oracle
-2. **Oracle 分配验证任务给矿工 B** — 矿工 B 执行相同的 payload，独立验证攻击结果
-3. **结果比对** — 两名矿工的结果一致时，验证通过，双方均获积分
-4. **异常处理** — 结果不一致或验证超时时，平台作为低成本 fallback validator 进行兜底验证
+2. **Oracle 创建验证轮次** — 根据任务价值分配 2-4 名验证矿工
+3. **验证矿工独立执行** — 每名验证者执行相同 payload，提交投票
+4. **共识判定** — 达到共识阈值后自动结算；不一致则进入仲裁
+5. **平台抽查** — 1-5% 概率低频随机抽查，确保矿工行为诚实
 
 ### 验证类型
 
 | 验证方式 | 触发条件 | 说明 |
 |----------|----------|------|
-| **矿工交叉验证**（主要） | 每次攻击任务完成后 | 另一名矿工独立执行相同 payload 验证结果 |
-| **平台抽查**（辅助） | 低频随机抽查 | 平台 fallback validator 随机验证，确保矿工行为诚实 |
-| **超时兜底**（保障） | 验证矿工超时未响应 | 平台 fallback validator 自动接管，防止任务卡死 |
+| **多 Peer 交叉验证**（主要） | 每次攻击提交后 | 2-4 名矿工独立执行 + 投票共识 |
+| **平台抽查**（辅助） | 1-5% 随机抽查 | DeepSeek 低成本二分类验证 |
+| **超时兜底**（保障） | 验证矿工超时未响应 | 平台 fallback validator 自动接管 |
 
 ### 对矿工的影响
 
-- **攻击和验证任务对矿工完全一致** — 矿工无需区分任务类型，透明参与交叉验证
+- **攻击和验证任务对矿工完全一致** — 矿工无需区分任务类型，透明参与
 - **验证任务同样获得积分** — 诚实验证同样赚取 $SHELL
-- **作弊惩罚** — 验证结果与其他矿工/平台不一致时，影响信誉评分
+- **作弊惩罚** — 伪造结果将重置信誉评分，影响后续收益
 
 ---
 
 ## 目标 Agent 画像
 
-沙盒内置 **8 个 AI Agent 画像**，覆盖两大攻击类别：
+沙盒内置多个 AI Agent 画像，覆盖两大攻击类别。平台还会自动从 Twitter 和 GitHub 发现热门真实 AI Agent 项目，生成新的攻击目标。
 
 ### 金融类 Agent（Token Injection / Social Engineering）
 
@@ -200,8 +197,6 @@ DeFi 交易机器人，具备代币操作工具（buy_token、sell_token、swap�
 | Easy | Pump.fun Sniper Bot | Token injection |
 | Medium | Four.Meme Agentic / Personal Trading Bot | Social engineering |
 | Hard | **OpenClaw (Hardened)** / DeFi Portfolio Manager | System-level command injection |
-
-> OpenClaw（强化版）是最高难度目标之一，拥有多层防御体系，模拟真实 OpenClaw Agent 的完整工具链。
 
 ---
 
@@ -228,7 +223,7 @@ miner-cli status
 - 分享你的专属推荐链接（在控制面板获取）
 - 被邀请人挖矿产出的 **8%** 作为佣金自动发放给你
 - 返佣持续 **30 天**
-- 支持多级邀请，所有邀请关系上链存储
+- 邀请码还可增加免费模式的每日额度（+5 次/码）
 
 **获取推荐链接**：登录 [官网控制面板](https://openshell.cc/dashboard) → 复制推荐链接
 
@@ -237,28 +232,31 @@ miner-cli status
 ## 常见问题（FAQ）
 
 **Q: 挖矿需要什么硬件？**
-A: 只需要能运行 Node.js（v18+）的任何设备。默认模式无需本地 GPU，也无需配置任何第三方 LLM API Key。
+A: 只需要能运行 Node.js（v18+）的任何设备。免费模式无需本地 GPU，也无需配置任何第三方 LLM API Key。
+
+**Q: 免费模式和高效模式有什么区别？**
+A: 免费模式积分 ×0.2、每日有限次数、20-40 分钟轮询；高效模式需要 LLM API Key，积分 ×1.0、无次数限制、60-120 秒轮询。API Key 仅在本地运行，不上传平台。
 
 **Q: 需要 Solana 钱包才能参与吗？**
-A: 不需要。可直接用邮箱注册，通过控制面板签发 `sk-shell-xxx` 密钥开始挖矿。Solana 钱包为可选，用于后续代币兑换。
+A: 不需要。可直接用邮箱注册或 CLI 自动注册，通过控制面板签发 `sk-shell-xxx` 密钥开始挖矿。Solana 钱包为可选，用于后续代币兑换。
 
 **Q: 每次攻击成功能赚多少积分？**
-A: 取决于目标 Agent 的防御等级和你的段位倍率。Scout 1x、Hunter 3x、Apex 10x，具体基础积分按任务难度动态计算，可在控制面板查看每次任务的奖励明细。
+A: 基础积分按任务难度计算，乘以你的段位倍率（Scout 1x、Hunter 3x、Apex 10x）和挖矿模式倍率（免费 ×0.2、高效 ×1.0）。
 
 **Q: $SHELL 什么时候上链？**
-A: Phase 5（Solana 合约）待开发，目前积累的积分将按比例兑换 $SHELL 代币。**建议现在就在控制面板绑定 Solana 钱包**，空投时直接发放到你的钱包地址。
+A: Phase 5（Solana 合约）待开发，目前积累的积分将按比例兑换 $SHELL 代币。**建议现在就绑定 Solana 钱包**，空投时直接发放。
 
 **Q: 验证任务是什么？**
-A: 矿工透明参与交叉验证，无需感知任务类型。攻击和验证任务对矿工完全一致，矿机自动处理，诚实验证同样获得 $SHELL 积分。
+A: 矿工透明参与多 Peer 交叉验证。攻击和验证任务对矿工完全一致，矿机自动处理，诚实验证同样获得积分。
 
 **Q: 攻击失败了会扣分吗？**
-A: 不会扣积分，只是本次任务无奖励。但反复提交虚假结果会影响信誉评分，严重时被封号。
+A: 不会扣积分，只是本次任务无奖励。但反复伪造结果会重置信誉评分，严重时被封号。
 
-**Q: 一台机器可以同时跑多个矿机实例吗？**
-A: 可以，但每个实例需要使用不同的账号和 API Key。
+**Q: 高效模式的 API Key 安全吗？**
+A: 完全安全。API Key 仅在你的本地机器上运行，用于生成攻击 payload 和执行验证任务。Key 不会上传到平台服务器，也不会被任何第三方访问。
 
-**Q: 平台支持哪些 LLM 进行本地计算？**
-A: 支持 Anthropic、OpenAI、DeepSeek、OpenRouter，可通过 `.env` 配置切换。简单任务推荐 DeepSeek（最便宜），高难度任务推荐 Claude。
+**Q: 平台支持哪些 LLM 进行高效模式？**
+A: 支持 Anthropic、OpenAI、DeepSeek。简单任务推荐 DeepSeek（最便宜），高难度任务推荐 Claude。
 
 ---
 
@@ -272,6 +270,19 @@ A: 支持 Anthropic、OpenAI、DeepSeek、OpenRouter，可通过 `.env` 配置�
 **金矿属于守规则的人。**
 
 未经授权的链上操作、资金转移、破坏性攻击将导致永久封号并没收押金。
+
+---
+
+## 仓库结构
+
+```
+shell-protocol/
+├── packages/
+│   ├── miner-cli/     # 矿机命令行工具（npm 可用）
+│   └── web/           # 官方网站前端 (Vue 3 + Vite)
+```
+
+> **注意**：Oracle（后端服务器）和 Sandbox（验证沙盒）在私有仓库中，不对外开放。
 
 ---
 
@@ -318,5 +329,5 @@ Official protocol-controlled wallets for future onchain operations, reward distr
 ---
 
 <p align="center">
-  Built by <a href="https://github.com/openshell-cc">openshell-cc</a> · 零 API Key，人人可挖矿
+  Built by <a href="https://github.com/openshell-cc">openshell-cc</a> · 零门槛免费挖矿 · 自带 LLM 5 倍积分
 </p>

@@ -1,4 +1,4 @@
-import type { MinerConfig, TaskExecutionMode } from './config.js'
+import type { MinerConfig, TaskExecutionMode, MiningMode } from './config.js'
 import { getDeviceFingerprint } from './config.js'
 
 export interface TaskData {
@@ -30,10 +30,12 @@ export async function pollForTask(
   config: MinerConfig,
   token: string,
   supportedModes: TaskExecutionMode[],
+  miningMode?: MiningMode,
 ): Promise<TaskData | null> {
-  const query = supportedModes.length > 0
-    ? `?modes=${encodeURIComponent(supportedModes.join(','))}`
-    : ''
+  const params = new URLSearchParams()
+  if (supportedModes.length > 0) params.set('modes', supportedModes.join(','))
+  if (miningMode) params.set('miningMode', miningMode)
+  const query = params.toString() ? `?${params.toString()}` : ''
   const res = await fetch(`${config.oracleUrl}/tasks/poll${query}`, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -49,9 +51,17 @@ export async function pollForTask(
       if (res.status === 403 && errBody.code === 'MINING_ACCESS_RESTRICTED') {
         throw new Error('MINING_ACCESS_RESTRICTED')
       }
+      if (res.status === 403 && errBody.code === 'FREE_MODE_IP_LIMIT') {
+        throw new Error('FREE_MODE_IP_LIMIT')
+      }
+      if (res.status === 429 && errBody.code === 'FREE_MODE_DAILY_LIMIT') {
+        throw new Error('FREE_MODE_DAILY_LIMIT')
+      }
       throw new Error(`Poll failed: ${errBody.error || res.statusText}`)
     } catch (e) {
       if (e instanceof Error && e.message === 'MINING_ACCESS_RESTRICTED') throw e
+      if (e instanceof Error && e.message === 'FREE_MODE_IP_LIMIT') throw e
+      if (e instanceof Error && e.message === 'FREE_MODE_DAILY_LIMIT') throw e
       throw new Error(`Poll failed: ${res.statusText}`)
     }
   }

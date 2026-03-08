@@ -3,6 +3,7 @@ import {
   requestNonce,
   login,
   setToken,
+  getToken,
   loginWithEmail as apiLoginEmail,
   registerEmail as apiRegisterEmail,
   bindWalletToAccount,
@@ -21,9 +22,11 @@ const walletState = ref<WalletState>({
   publicKey: null,
 })
 
-const isAuthenticated = ref(false)
+// Restore auth state from persisted token
+const hasPersistedToken = !!getToken()
+const isAuthenticated = ref(hasPersistedToken)
 const userEmail = ref<string | null>(null)
-const authMethod = ref<'wallet' | 'email' | 'apikey' | null>(null)
+const authMethod = ref<'wallet' | 'email' | 'apikey' | null>(hasPersistedToken ? 'email' : null)
 
 export function useWallet() {
   const connected = computed(() => walletState.value.connected)

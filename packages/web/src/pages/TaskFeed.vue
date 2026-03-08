@@ -35,6 +35,25 @@ const T = computed(() => lang.value === 'en' ? {
   attackChain: 'Attack Chain Reconstruction',
   taskType: 'Task Type',
   loadingStats: 'Loading...',
+  // Detail panel
+  targetAgent: 'Target Agent',
+  model: 'Model',
+  chain: 'Chain',
+  defense: 'Defense',
+  surface: 'Attack Surface',
+  canaryOps: 'Canary Operations',
+  execMode: 'Execution',
+  vulnReport: 'Vulnerability Report',
+  defenseNone: 'No Defense',
+  defenseBasic: 'Basic',
+  defenseModerate: 'Moderate',
+  defenseHardened: 'Hardened',
+  surfaceToken: 'Token Data',
+  surfaceChat: 'Chat Interface',
+  surfaceTool: 'Tool Description',
+  surfaceMemory: 'Memory Context',
+  localExec: 'Local Compute',
+  sandboxExec: 'Sandbox',
 } : {
   title: '攻防实况',
   subtitle: '实时监控全网 AI Agent 红队测试',
@@ -58,6 +77,25 @@ const T = computed(() => lang.value === 'en' ? {
   attackChain: '攻击链路还原',
   taskType: '任务类型',
   loadingStats: '加载中...',
+  // Detail panel
+  targetAgent: '目标 Agent',
+  model: '模型',
+  chain: '链',
+  defense: '防御等级',
+  surface: '攻击面',
+  canaryOps: 'Canary 操作',
+  execMode: '执行方式',
+  vulnReport: '漏洞报告',
+  defenseNone: '无防御',
+  defenseBasic: '基础防御',
+  defenseModerate: '中等防御',
+  defenseHardened: '高级防御',
+  surfaceToken: 'Token 数据',
+  surfaceChat: '对话接口',
+  surfaceTool: '工具描述',
+  surfaceMemory: '记忆上下文',
+  localExec: '本地执行',
+  sandboxExec: '沙盒验证',
 })
 
 const taskTypeLabels = computed<Record<string, string>>(() => lang.value === 'en' ? {
@@ -163,6 +201,43 @@ function timeAgo(dateStr: string) {
   return `${Math.floor(seconds / 86400)}天前`
 }
 
+function defenseLevelLabel(level: string) {
+  return ({
+    none: T.value.defenseNone,
+    basic: T.value.defenseBasic,
+    moderate: T.value.defenseModerate,
+    hardened: T.value.defenseHardened,
+  } as Record<string, string>)[level] || level
+}
+
+function defenseLevelColor(level: string) {
+  switch (level) {
+    case 'none': return 'text-red-400'
+    case 'basic': return 'text-yellow-400'
+    case 'moderate': return 'text-blue-400'
+    case 'hardened': return 'text-shell-green'
+    default: return 'text-shell-text'
+  }
+}
+
+function surfaceLabel(surface: string) {
+  return ({
+    token_data: T.value.surfaceToken,
+    chat_interface: T.value.surfaceChat,
+    tool_description: T.value.surfaceTool,
+    memory_context: T.value.surfaceMemory,
+  } as Record<string, string>)[surface] || surface
+}
+
+function chainLabel(chain: string) {
+  return ({
+    solana: 'Solana',
+    bsc: 'BNB Chain',
+    ethereum: 'Ethereum',
+    multi: 'Multi-chain',
+  } as Record<string, string>)[chain] || chain
+}
+
 // Expandable attack detail
 const expandedId = ref<string | null>(null)
 function toggleDetail(id: string) {
@@ -253,7 +328,9 @@ function toggleDetail(id: string) {
                   <div class="flex items-center gap-2">
                     <span class="w-2 h-2 rounded-full flex-shrink-0" :class="tierDot(entry.tier)"></span>
                     <span class="font-mono text-xs truncate" :class="tierColor(entry.tier)">{{ entry.displayName }}</span>
-                    <span class="text-shell-text text-xs hidden sm:inline">{{ taskTypeLabels[entry.taskType] || entry.taskType }}</span>
+                    <span class="text-shell-text text-xs">→</span>
+                    <span v-if="entry.targetAgentName" class="text-xs text-purple-400 truncate hidden sm:inline" :title="entry.targetAgentName">{{ entry.targetAgentName }}</span>
+                    <span v-else class="text-shell-text text-xs hidden sm:inline">{{ taskTypeLabels[entry.taskType] || entry.taskType }}</span>
                   </div>
                 </div>
                 <div class="flex items-center gap-3 flex-shrink-0">
@@ -272,32 +349,91 @@ function toggleDetail(id: string) {
 
               <!-- Expandable Attack Detail -->
               <div v-if="expandedId === entry.id" class="px-4 pb-3 animate-fade-in">
-                <div class="bg-black/50 rounded-lg p-4 border border-shell-border/50">
-                  <div class="text-xs text-shell-text mb-3 font-mono uppercase tracking-wider">{{ T.attackChain }}</div>
-                  <div class="space-y-2">
-                    <div
-                      v-for="(phase, i) in (attackPhases[entry.taskType] || ['Payload generation', 'Sandbox execution', 'Result verification'])"
-                      :key="i"
-                      class="flex items-center gap-3"
-                    >
-                      <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-mono flex-shrink-0"
-                        :class="entry.canaryTriggered || i < (attackPhases[entry.taskType]?.length ?? 3) - 1
-                          ? 'bg-shell-green/15 text-shell-green border border-shell-green/30'
-                          : 'bg-shell-border/30 text-shell-text border border-shell-border'
-                        ">
-                        {{ i + 1 }}
-                      </div>
-                      <div class="flex-1 h-px" :class="entry.canaryTriggered ? 'bg-shell-green/30' : 'bg-shell-border'"></div>
-                      <span class="text-xs font-mono"
-                        :class="entry.canaryTriggered ? 'text-shell-green' : 'text-shell-text'">
-                        {{ phase }}
-                      </span>
-                      <span class="text-xs" :class="entry.canaryTriggered || i < (attackPhases[entry.taskType]?.length ?? 3) - 1 ? 'text-shell-green' : 'text-tier-apex'">
-                        {{ entry.canaryTriggered || i < (attackPhases[entry.taskType]?.length ?? 3) - 1 ? 'PASS' : 'FAIL' }}
+                <div class="bg-black/50 rounded-lg p-4 border border-shell-border/50 space-y-4">
+
+                  <!-- Target Agent Info -->
+                  <div v-if="entry.targetAgentName" class="flex flex-wrap gap-x-6 gap-y-2 text-xs">
+                    <div>
+                      <span class="text-shell-text">{{ T.targetAgent }}</span>
+                      <p class="font-mono text-purple-400 font-medium">{{ entry.targetAgentName }}</p>
+                    </div>
+                    <div v-if="entry.targetAgentModel">
+                      <span class="text-shell-text">{{ T.model }}</span>
+                      <p class="font-mono text-white">{{ entry.targetAgentModel }}</p>
+                    </div>
+                    <div v-if="entry.targetChain">
+                      <span class="text-shell-text">{{ T.chain }}</span>
+                      <p class="font-mono text-cyan-400">{{ chainLabel(entry.targetChain) }}</p>
+                    </div>
+                    <div>
+                      <span class="text-shell-text">{{ T.defense }}</span>
+                      <p class="font-mono font-medium" :class="defenseLevelColor(entry.defenseLevel)">{{ defenseLevelLabel(entry.defenseLevel) }}</p>
+                    </div>
+                    <div>
+                      <span class="text-shell-text">{{ T.surface }}</span>
+                      <p class="font-mono text-yellow-400">{{ surfaceLabel(entry.injectionSurface) }}</p>
+                    </div>
+                    <div>
+                      <span class="text-shell-text">{{ T.execMode }}</span>
+                      <p class="font-mono" :class="entry.executionMode === 'local_compute' ? 'text-blue-400' : 'text-shell-text'">
+                        {{ entry.executionMode === 'local_compute' ? T.localExec : T.sandboxExec }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Canary Operations -->
+                  <div v-if="entry.canaryActions?.length" class="text-xs">
+                    <span class="text-shell-text font-mono uppercase tracking-wider">{{ T.canaryOps }}</span>
+                    <div class="flex flex-wrap gap-1.5 mt-1.5">
+                      <span
+                        v-for="action in entry.canaryActions"
+                        :key="action"
+                        class="px-2 py-0.5 rounded font-mono border"
+                        :class="entry.canaryTriggered
+                          ? 'bg-tier-apex/10 text-tier-apex border-tier-apex/30'
+                          : 'bg-shell-border/30 text-shell-text border-shell-border'"
+                      >
+                        {{ action.replace(/_/g, ' ') }}
                       </span>
                     </div>
                   </div>
-                  <div class="mt-4 pt-3 border-t border-shell-border/30 flex items-center justify-between text-xs">
+
+                  <!-- Attack Chain -->
+                  <div>
+                    <div class="text-xs text-shell-text mb-2 font-mono uppercase tracking-wider">{{ T.attackChain }}</div>
+                    <div class="space-y-2">
+                      <div
+                        v-for="(phase, i) in (attackPhases[entry.taskType] || ['Payload generation', 'Sandbox execution', 'Result verification'])"
+                        :key="i"
+                        class="flex items-center gap-3"
+                      >
+                        <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-mono flex-shrink-0"
+                          :class="entry.canaryTriggered || i < (attackPhases[entry.taskType]?.length ?? 3) - 1
+                            ? 'bg-shell-green/15 text-shell-green border border-shell-green/30'
+                            : 'bg-shell-border/30 text-shell-text border border-shell-border'
+                          ">
+                          {{ i + 1 }}
+                        </div>
+                        <div class="flex-1 h-px" :class="entry.canaryTriggered ? 'bg-shell-green/30' : 'bg-shell-border'"></div>
+                        <span class="text-xs font-mono"
+                          :class="entry.canaryTriggered ? 'text-shell-green' : 'text-shell-text'">
+                          {{ phase }}
+                        </span>
+                        <span class="text-xs" :class="entry.canaryTriggered || i < (attackPhases[entry.taskType]?.length ?? 3) - 1 ? 'text-shell-green' : 'text-tier-apex'">
+                          {{ entry.canaryTriggered || i < (attackPhases[entry.taskType]?.length ?? 3) - 1 ? 'PASS' : 'FAIL' }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Vulnerability Report (only for BREACHED) -->
+                  <div v-if="entry.canaryTriggered && entry.vulnerabilitySummary" class="border-t border-tier-apex/20 pt-3">
+                    <div class="text-xs font-mono uppercase tracking-wider text-tier-apex mb-1.5">{{ T.vulnReport }}</div>
+                    <p class="text-xs font-mono text-tier-apex/80 leading-relaxed">{{ entry.vulnerabilitySummary }}</p>
+                  </div>
+
+                  <!-- Footer -->
+                  <div class="pt-3 border-t border-shell-border/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">
                     <div class="font-mono text-shell-text">
                       {{ T.taskType }}: <span class="text-white">{{ taskTypeLabels[entry.taskType] || entry.taskType }}</span>
                     </div>

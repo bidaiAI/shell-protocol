@@ -1,10 +1,36 @@
 # $SHELL Miner CLI
 
-通过红队测试 AI Agent 来挖掘 $SHELL 积分。矿机会自动从 Oracle 拉取任务，由平台 AI 默认生成攻击 payload，你只负责接收任务、提交验证并赚取积分。
+通过红队测试 AI Agent 来挖掘 $SHELL 积分。注册即可免费挖矿，自带 LLM API Key 可获 5 倍积分。
+
+## 双模式挖矿
+
+| 模式 | 积分倍率 | API Key | 轮询间隔 | 说明 |
+|------|----------|---------|----------|------|
+| 🆓 **免费模式** | ×0.2 | 不需要 | 20-40 分钟 | 零门槛，平台 AI 生成 payload |
+| ⚡ **高效模式** | ×1.0 | 需要 LLM API Key | 60-120 秒 | 本地 LLM，5 倍积分，无次数限制 |
+
+> 🔒 **安全保证**：高效模式的 LLM API Key **仅在你的本地机器上运行**，不上传到任何平台服务器，完全安全。
+
+---
 
 ## 安装方式
 
-### 方式一：从源码安装（推荐，当前阶段）
+### 方式一：npx 一键启动（推荐）
+
+```bash
+npx @openshell-cc/miner-cli@latest setup
+npx @openshell-cc/miner-cli@latest start
+```
+
+### 方式二：全局安装
+
+```bash
+npm install -g @openshell-cc/miner-cli
+miner-cli setup
+miner-cli start
+```
+
+### 方式三：从源码安装
 
 ```bash
 # 1. 克隆仓库
@@ -21,103 +47,96 @@ cd packages/miner-cli
 cp .env.example .env
 # 编辑 .env，填入你的密钥（见下方配置说明）
 
-# 5. 构建
+# 5. 构建 & 启动
 pnpm build
-
-# 6. 开始挖矿
 node dist/index.js start
 ```
-
-### 方式二：npx（npm 发布后可用）
-
-```bash
-npx @openshell-cc/miner-cli start
-```
-
-> **注意**：此命令需要包已发布到 npm。
 
 ---
 
 ## 配置说明
 
-复制 `.env.example` 为 `.env`，填入以下内容：
+复制 `.env.example` 为 `.env`，填入以下内容（或通过 `setup` 向导自动生成）：
 
 ### 必填
 
 | 变量 | 说明 |
 |------|------|
 | `ORACLE_URL` | $SHELL Oracle 地址（默认：`https://oracle.openshell.cc`） |
-| `SHELL_API_KEY` | $SHELL 控制面板签发的矿工密钥 |
+| `SHELL_API_KEY` | $SHELL 控制面板签发的矿工密钥（`sk-shell-xxx`） |
 
-### 可选
+### 可选（升级到高效模式）
 
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `LLM_PROVIDER` | `anthropic` | 高级本地模式的模型提供商（可选） |
-| `LLM_MODEL` | 各提供商默认值 | 高级本地模式指定模型 |
-| `LLM_API_KEY` | 空 | 高级本地计算的可选配置 |
-| `EXECUTION_MODE` | `sandbox_only` | `auto` / `local_only` / `sandbox_only` |
-| `POLLING_INTERVAL_MS` | `5000` | 拉取任务间隔（毫秒） |
-
-### 获取 Solana 钱包私钥
-
-如果你没有 Solana 钱包，可以用 Solana CLI 生成：
-
-```bash
-# 安装 Solana CLI
-sh -c "$(curl -sSfL https://release.solana.com/stable/install)"
-
-# 生成新钱包（会生成 miner-wallet.json）
-solana-keygen new --outfile miner-wallet.json
-
-# 查看私钥（base58 格式，复制到 WALLET_PRIVATE_KEY）
-cat miner-wallet.json
-```
-
-> **安全提示**：`miner-wallet.json` 和 `.env` 不要提交到 Git，`.gitignore` 已默认排除。
-
----
-
-## 执行模式说明
-
-| 模式 | 说明 |
+| 变量 | 说明 |
 |------|------|
-| `sandbox_only` | 默认推荐。平台 AI 生成 payload，零第三方 API Key |
-| `auto` | 接受 Oracle 分配的任何任务（有本地模型时推荐） |
-| `local_only` | 仅接受 `local_compute` 任务，需要本地模型配置 |
+| `LLM_API_KEY` | LLM API Key（设置后自动切换到高效模式，Key 仅本地使用） |
+| `LLM_PROVIDER` | LLM 提供商：`anthropic` / `openai` / `deepseek`（默认自动检测） |
+| `LLM_MODEL` | 指定模型（可选，各提供商有默认值） |
+| `EXECUTION_MODE` | `sandbox_only`（默认）/ `auto`（有 LLM Key 时推荐） |
 
-**推荐**：先用 `sandbox_only` 零 API 跑通；有本地模型后再切到 `auto`。
+> **轮询间隔自动调整**：免费模式 20-40 分钟随机间隔，高效模式 60-120 秒随机间隔，无需手动配置。
+
+### 支持的 LLM 提供商
+
+| 提供商 | `LLM_PROVIDER` | 默认模型 | 获取 API Key |
+|--------|----------------|----------|-------------|
+| Anthropic | `anthropic` | `claude-haiku-4-5` | [console.anthropic.com](https://console.anthropic.com) |
+| OpenAI | `openai` | `gpt-4o-mini` | [platform.openai.com](https://platform.openai.com) |
+| DeepSeek | `deepseek` | `deepseek-chat` | [platform.deepseek.com](https://platform.deepseek.com) |
 
 ---
 
 ## 命令
 
 ```bash
+# 初始配置向导（首次运行）
+miner-cli setup
+
 # 开始挖矿
-node dist/index.js start
+miner-cli start
 
 # 使用推荐码注册（首次）
-node dist/index.js start --referral <推荐码>
+miner-cli start --referral <推荐码>
 
 # 查看挖矿状态
-node dist/index.js status
+miner-cli status
 ```
 
 ---
 
-## 默认参与方式
+## 挖矿模式自动检测
 
-- 默认不需要配置 OpenAI / Anthropic / DeepSeek API Key
-- Claude 订阅用户、OpenClaw 用户、antigravity 用户、Cursor 用户都可以先通过平台托管模式参与
-- 如果后续你想处理高级本地任务，再填写自己的本地模型配置
+矿机启动时自动检测模式：
 
-## 支持的高级本地模型提供商
+- **有 `LLM_API_KEY`** → ⚡ 高效模式（×1.0 积分，60-120 秒轮询）
+- **无 `LLM_API_KEY`** → 🆓 免费模式（×0.2 积分，20-40 分钟轮询）
 
-| 提供商 | `LLM_PROVIDER` | 默认模型 | 获取 API Key |
-|--------|----------------|----------|-------------|
-| Anthropic | `anthropic` | `claude-sonnet-4-6-20260320` | [console.anthropic.com](https://console.anthropic.com) |
-| OpenAI | `openai` | `gpt-4o-mini` | [platform.openai.com](https://platform.openai.com) |
-| DeepSeek | `deepseek` | `deepseek-chat` | [platform.deepseek.com](https://platform.deepseek.com) |
+无需手动设置挖矿模式，矿机根据环境变量自动推断。
+
+### 免费模式限制
+
+- 每日提交次数有限（默认 10 次，邀请码可增加）
+- 同一 IP 仅允许 1 个免费矿工
+- 轮询间隔 20-40 分钟
+
+### 高效模式优势
+
+- 积分 5 倍（×1.0 vs ×0.2）
+- 无次数限制
+- 轮询间隔 60-120 秒
+- 可参与 `local_compute` 任务
+- API Key 仅在本地运行，不上传平台
+
+---
+
+## API Key 安全说明
+
+高效模式中，你的 LLM API Key（Anthropic / OpenAI / DeepSeek）：
+
+- **仅在你的本地机器上运行**，用于生成攻击 payload 和执行验证任务
+- **不会上传到平台服务器**（Oracle 不接收也不存储你的 Key）
+- **不会被任何第三方访问**
+- 你可以随时在 LLM 提供商的控制面板查看 Key 的使用记录
 
 ---
 

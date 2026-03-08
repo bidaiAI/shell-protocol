@@ -2,8 +2,24 @@ const BASE_URL = import.meta.env.VITE_ORACLE_URL || '/api'
 
 let authToken: string | null = null
 
+// Restore token from localStorage on init
+try {
+  authToken = localStorage.getItem('shell-auth-token')
+} catch { /* SSR or private browsing */ }
+
 export function setToken(token: string | null) {
   authToken = token
+  try {
+    if (token) {
+      localStorage.setItem('shell-auth-token', token)
+    } else {
+      localStorage.removeItem('shell-auth-token')
+    }
+  } catch { /* ignore */ }
+}
+
+export function getToken(): string | null {
+  return authToken
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -140,6 +156,7 @@ export interface LeaderboardEntry {
   shellPoints: number
   totalSuccessfulAttacks: number
   totalTasksCompleted: number
+  miningMode?: 'free' | 'self_llm'
 }
 
 export async function getLeaderboard(limit = 50, offset = 0) {
@@ -241,11 +258,21 @@ export async function getGlobalStats() {
 export interface FeedEntry {
   id: string
   displayName: string
+  // Agent profile info
+  targetAgentName: string | null
+  targetAgentModel: string | null
+  targetChain: string | null
+  defenseLevel: string
+  injectionSurface: string
+  canaryActions: string[]
+  // Task info
   taskType: string
   difficulty: number
   tier: string
+  executionMode: string
   canaryTriggered: boolean
   pointsAwarded: number
+  vulnerabilitySummary: string | null
   verifiedAt: string
 }
 
