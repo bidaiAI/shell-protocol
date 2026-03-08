@@ -43,7 +43,7 @@ program
     const ask = (question: string): Promise<string> =>
       new Promise(resolve => rl.question(question, resolve))
 
-    const oracleUrl = 'https://oracle.openshell.cc'
+    const oracleUrl = process.env.ORACLE_URL || 'https://oracle.openshell.cc'
     let shellApiKey = ''
 
     // Step 1: Auth — auto-register or paste existing key

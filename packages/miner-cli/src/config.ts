@@ -36,7 +36,7 @@ export function loadConfig(): MinerConfig {
     llmProvider: provider,
     llmApiKey,
     llmModel: process.env.LLM_MODEL || defaultModels[provider],
-    pollingIntervalMs: Number(process.env.POLLING_INTERVAL_MS) || 5000,
+    pollingIntervalMs: Number(process.env.POLLING_INTERVAL_MS) || 60000,
     executionMode,
   }
 }
