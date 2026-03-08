@@ -45,14 +45,18 @@ export async function pollForTask(
 
   if (!res.ok) {
     if (res.status === 401) throw new Error('Token expired, re-authenticate')
+    // 404 from Railway = service temporarily unavailable (deploying or domain issue)
+    if (res.status === 404) {
+      throw new Error('ORACLE_UNAVAILABLE')
+    }
     // Parse structured error for specific codes
     try {
-      const errBody = await res.json() as { code?: string; error?: string }
+      const errBody = await res.json() as { code?: string; error?: string; hint?: string }
       if (res.status === 403 && errBody.code === 'MINING_ACCESS_RESTRICTED') {
         throw new Error('MINING_ACCESS_RESTRICTED')
       }
       if (res.status === 403 && errBody.code === 'FREE_MODE_IP_LIMIT') {
-        throw new Error('FREE_MODE_IP_LIMIT')
+        throw new Error(`FREE_MODE_IP_LIMIT:${errBody.hint || ''}`)
       }
       if (res.status === 429 && errBody.code === 'FREE_MODE_DAILY_LIMIT') {
         throw new Error('FREE_MODE_DAILY_LIMIT')
@@ -60,8 +64,9 @@ export async function pollForTask(
       throw new Error(`Poll failed: ${errBody.error || res.statusText}`)
     } catch (e) {
       if (e instanceof Error && e.message === 'MINING_ACCESS_RESTRICTED') throw e
-      if (e instanceof Error && e.message === 'FREE_MODE_IP_LIMIT') throw e
+      if (e instanceof Error && e.message.startsWith('FREE_MODE_IP_LIMIT')) throw e
       if (e instanceof Error && e.message === 'FREE_MODE_DAILY_LIMIT') throw e
+      if (e instanceof Error && e.message === 'ORACLE_UNAVAILABLE') throw e
       throw new Error(`Poll failed: ${res.statusText}`)
     }
   }

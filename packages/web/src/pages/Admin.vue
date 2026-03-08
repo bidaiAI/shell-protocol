@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import {
   adminListUsers, adminGrantMining, adminRevokeMining,
   adminGenerateInviteCodes, adminListInviteCodes,
-  type AdminUser, type AdminInviteCode, ApiError,
+  adminGetActiveMiners,
+  type AdminUser, type AdminInviteCode, type ActiveMinersResponse, ApiError,
 } from '../lib/api'
 
 // ── Auth ──────────────────────────────────────────────────────
@@ -27,6 +28,7 @@ function logout() {
 
 // ── Tab ──────────────────────────────────────────────────────
 const activeTab = ref<'users' | 'invites'>('users')
+const showActiveDetail = ref(false)
 
 // ═══════════════════════════════════════════════════════════════
 //  TAB 1: Users
@@ -89,10 +91,28 @@ async function loadUsers(resetPage = false) {
   }
 }
 
+// ── Active Miners (实时挖矿统计) ────────────────────────────
+const activeMiners = ref<ActiveMinersResponse>({ total: 0, free: 0, selfLlm: 0, miners: [] })
+let activeMinerTimer: ReturnType<typeof setInterval> | null = null
+
+async function loadActiveMiners() {
+  if (!secret.value) return
+  try {
+    activeMiners.value = await adminGetActiveMiners(secret.value)
+  } catch { /* ignore */ }
+}
+
+onUnmounted(() => {
+  if (activeMinerTimer) clearInterval(activeMinerTimer)
+})
+
 onMounted(() => {
   if (isAuthenticated.value) {
     loadUsers()
     loadInviteCodes()
+    loadActiveMiners()
+    // Auto-refresh active miners every 30 seconds
+    activeMinerTimer = setInterval(loadActiveMiners, 30_000)
   }
 })
 
@@ -289,7 +309,7 @@ function onSearchInput() {
       <div v-if="activeTab === 'users'">
 
         <!-- Stats bar -->
-        <div class="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-6">
+        <div class="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-6">
           <div class="bg-shell-card border border-shell-border rounded-lg p-3 text-center">
             <div class="text-2xl font-bold text-white font-mono">{{ totalAll || total }}</div>
             <div class="text-xs text-shell-text/50 mt-0.5">总注册</div>
@@ -302,9 +322,46 @@ function onSearchInput() {
             <div class="text-2xl font-bold text-amber-300 font-mono">{{ disabledCount }}</div>
             <div class="text-xs text-shell-text/50 mt-0.5">等待名单</div>
           </div>
-          <div class="hidden sm:block bg-shell-card border border-shell-border rounded-lg p-3 text-center">
-            <div class="text-2xl font-bold text-white font-mono">{{ totalPages }}</div>
-            <div class="text-xs text-shell-text/50 mt-0.5">页 / {{ PAGE_SIZE }}条</div>
+          <!-- Real-time mining stats -->
+          <div class="bg-shell-card border border-cyan-400/30 rounded-lg p-3 text-center">
+            <div class="text-2xl font-bold text-cyan-400 font-mono">{{ activeMiners.total }}</div>
+            <div class="text-xs text-shell-text/50 mt-0.5">⛏️ 在线矿工</div>
+          </div>
+          <div class="bg-shell-card border border-shell-border rounded-lg p-3 text-center">
+            <div class="text-2xl font-bold text-blue-400 font-mono">{{ activeMiners.free }}</div>
+            <div class="text-xs text-shell-text/50 mt-0.5">🆓 免费模式</div>
+          </div>
+          <div class="bg-shell-card border border-purple-400/30 rounded-lg p-3 text-center">
+            <div class="text-2xl font-bold text-purple-400 font-mono">{{ activeMiners.selfLlm }}</div>
+            <div class="text-xs text-shell-text/50 mt-0.5">🤖 自带LLM</div>
+          </div>
+        </div>
+
+        <!-- Active miners detail (collapsible) -->
+        <div v-if="activeMiners.total > 0" class="mb-6">
+          <button @click="showActiveDetail = !showActiveDetail" class="text-xs text-cyan-400 hover:text-cyan-300 transition-colors">
+            {{ showActiveDetail ? '▼' : '▶' }} 在线矿工详情 ({{ activeMiners.total }})
+            <span class="text-shell-text/30 ml-2">每30秒刷新</span>
+          </button>
+          <div v-if="showActiveDetail" class="mt-2 bg-shell-card border border-shell-border rounded-lg overflow-hidden">
+            <table class="w-full text-xs">
+              <thead>
+                <tr class="border-b border-shell-border text-shell-text/50">
+                  <th class="px-3 py-2 text-left">矿工</th>
+                  <th class="px-3 py-2 text-left">模式</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="m in activeMiners.miners" :key="m.userId" class="border-b border-shell-border/30 hover:bg-white/5">
+                  <td class="px-3 py-1.5 font-mono">{{ m.agentName || m.email || m.userId.slice(0,8) }}</td>
+                  <td class="px-3 py-1.5">
+                    <span :class="m.mode === 'self_llm' ? 'text-purple-400' : 'text-blue-400'">
+                      {{ m.mode === 'self_llm' ? '🤖 self_llm' : '🆓 free' }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
 

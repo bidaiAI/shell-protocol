@@ -454,6 +454,26 @@ export async function adminRevokeMining(secret: string, userId: string, note?: s
   )
 }
 
+// ── Admin Active Miners ──
+
+export interface ActiveMiner {
+  userId: string
+  mode: string
+  agentName: string | null
+  email: string | null
+}
+
+export interface ActiveMinersResponse {
+  total: number
+  free: number
+  selfLlm: number
+  miners: ActiveMiner[]
+}
+
+export async function adminGetActiveMiners(secret: string) {
+  return adminRequest<ActiveMinersResponse>('/admin/active-miners', secret)
+}
+
 // ── Admin Invite Codes ──
 
 export interface AdminInviteCode {
