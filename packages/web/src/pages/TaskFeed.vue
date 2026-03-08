@@ -10,6 +10,7 @@ const topMiners = ref<LeaderboardEntry[]>([])
 const loading = ref(true)
 const feed = ref<FeedEntry[]>([])
 const newEntryIds = ref<Set<string>>(new Set())
+const feedFilter = ref<'all' | 'success'>('all')
 let pollTimer: ReturnType<typeof setInterval> | null = null
 
 const T = computed(() => lang.value === 'en' ? {
@@ -54,6 +55,8 @@ const T = computed(() => lang.value === 'en' ? {
   surfaceMemory: 'Memory Context',
   localExec: 'Local Compute',
   sandboxExec: 'Sandbox',
+  filterAll: 'All',
+  filterSuccess: 'Breached Only',
 } : {
   title: '攻防实况',
   subtitle: '实时监控全网 AI Agent 红队测试',
@@ -96,6 +99,8 @@ const T = computed(() => lang.value === 'en' ? {
   surfaceMemory: '记忆上下文',
   localExec: '本地执行',
   sandboxExec: '沙盒验证',
+  filterAll: '全部',
+  filterSuccess: '仅成功',
 })
 
 const taskTypeLabels = computed<Record<string, string>>(() => lang.value === 'en' ? {
@@ -238,6 +243,11 @@ function chainLabel(chain: string) {
   } as Record<string, string>)[chain] || chain
 }
 
+const filteredFeed = computed(() => {
+  if (feedFilter.value === 'success') return feed.value.filter(e => e.canaryTriggered)
+  return feed.value
+})
+
 // Expandable attack detail
 const expandedId = ref<string | null>(null)
 function toggleDetail(id: string) {
@@ -301,12 +311,29 @@ function toggleDetail(id: string) {
             </div>
             <span class="text-xs text-shell-text font-mono">shell@oracle:~/attacks$</span>
             <span class="cursor-blink text-shell-green text-xs">_</span>
+            <!-- Filter buttons -->
+            <div class="ml-auto flex gap-1">
+              <button
+                class="text-[10px] px-2 py-0.5 rounded font-mono border transition-colors"
+                :class="feedFilter === 'all'
+                  ? 'bg-shell-green/15 text-shell-green border-shell-green/40'
+                  : 'bg-transparent text-shell-text border-shell-border hover:border-shell-text/50'"
+                @click="feedFilter = 'all'"
+              >{{ T.filterAll }}</button>
+              <button
+                class="text-[10px] px-2 py-0.5 rounded font-mono border transition-colors"
+                :class="feedFilter === 'success'
+                  ? 'bg-tier-apex/15 text-tier-apex border-tier-apex/40'
+                  : 'bg-transparent text-shell-text border-shell-border hover:border-shell-text/50'"
+                @click="feedFilter = 'success'"
+              >{{ T.filterSuccess }}</button>
+            </div>
           </div>
 
           <!-- Feed Entries -->
           <div class="max-h-[600px] overflow-y-auto">
             <div
-              v-for="entry in feed"
+              v-for="entry in filteredFeed"
               :key="entry.id"
               class="border-b border-shell-border/20 cursor-pointer transition-colors hover:bg-white/[0.02]"
               :class="{
