@@ -247,9 +247,24 @@ program
         console.log()
       }
       catch (err) {
-        pollSpinner.fail(`Error: ${err instanceof Error ? err.message : 'Unknown'}`)
+        const errMsg = err instanceof Error ? err.message : 'Unknown'
 
-        if (err instanceof Error && (err.message.includes('Token expired') || err.message.includes('re-authenticate') || err.message.includes('Invalid or expired'))) {
+        // Whitelist access not granted — clear message and stop polling
+        if (errMsg === 'MINING_ACCESS_RESTRICTED') {
+          pollSpinner.fail(chalk.yellow('Mining access not yet enabled for your account'))
+          console.log(chalk.cyan('  ✓ Your account is logged in successfully'))
+          console.log(chalk.cyan('  ✗ Mining access has not been enabled yet'))
+          console.log(chalk.cyan('  → Visit your Dashboard to check status, or contact the admin'))
+          console.log(chalk.cyan('  → Dashboard: https://openshell.cc'))
+          console.log()
+          console.log(chalk.gray('  Retrying in 60 seconds...'))
+          await sleep(60_000)
+          continue
+        }
+
+        pollSpinner.fail(`Error: ${errMsg}`)
+
+        if (err instanceof Error && (errMsg.includes('Token expired') || errMsg.includes('re-authenticate') || errMsg.includes('Invalid or expired'))) {
           if (config.walletPrivateKey) {
             console.log(chalk.yellow('  Re-authenticating...'))
             try {
@@ -260,6 +275,9 @@ program
             catch (authErr) {
               console.error(chalk.red(`  Re-auth failed: ${authErr instanceof Error ? authErr.message : 'Unknown'}`))
             }
+          } else {
+            // API key users can't re-auth — key is likely revoked
+            console.log(chalk.red('  API key may be invalid or revoked. Please check your configuration.'))
           }
         }
       }

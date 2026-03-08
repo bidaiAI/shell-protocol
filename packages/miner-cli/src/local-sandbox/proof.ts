@@ -46,10 +46,21 @@ export function buildSubmissionBody(
   executionResult: LocalExecutionResult,
   config: { llmProvider: string, llmModel: string },
 ): Record<string, unknown> {
+  // Sanitize BEFORE hashing to match server-side sanitizeSubmissionData()
+  const sanitizedResponse = executionResult.agentResponse.slice(0, 5000)
+  const sanitizedPayload = payload.slice(0, 10000)
+  const sanitizedLog = executionResult.actionLog.slice(0, 50).map(entry => {
+    const argsStr = JSON.stringify(entry.arguments ?? {})
+    const args = argsStr.length > 2048
+      ? { _truncated: true, _preview: argsStr.slice(0, 200) }
+      : entry.arguments
+    return { name: entry.name, arguments: args, order: entry.order }
+  })
+
   const executionHash = computeExecutionHash(
-    payload,
-    executionResult.actionLog,
-    executionResult.agentResponse,
+    sanitizedPayload,
+    sanitizedLog,
+    sanitizedResponse,
   )
 
   const totalTokens = executionResult.tokensUsed.input + executionResult.tokensUsed.output
@@ -66,11 +77,11 @@ export function buildSubmissionBody(
 
   return {
     taskId,
-    payload,
+    payload: sanitizedPayload,
     executionMode: 'local_compute',
     result: {
-      actionLog: executionResult.actionLog,
-      agentResponse: executionResult.agentResponse.slice(0, 5000),
+      actionLog: sanitizedLog,
+      agentResponse: sanitizedResponse,
       modelUsed: executionResult.modelUsed,
       tokensUsed: executionResult.tokensUsed,
       executionTimeMs: executionResult.executionTimeMs,
