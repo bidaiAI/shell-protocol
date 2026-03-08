@@ -43,24 +43,94 @@ program
     const ask = (question: string): Promise<string> =>
       new Promise(resolve => rl.question(question, resolve))
 
-    // Step 1: Auth
-    console.log(chalk.bold('Step 1: 获取你的 $SHELL 密钥'))
-    console.log(chalk.gray('  前往 https://openshell.cc → 注册 → 控制面板 → Agent 注册'))
-    console.log(chalk.gray('  复制生成的 sk-shell-xxx 密钥'))
-    console.log()
-    const shellApiKey = (await ask(chalk.white('  SHELL_API_KEY (sk-shell-xxx): '))).trim()
+    const oracleUrl = 'https://oracle.openshell.cc'
+    let shellApiKey = ''
 
-    // Step 2: Optional advanced local model
+    // Step 1: Auth — auto-register or paste existing key
+    console.log(chalk.bold('Step 1: 获取你的 $SHELL 密钥'))
+    console.log(chalk.gray('  1) 自动注册（推荐，一键完成）'))
+    console.log(chalk.gray('  2) 已有密钥（手动粘贴 sk-shell-xxx）'))
     console.log()
-    console.log(chalk.bold('Step 2: 选择挖矿模式'))
-    console.log(chalk.gray('  • sandbox_only — 轻量模式：平台 AI 全程处理，零成本'))
-    console.log(chalk.gray('  • auto         — 全模式挖矿：攻击 + 验证（需要 LLM API Key）'))
+    const authChoice = (await ask(chalk.white('  选择 [1]: '))).trim() || '1'
+
+    if (authChoice === '2') {
+      // Manual: paste existing key
+      console.log()
+      console.log(chalk.gray('  前往 https://openshell.cc → 注册 → 控制面板 → Agent 注册'))
+      shellApiKey = (await ask(chalk.white('  SHELL_API_KEY (sk-shell-xxx): '))).trim()
+    } else {
+      // Auto-register
+      console.log()
+      const regSpinner = ora('Registering with Oracle...').start()
+      try {
+        const deviceFp = getDeviceFingerprint()
+        const res = await fetch(`${oracleUrl}/auth/cli-register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ deviceFingerprint: deviceFp }),
+        })
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: res.statusText })) as { error?: string }
+          throw new Error(err.error || `HTTP ${res.status}`)
+        }
+
+        const data = await res.json() as {
+          apiKey: string
+          user: { agentName: string; referralCode: string; miningAccessEnabled: boolean }
+        }
+        shellApiKey = data.apiKey
+        regSpinner.succeed(`Registered as ${chalk.green(data.user.agentName)}`)
+        console.log(chalk.gray(`  API Key: ${shellApiKey}`))
+        console.log(chalk.gray(`  Referral Code: ${data.user.referralCode}`))
+        console.log(chalk.yellow('  ⚠ Save this API key! It will NOT be shown again.'))
+      } catch (err) {
+        regSpinner.fail(`Registration failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
+        console.log()
+        console.log(chalk.gray('  You can manually paste an existing key instead:'))
+        shellApiKey = (await ask(chalk.white('  SHELL_API_KEY (sk-shell-xxx): '))).trim()
+      }
+    }
+
+    // Step 2: Invite code (optional — enables mining access)
     console.log()
+    console.log(chalk.bold('Step 2: 白名单邀请码（可选）'))
+    console.log(chalk.gray('  如果你有邀请码，输入后立即开启挖矿权限'))
+    console.log(chalk.gray('  没有邀请码？直接回车跳过，等待平台正式开放'))
+    console.log()
+    const inviteCode = (await ask(chalk.white('  邀请码（留空跳过）: '))).trim()
+
+    if (inviteCode && shellApiKey) {
+      const inviteSpinner = ora('Redeeming invite code...').start()
+      try {
+        const res = await fetch(`${oracleUrl}/auth/redeem-invite`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${shellApiKey}`,
+          },
+          body: JSON.stringify({ inviteCode }),
+        })
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: res.statusText })) as { error?: string }
+          throw new Error(err.error || `HTTP ${res.status}`)
+        }
+
+        inviteSpinner.succeed(chalk.green('Mining access enabled!'))
+      } catch (err) {
+        inviteSpinner.fail(`Invite code failed: ${err instanceof Error ? err.message : 'Unknown'}`)
+        console.log(chalk.gray('  You can try again later, or contact the admin for access.'))
+      }
+    } else if (!inviteCode) {
+      console.log(chalk.cyan('  ℹ 已跳过。挖矿功能暂未开启，请等待平台正式开放或联系管理员获取邀请码。'))
+    }
+
+    // Step 3: Optional advanced local model
+    console.log()
+    console.log(chalk.bold('Step 3: 挖矿模式'))
     console.log(chalk.cyan('  直接回车即可') + chalk.gray(' — 默认 sandbox_only，无需第三方 API Key'))
-    console.log(chalk.gray('  如果你想参与高级本地计算任务，可填写自己的 LLM Key：'))
-    console.log(chalk.gray('    Anthropic → console.anthropic.com  (claude-haiku-4-5)'))
-    console.log(chalk.gray('    DeepSeek  → platform.deepseek.com  (deepseek-chat, 最便宜)'))
-    console.log(chalk.gray('    OpenAI    → platform.openai.com    (gpt-4o-mini)'))
+    console.log(chalk.gray('  如需高级本地计算，可填写 LLM Key（Anthropic/DeepSeek/OpenAI）'))
     console.log()
     const llmApiKey = (await ask(chalk.white('  LLM_API_KEY（留空跳过）: '))).trim()
 
@@ -84,7 +154,7 @@ program
       '# $SHELL Miner Configuration — generated by shell-miner setup',
       '',
       '# Oracle endpoint',
-      'ORACLE_URL=https://oracle.openshell.cc',
+      `ORACLE_URL=${oracleUrl}`,
       '',
       '# Authentication',
       shellApiKey ? `SHELL_API_KEY=${shellApiKey}` : '# SHELL_API_KEY=sk-shell-...',
