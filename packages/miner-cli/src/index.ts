@@ -265,8 +265,8 @@ program
     if (config.miningMode === 'free') {
       console.log()
       console.log(chalk.yellow('  💡 提升成功率: 配置 LLM_API_KEY 解锁高级攻击模式'))
-      console.log(chalk.gray('     在 .env 中设置 LLM_API_KEY=sk-xxx (支持 Anthropic/OpenAI/DeepSeek)'))
-      console.log(chalk.gray('     自带 LLM → 更强模型 → 更高攻破率 → 更多积分'))
+      console.log(chalk.gray('     在 .env 中设置 LLM_API_KEY (支持 Anthropic/OpenAI/DeepSeek/Gemini/xAI 等)'))
+      console.log(chalk.gray('     自带 LLM → 更强模型 → 更高攻破率 → 5x 积分倍率'))
     }
     console.log()
 

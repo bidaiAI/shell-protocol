@@ -270,6 +270,7 @@ export interface FeedEntry {
   difficulty: number
   tier: string
   executionMode: string
+  miningMode?: 'free' | 'self_llm'
   canaryTriggered: boolean
   pointsAwarded: number
   vulnerabilitySummary: string | null

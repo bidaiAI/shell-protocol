@@ -341,6 +341,15 @@ function toggleDetail(id: string) {
                   <span v-else class="text-xs text-shell-text px-2 py-0.5 rounded bg-shell-border/30 border border-shell-border">
                     BLOCKED
                   </span>
+                  <!-- Mining mode badge -->
+                  <span v-if="entry.miningMode === 'self_llm'"
+                    class="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-400 border border-purple-500/30 hidden sm:inline">
+                    🤖 LLM
+                  </span>
+                  <span v-else
+                    class="text-[10px] px-1.5 py-0.5 rounded bg-shell-border/20 text-shell-text/50 border border-shell-border/30 hidden sm:inline">
+                    🆓 FREE
+                  </span>
                   <span v-if="entry.pointsAwarded > 0" class="text-shell-green font-mono text-sm font-bold">+{{ entry.pointsAwarded }}</span>
                   <span v-else class="text-shell-text font-mono text-sm">0</span>
                   <span class="text-shell-text text-xs w-14 text-right hidden sm:inline">{{ timeAgo(entry.verifiedAt) }}</span>
