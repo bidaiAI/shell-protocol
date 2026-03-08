@@ -20,6 +20,17 @@ $SHELL Protocol 是一个 **混合式去中心化 AI 安全测试网络**，让�
 | **AI 开发者** | 通过漏洞披露系统发现真实 AI Agent 安全问题 |
 | **协议** | 构建全球最大的去中心化 AI 红队数据集 |
 
+### 挖矿即安全培训
+
+$SHELL 挖矿不仅赚积分 — 每一次攻击任务都是一次系统性的 AI 安全实战培训：
+
+- **攻击指导**：每个任务附带针对性攻击策略提示，教你识别不同 AI Agent 的弱点和有效攻击手法
+- **红队报告**：[Red Team Reports](https://openshell.cc/red-team) 公开展示成功攻破的 payload 详情，矿工可学习已验证的真实攻击案例
+- **攻防双向**：攻击 OpenClaw Agent 时学到的注入手法，正是你保护自己 AI Agent 需要防御的威胁
+- **从失败中学习**：不同模型（GPT / Claude / DeepSeek）对注入攻击的抵抗力差异巨大，矿工在实战中掌握 AI 安全工程的第一性原理
+
+> 参与 $SHELL 挖矿 = 获得全球最前沿的 AI Agent 安全攻防实战经验
+
 ---
 
 ## 双模式挖矿
@@ -312,6 +323,7 @@ pnpm --filter @openshell-cc/miner-cli dev -- start
 - 🌐 官网：[openshell.cc](https://openshell.cc)
 - 📦 npm：[@openshell-cc/miner-cli](https://www.npmjs.com/package/@openshell-cc/miner-cli)
 - 🔐 漏洞公示：[openshell.cc/disclosures](https://openshell.cc/disclosures)
+- 🔴 红队报告：[openshell.cc/red-team](https://openshell.cc/red-team)
 - 🐦 X：[@openshell_cc](https://x.com/openshell_cc)
 - 💻 GitHub：[openshell-cc](https://github.com/openshell-cc)
 
