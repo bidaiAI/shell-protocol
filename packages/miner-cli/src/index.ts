@@ -262,12 +262,19 @@ program
 
     console.log()
     console.log(chalk.green('  Mining started.'), chalk.gray('Press Ctrl+C to stop.'))
+    if (config.miningMode === 'free') {
+      console.log()
+      console.log(chalk.yellow('  💡 提升成功率: 配置 LLM_API_KEY 解锁高级攻击模式'))
+      console.log(chalk.gray('     在 .env 中设置 LLM_API_KEY=sk-xxx (支持 Anthropic/OpenAI/DeepSeek)'))
+      console.log(chalk.gray('     自带 LLM → 更强模型 → 更高攻破率 → 更多积分'))
+    }
     console.log()
 
     // Mining loop
     let totalTasks = 0
     let totalSuccess = 0
     let totalPoints = 0
+    let consecutiveFails = 0
 
     while (true) {
       const pollSpinner = ora('Polling for tasks...').start()
@@ -306,14 +313,23 @@ program
 
         if (result.result === 'success') {
           totalSuccess++
+          consecutiveFails = 0
           totalPoints += result.pointsAwarded ?? 0
           console.log(chalk.green(`  ✓ Attack successful! +${result.pointsAwarded} pts`))
+          if (config.miningMode === 'free') {
+            console.log(chalk.yellow(`  💡 配置 LLM_API_KEY 可获得 5x 积分倍率！本地运行，密钥安全不上传`))
+          }
         }
         else if (result.result === 'slashed') {
+          consecutiveFails++
           console.log(chalk.red(`  ✗ SLASHED! ${result.message}`))
         }
         else if (result.result === 'failed') {
+          consecutiveFails++
           console.log(chalk.red(`  ✗ Failed: ${result.message}`))
+          if (config.miningMode === 'free') {
+            console.log(chalk.yellow(`  💡 配置 LLM_API_KEY 使用更强模型，大幅提升攻破成功率！密钥仅本地使用，安全不上传`))
+          }
         }
         else {
           const spotTag = result.spotCheckSelected ? chalk.yellow(' [spot-check pending]') : ''
@@ -342,10 +358,13 @@ program
         }
 
         // Free mode: IP already in use by another miner
-        if (errMsg === 'FREE_MODE_IP_LIMIT') {
+        if (errMsg.startsWith('FREE_MODE_IP_LIMIT')) {
+          const hint = errMsg.split(':').slice(1).join(':').trim()
           pollSpinner.fail(chalk.yellow('Free mode IP limit: another free miner is already using this IP'))
-          console.log(chalk.cyan('  → Upgrade to ⚡ 高效模式: set LLM_API_KEY in your .env'))
-          console.log(chalk.gray('  → API Key runs locally, never uploaded to platform'))
+          if (hint) console.log(chalk.gray(`  ℹ ${hint}`))
+          console.log(chalk.cyan('  → 解决方案: 在 .env 中配置 LLM_API_KEY 升级到⚡高效模式'))
+          console.log(chalk.cyan('  → 高效模式无 IP 限制，更强模型，5x 积分！'))
+          console.log(chalk.gray('  → 密钥仅在你本地运行，绝不上传到平台'))
           console.log()
           console.log(chalk.gray('  Retrying in 5 minutes...'))
           await sleep(5 * 60_000)
