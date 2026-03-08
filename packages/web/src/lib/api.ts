@@ -277,8 +277,10 @@ export interface FeedEntry {
   verifiedAt: string
 }
 
-export async function getRecentFeed(limit = 20) {
-  return request<{ feed: FeedEntry[] }>(`/feed/recent?limit=${limit}`)
+export async function getRecentFeed(limit = 20, offset = 0, breachedOnly = false) {
+  const params = new URLSearchParams({ limit: String(limit), offset: String(offset) })
+  if (breachedOnly) params.set('breached', '1')
+  return request<{ feed: FeedEntry[]; hasMore: boolean }>(`/feed/recent?${params}`)
 }
 
 // ── Disclosures (White Hat Hall of Fame) ──

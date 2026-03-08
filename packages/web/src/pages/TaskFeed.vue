@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { getGlobalStats, getLeaderboard, getRecentFeed, type GlobalStats, type LeaderboardEntry, type FeedEntry } from '../lib/api'
 import { useLang } from '../lib/i18n'
 
@@ -11,6 +11,8 @@ const loading = ref(true)
 const feed = ref<FeedEntry[]>([])
 const newEntryIds = ref<Set<string>>(new Set())
 const feedFilter = ref<'all' | 'success'>('all')
+const hasMore = ref(true)
+const loadingMore = ref(false)
 let pollTimer: ReturnType<typeof setInterval> | null = null
 
 const T = computed(() => lang.value === 'en' ? {
@@ -57,6 +59,9 @@ const T = computed(() => lang.value === 'en' ? {
   sandboxExec: 'Sandbox',
   filterAll: 'All',
   filterSuccess: 'Breached Only',
+  loadMore: 'Load More',
+  loadingMore: 'Loading...',
+  noMore: 'All loaded',
 } : {
   title: '攻防实况',
   subtitle: '实时监控全网 AI Agent 红队测试',
@@ -101,6 +106,9 @@ const T = computed(() => lang.value === 'en' ? {
   sandboxExec: '沙盒验证',
   filterAll: '全部',
   filterSuccess: '仅成功',
+  loadMore: '加载更多',
+  loadingMore: '加载中...',
+  noMore: '已全部加载',
 })
 
 const taskTypeLabels = computed<Record<string, string>>(() => lang.value === 'en' ? {
@@ -134,16 +142,43 @@ const attackPhases = computed<Record<string, string[]>>(() => lang.value === 'en
   full_chain: ['信息搜集', '漏洞利用', '权限提升', '数据外泄'],
 })
 
+const PAGE_SIZE = 20
+
+async function fetchFeed(reset = false) {
+  const breached = feedFilter.value === 'success'
+  const offset = reset ? 0 : feed.value.length
+  if (!reset) loadingMore.value = true
+  try {
+    const f = await getRecentFeed(PAGE_SIZE, offset, breached)
+    if (reset) {
+      feed.value = f.feed
+    } else {
+      feed.value = [...feed.value, ...f.feed]
+    }
+    hasMore.value = f.hasMore
+  } catch (err) {
+    console.error('Failed to load feed:', err)
+  } finally {
+    loadingMore.value = false
+  }
+}
+
+// When filter changes, re-fetch from scratch
+watch(feedFilter, () => {
+  feed.value = []
+  hasMore.value = true
+  fetchFeed(true)
+})
+
 onMounted(async () => {
   try {
-    const [s, lb, f] = await Promise.all([
+    const [s, lb] = await Promise.all([
       getGlobalStats(),
       getLeaderboard(5),
-      getRecentFeed(20),
     ])
     stats.value = s
     topMiners.value = lb.leaderboard
-    feed.value = f.feed
+    await fetchFeed(true)
   }
   catch (err) {
     console.error('Failed to load task feed:', err)
@@ -152,15 +187,16 @@ onMounted(async () => {
     loading.value = false
   }
 
-  // Poll for new feed entries every 8 seconds
+  // Poll for new feed entries every 8 seconds (only for "all" view)
   pollTimer = setInterval(async () => {
+    if (feedFilter.value !== 'all') return
     try {
-      const f = await getRecentFeed(20)
+      const f = await getRecentFeed(PAGE_SIZE, 0, false)
       const existingIds = new Set(feed.value.map(e => e.id))
       const incoming = f.feed.filter(e => !existingIds.has(e.id))
       if (incoming.length > 0) {
         incoming.forEach(e => newEntryIds.value.add(e.id))
-        feed.value = [...incoming, ...feed.value].slice(0, 40)
+        feed.value = [...incoming, ...feed.value]
         setTimeout(() => {
           incoming.forEach(e => newEntryIds.value.delete(e.id))
         }, 2000)
@@ -242,11 +278,6 @@ function chainLabel(chain: string) {
     multi: 'Multi-chain',
   } as Record<string, string>)[chain] || chain
 }
-
-const filteredFeed = computed(() => {
-  if (feedFilter.value === 'success') return feed.value.filter(e => e.canaryTriggered)
-  return feed.value
-})
 
 // Expandable attack detail
 const expandedId = ref<string | null>(null)
@@ -333,7 +364,7 @@ function toggleDetail(id: string) {
           <!-- Feed Entries -->
           <div class="max-h-[600px] overflow-y-auto">
             <div
-              v-for="entry in filteredFeed"
+              v-for="entry in feed"
               :key="entry.id"
               class="border-b border-shell-border/20 cursor-pointer transition-colors hover:bg-white/[0.02]"
               :class="{
@@ -482,6 +513,21 @@ function toggleDetail(id: string) {
                   </div>
                 </div>
               </div>
+            </div>
+
+            <!-- Load more button -->
+            <div v-if="feed.length > 0 && hasMore" class="px-4 py-3 text-center border-t border-shell-border/20">
+              <button
+                class="text-xs font-mono px-4 py-1.5 rounded border transition-colors"
+                :class="loadingMore
+                  ? 'border-shell-border text-shell-text cursor-wait'
+                  : 'border-shell-green/40 text-shell-green hover:bg-shell-green/10 cursor-pointer'"
+                :disabled="loadingMore"
+                @click="fetchFeed(false)"
+              >{{ loadingMore ? T.loadingMore : T.loadMore }}</button>
+            </div>
+            <div v-if="feed.length > 0 && !hasMore" class="px-4 py-2 text-center">
+              <span class="text-[10px] font-mono text-shell-text/40">{{ T.noMore }}</span>
             </div>
 
             <div v-if="feed.length === 0 && !loading" class="px-4 py-12 text-center text-shell-text text-sm">
