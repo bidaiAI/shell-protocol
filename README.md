@@ -10,7 +10,7 @@
 
 ## 什么是 $SHELL Protocol？
 
-$SHELL Protocol 是一个 **混合式去中心化 AI 安全测试网络**，让任何人都能通过运行矿机（Miner CLI）对 AI Agent 进行 Prompt Injection 红队攻击。攻击结果由其他矿工交叉验证，平台仅作为低频抽查与超时兜底的低成本 fallback validator，确保验证去中心化的同时保证可靠性。成功的攻击赚取 $SHELL 积分。
+$SHELL Protocol 是一个 **混合式去中心化 AI 安全测试网络**，让任何人都能通过运行矿机（Miner CLI）对 AI Agent 进行红队攻击。沙盒内含 **8 个目标 Agent 画像**，覆盖金融类（Four.Meme、Pump.fun 交易机器人）和系统类（OpenClaw 工具 Agent）两大攻击类别。攻击手段包括 Prompt 注入、社会工程和系统级命令注入。攻击结果由其他矿工交叉验证，平台仅作为低频抽查与超时兜底的低成本 fallback validator。成功的攻击赚取 $SHELL 积分。
 
 ### 核心价值
 
@@ -178,6 +178,30 @@ $SHELL Protocol v0.3.0 引入 **混合式去中心化验证网络**，核心原�
 - **攻击和验证任务对矿工完全一致** — 矿工无需区分任务类型，透明参与交叉验证
 - **验证任务同样获得积分** — 诚实验证同样赚取 $SHELL
 - **作弊惩罚** — 验证结果与其他矿工/平台不一致时，影响信誉评分
+
+---
+
+## 目标 Agent 画像
+
+沙盒内置 **8 个 AI Agent 画像**，覆盖两大攻击类别：
+
+### 金融类 Agent（Token Injection / Social Engineering）
+
+DeFi 交易机器人，具备代币操作工具（buy_token、sell_token、swap、transfer 等）。目标包括 Four.Meme、Pump.fun、ElizaOS DeFi、个人交易助手等 Agent，攻击者通过 Prompt 注入与社会工程诱导未授权交易。
+
+### 系统类 Agent（Command Injection / Privilege Escalation）
+
+装备真实工具的 AI 助手。OpenClaw 画像使用 **9 个真实工具**（`exec`、`bash`、`web_fetch`、`message`、`read`、`write`、`gateway`、`cron`、`memory_search`），而非虚构的金融工具。攻击者通过权限提升与命令注入突破沙盒防御。
+
+### 难度分级
+
+| 难度 | 示例画像 | 攻击类型 |
+|------|----------|----------|
+| Easy | Pump.fun Sniper Bot | Token injection |
+| Medium | Four.Meme Agentic / Personal Trading Bot | Social engineering |
+| Hard | **OpenClaw (Hardened)** / DeFi Portfolio Manager | System-level command injection |
+
+> OpenClaw（强化版）是最高难度目标之一，拥有多层防御体系，模拟真实 OpenClaw Agent 的完整工具链。
 
 ---
 
