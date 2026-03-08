@@ -43,8 +43,10 @@ const page = ref(0)
 const PAGE_SIZE = 50
 
 const totalPages = computed(() => Math.ceil(total.value / PAGE_SIZE))
-const enabledCount = computed(() => users.value.filter(u => u.miningAccessEnabled).length)
-const disabledCount = computed(() => users.value.filter(u => !u.miningAccessEnabled).length)
+// Server-side counts (accurate across all pages)
+const totalAll = ref(0)
+const enabledCount = ref(0)
+const disabledCount = ref(0)
 
 async function loadUsers(resetPage = false) {
   if (!secret.value) return
@@ -60,6 +62,17 @@ async function loadUsers(resetPage = false) {
     })
     users.value = res.users
     total.value = res.total
+    // Use server-side summary counts (accurate across all pages)
+    if ('totalAll' in res) {
+      totalAll.value = (res as any).totalAll
+      enabledCount.value = (res as any).enabledTotal
+      disabledCount.value = (res as any).disabledTotal
+    } else {
+      // Fallback: client-side count from loaded page
+      totalAll.value = res.total
+      enabledCount.value = users.value.filter(u => u.miningAccessEnabled).length
+      disabledCount.value = users.value.filter(u => !u.miningAccessEnabled).length
+    }
   }
   catch (e) {
     if (e instanceof ApiError && e.status === 401 || (e instanceof ApiError && e.status === 403)) {
@@ -278,7 +291,7 @@ function onSearchInput() {
         <!-- Stats bar -->
         <div class="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-6">
           <div class="bg-shell-card border border-shell-border rounded-lg p-3 text-center">
-            <div class="text-2xl font-bold text-white font-mono">{{ total }}</div>
+            <div class="text-2xl font-bold text-white font-mono">{{ totalAll || total }}</div>
             <div class="text-xs text-shell-text/50 mt-0.5">总注册</div>
           </div>
           <div class="bg-shell-card border border-shell-green/30 rounded-lg p-3 text-center">
