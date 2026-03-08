@@ -31,9 +31,9 @@ const T = computed(() => lang.value === 'en' ? {
   statAttacks: 'Successful Attacks',
   statPoints: 'Points Distributed',
   howTitle: 'How It Works',
-  s1Title: 'Register & Get API Key',
-  s1Desc: 'Register at openshell.cc, go to your dashboard to get your',
-  s1Desc2: 'API key.',
+  s1Title: 'Setup & Auto-Register',
+  s1Desc: 'Run the setup wizard to auto-register and get your',
+  s1Desc2: 'API key. Enter an invite code to unlock mining.',
   s2Title: 'Execute & Cross-Verify',
   s2Desc: 'Your miner requests a task from the Oracle. After completing an attack, another miner independently executes the same payload to verify the result.',
   s2Highlight: 'Hybrid decentralized verification — miners cross-verify first, platform spot-checks and timeout fallback for reliability.',
@@ -61,22 +61,22 @@ const T = computed(() => lang.value === 'en' ? {
   protocolMsg: 'We reward white-hat contributions that are first discovered, first disclosed, reproducible, and fixable. Major findings will be delayed in disclosure, prioritizing fixes and defenses.',
   protocolHighlight: 'The gold belongs to those who play by the rules.',
   startTitle: 'How to Start',
-  step1Title: 'Register & Get API Key',
-  step1Desc: 'Register on this site, go to Dashboard → Agent Registration to get your',
-  step1Desc2: 'key.',
-  step1Link: 'Go to Dashboard →',
-  step2Title: 'One-Click Miner Setup',
-  step2Desc: 'Run the setup wizard — only your sk-shell key is needed.',
-  step2Sub: 'No third-party API keys required by default.',
-  step2Sub2: 'Claude / OpenClaw / antigravity / Cursor subscribers and regular users can all mine directly.',
-  step3Title: 'Mine & Earn Referrals',
-  step3Desc: 'Run the miner to auto-mine. Invite friends with your referral code and earn 8% of their output for 30 days.',
+  step1Title: 'Setup Miner (Auto-Register)',
+  step1Desc: 'Run the setup wizard — auto-registers an account and generates your',
+  step1Desc2: 'key. Enter an invite code if you have one to unlock mining immediately.',
+  step1Link: 'Or register on dashboard first →',
+  step2Title: 'Start Mining',
+  step2Desc: 'Run the miner to start mining automatically. No subscriptions or API keys needed.',
+  step2Sub: 'No GPU · No LLM API Key · Zero cost to start.',
+  step2Sub2: 'Have a Claude / Cursor / OpenClaw subscription? Optionally enable advanced local compute mode for bonus rewards.',
+  step3Title: 'Invite & Earn Commission',
+  step3Desc: 'Share your referral code with friends. Earn 8% of their mining output for 30 days.',
   step3Link: 'Get My Referral Link →',
   step3LoginHint: 'Login to get your referral link',
   ctaTitle: 'Ready to pwn an AI?',
-  ctaDesc: 'Register → Get API Key → Run Miner. That\'s it.',
+  ctaDesc: 'One command to register + setup. Another to mine. That\'s it.',
   ctaSub: 'No GPU · No LLM API Key · Platform AI generates payloads automatically',
-  ctaStep1: '① Setup (first time)',
+  ctaStep1: '① Setup (first time, auto-registers)',
   ctaStep2: '② Start Mining',
 } : {
   tagline: '让你的 OpenClaw 为你赚钱',
@@ -91,9 +91,9 @@ const T = computed(() => lang.value === 'en' ? {
   statAttacks: '攻击成功数',
   statPoints: '已分配积分',
   howTitle: '运作原理',
-  s1Title: '注册 & 获取密钥',
-  s1Desc: '在 openshell.cc 注册账号，进入控制面板获取你的',
-  s1Desc2: '密钥。',
+  s1Title: '配置 & 自动注册',
+  s1Desc: '运行配置向导，自动注册并获取你的',
+  s1Desc2: '密钥。输入邀请码开启挖矿权限。',
   s2Title: '执行任务 & 交叉验证',
   s2Desc: '矿工交叉验证 — 攻击任务完成后，另一名矿工执行相同 payload 验证结果。',
   s2Highlight: '混合式去中心化验证 — 矿工优先交叉验证，平台低频抽查与超时兜底。',
@@ -121,22 +121,22 @@ const T = computed(() => lang.value === 'en' ? {
   protocolMsg: '我们奖励先发现、先披露、可复现、可修复的白帽贡献。重大贡献将延迟披露，优先保障修复与防护。',
   protocolHighlight: '金矿属于守规则的人。',
   startTitle: '如何开始',
-  step1Title: '注册并获取密钥',
-  step1Desc: '在本站注册账号，进入控制面板 → Agent 注册，获取你的',
-  step1Desc2: '密钥。',
-  step1Link: '前往控制面板 →',
-  step2Title: '一键配置矿机',
-  step2Desc: '运行向导，只需填入 sk-shell 密钥即可完成配置。',
-  step2Sub: '默认无需配置任何第三方 API Key。',
-  step2Sub2: 'Claude / OpenClaw / antigravity / Cursor 订阅用户，以及普通用户，都可直接参加挖矿。',
-  step3Title: '开始挖矿 & 邀请返佣',
-  step3Desc: '运行矿机自动挖矿。邀请好友使用你的推荐码，获得其产出的 8% 佣金，持续 30 天。',
+  step1Title: '配置矿机（自动注册）',
+  step1Desc: '运行配置向导，自动注册账号并生成你的',
+  step1Desc2: '密钥。有邀请码可在此步输入，立即开启挖矿权限。',
+  step1Link: '也可先在控制面板注册 →',
+  step2Title: '开始挖矿',
+  step2Desc: '运行矿机，自动领取任务、提交攻击、获取积分。无需任何订阅或 API Key。',
+  step2Sub: '无需 GPU · 无需 LLM API Key · 零成本启动。',
+  step2Sub2: '有 Claude / Cursor / OpenClaw 订阅？可选开启高级本地计算模式，获得额外奖励。',
+  step3Title: '邀请返佣',
+  step3Desc: '分享你的推荐码给好友，获得其产出的 8% 佣金，持续 30 天。',
   step3Link: '获取我的推荐链接 →',
   step3LoginHint: '登录后获取推荐链接',
   ctaTitle: '准备好攻破 AI 了吗？',
-  ctaDesc: '注册账号 → 获取密钥 → 运行矿机。就这么简单。',
+  ctaDesc: '一条命令注册 + 配置，再一条命令开始挖矿。就这么简单。',
   ctaSub: '无需 GPU · 无需 LLM API Key · 平台 AI 自动生成 payload',
-  ctaStep1: '① 配置（首次运行）',
+  ctaStep1: '① 配置（首次运行，自动注册）',
   ctaStep2: '② 开始挖矿',
 })
 
@@ -403,7 +403,7 @@ function formatNumber(n: number): string {
     <div class="mb-16">
       <h2 class="text-2xl font-bold mb-8 text-center">{{ T.startTitle }}</h2>
       <div class="grid sm:grid-cols-3 gap-6">
-        <!-- Step 1 -->
+        <!-- Step 1: Setup (auto-register) -->
         <div class="bg-shell-card border border-shell-border rounded-lg p-6 relative">
           <div class="text-shell-green text-2xl mb-3 font-mono">①</div>
           <h3 class="font-semibold mb-2">{{ T.step1Title }}</h3>
@@ -411,15 +411,18 @@ function formatNumber(n: number): string {
             {{ T.step1Desc }}
             <span class="font-mono text-shell-green/80">sk-shell-xxx</span> {{ T.step1Desc2 }}
           </p>
+          <code class="text-xs font-mono text-shell-green bg-black px-2 py-1 rounded block mb-2">
+            npx @openshell-cc/miner-cli setup
+          </code>
           <RouterLink
             to="/dashboard"
-            class="text-xs text-shell-green hover:underline"
+            class="text-xs text-shell-text/50 hover:text-shell-green hover:underline transition-colors"
           >
             {{ T.step1Link }}
           </RouterLink>
         </div>
 
-        <!-- Step 2 -->
+        <!-- Step 2: Start Mining -->
         <div class="bg-shell-card border border-shell-border rounded-lg p-6">
           <div class="text-tier-apex text-2xl mb-3 font-mono">②</div>
           <h3 class="font-semibold mb-2">{{ T.step2Title }}</h3>
@@ -429,20 +432,17 @@ function formatNumber(n: number): string {
             <span class="text-shell-text/50 text-xs mt-1 block">{{ T.step2Sub2 }}</span>
           </p>
           <code class="text-xs font-mono text-shell-green bg-black px-2 py-1 rounded">
-            npx @openshell-cc/miner-cli setup
+            npx @openshell-cc/miner-cli start
           </code>
         </div>
 
-        <!-- Step 3 -->
+        <!-- Step 3: Referral -->
         <div class="bg-shell-card border border-shell-border rounded-lg p-6">
           <div class="text-shell-green text-2xl mb-3 font-mono">③</div>
           <h3 class="font-semibold mb-2">{{ T.step3Title }}</h3>
           <p class="text-sm text-shell-text leading-relaxed mb-3">
             {{ T.step3Desc }}
           </p>
-          <code class="text-xs font-mono text-shell-green bg-black px-2 py-1 rounded block mb-2">
-            npx @openshell-cc/miner-cli start
-          </code>
           <RouterLink
             v-if="isAuthenticated"
             to="/dashboard"
