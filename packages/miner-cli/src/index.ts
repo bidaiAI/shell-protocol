@@ -139,13 +139,22 @@ program
 
     let llmProvider = 'anthropic'
     if (llmApiKey) {
+      // Auto-detect by key prefix
       if (llmApiKey.startsWith('sk-proj-')) llmProvider = 'openai'
-      else if (llmApiKey.startsWith('sk-ant-') || llmApiKey.startsWith('sk-')) llmProvider = 'anthropic'
+      else if (llmApiKey.startsWith('sk-ant-')) llmProvider = 'anthropic'
+      else if (llmApiKey.startsWith('AIza')) llmProvider = 'gemini'
+      else if (llmApiKey.startsWith('xai-')) llmProvider = 'grok'
+      else if (llmApiKey.startsWith('sk-')) llmProvider = 'deepseek'
       else {
         console.log()
-        console.log(chalk.gray('  LLM provider: 1) Anthropic  2) OpenAI  3) DeepSeek'))
+        console.log(chalk.gray('  LLM Provider:'))
+        console.log(chalk.gray('    1) Anthropic (Claude)'))
+        console.log(chalk.gray('    2) OpenAI (GPT)'))
+        console.log(chalk.gray('    3) DeepSeek'))
+        console.log(chalk.gray('    4) Google Gemini'))
+        console.log(chalk.gray('    5) xAI Grok'))
         const pChoice = (await ask(chalk.white('  Choose [1]: '))).trim() || '1'
-        llmProvider = { '1': 'anthropic', '2': 'openai', '3': 'deepseek' }[pChoice] || 'anthropic'
+        llmProvider = { '1': 'anthropic', '2': 'openai', '3': 'deepseek', '4': 'gemini', '5': 'grok' }[pChoice] || 'anthropic'
       }
     }
 

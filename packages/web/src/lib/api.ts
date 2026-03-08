@@ -541,7 +541,7 @@ export interface RedTeamReport {
 export interface RedTeamAccess {
   agentName: string
   hasAccess: boolean
-  reason: 'has_mining_history' | 'no_mining_history'
+  reason: 'has_mining_history' | 'no_mining_history' | 'has_breached_agent' | 'not_breached_agent'
 }
 
 export async function getRedTeamAgents() {

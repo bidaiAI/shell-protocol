@@ -1,27 +1,34 @@
 import Anthropic from '@anthropic-ai/sdk'
 import OpenAI from 'openai'
 import type { MinerConfig } from '../config.js'
+import { PROVIDER_PRESETS } from '../config.js'
 
 export interface LLMResponse {
   text: string
   tokensUsed: { input: number, output: number }
 }
 
-/** Unified LLM provider interface */
+/**
+ * Unified LLM provider interface.
+ *
+ * Routing logic:
+ *  - provider === 'anthropic' → Anthropic SDK (Messages API)
+ *  - Everything else → OpenAI SDK (Chat Completions API)
+ *    Includes built-in presets (openai, deepseek, gemini, grok) and
+ *    any custom provider via LLM_BASE_URL.
+ */
 export async function generatePayload(
   config: MinerConfig,
   systemPrompt: string,
   userPrompt: string,
 ): Promise<LLMResponse> {
-  switch (config.llmProvider) {
-    case 'anthropic':
-      return callAnthropic(config, systemPrompt, userPrompt)
-    case 'openai':
-    case 'deepseek':
-      return callOpenAI(config, systemPrompt, userPrompt)
-    default:
-      throw new Error(`Unsupported LLM provider: ${config.llmProvider}`)
+  const preset = PROVIDER_PRESETS[config.llmProvider]
+  const sdk = preset?.sdk ?? 'openai' // unknown providers default to OpenAI-compatible
+
+  if (sdk === 'anthropic') {
+    return callAnthropic(config, systemPrompt, userPrompt)
   }
+  return callOpenAI(config, systemPrompt, userPrompt)
 }
 
 async function callAnthropic(
@@ -57,12 +64,13 @@ async function callOpenAI(
   systemPrompt: string,
   userPrompt: string,
 ): Promise<LLMResponse> {
+  // Resolve base URL: explicit config > provider preset > OpenAI default
+  const baseURL = config.llmBaseUrl || PROVIDER_PRESETS[config.llmProvider]?.baseUrl || undefined
+
   const client = new OpenAI({
     apiKey: config.llmApiKey,
     timeout: 60_000,
-    baseURL: config.llmProvider === 'deepseek'
-      ? 'https://api.deepseek.com'
-      : undefined,
+    baseURL,
   })
 
   const response = await client.chat.completions.create({

@@ -7,8 +7,11 @@ export type ExecutionMode = 'auto' | 'sandbox_only'
 export type TaskExecutionMode = 'sandbox_verified' | 'local_compute'
 export type MiningMode = 'free' | 'self_llm'
 
+/** Supported LLM providers (named presets + custom via LLM_BASE_URL) */
+export type LLMProvider = 'anthropic' | 'openai' | 'deepseek' | 'gemini' | 'grok' | string
+
 // Environment variables that indicate a user has their own LLM API key
-const LLM_KEY_ENV_VARS = ['LLM_API_KEY', 'ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'DEEPSEEK_API_KEY']
+const LLM_KEY_ENV_VARS = ['LLM_API_KEY', 'ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'DEEPSEEK_API_KEY', 'GEMINI_API_KEY']
 
 /** Auto-infer mining mode based on whether user has an LLM API key */
 export function inferMiningMode(): MiningMode {
@@ -36,11 +39,25 @@ export function getPollIntervalLabel(mode: MiningMode): string {
   return '60-120 seconds'
 }
 
+/**
+ * Built-in provider presets: default base URL + model.
+ * Any provider not listed here can still be used by setting LLM_BASE_URL + LLM_MODEL.
+ * All non-anthropic providers use the OpenAI-compatible chat completions API.
+ */
+export const PROVIDER_PRESETS: Record<string, { baseUrl?: string; defaultModel: string; sdk: 'anthropic' | 'openai' }> = {
+  anthropic: { defaultModel: 'claude-haiku-4-5', sdk: 'anthropic' },
+  openai:    { defaultModel: 'gpt-4o-mini', sdk: 'openai' },
+  deepseek:  { baseUrl: 'https://api.deepseek.com', defaultModel: 'deepseek-chat', sdk: 'openai' },
+  gemini:    { baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/', defaultModel: 'gemini-2.5-flash', sdk: 'openai' },
+  grok:      { baseUrl: 'https://api.x.ai/v1', defaultModel: 'grok-3-mini-fast', sdk: 'openai' },
+}
+
 export interface MinerConfig {
   oracleUrl: string
   walletPrivateKey: string  // Solana wallet private key (auth method A)
   shellApiKey: string       // sk-shell-xxx API key from dashboard (auth method B)
-  llmProvider: 'anthropic' | 'openai' | 'deepseek'
+  llmProvider: LLMProvider
+  llmBaseUrl: string        // Custom OpenAI-compatible base URL (optional)
   llmApiKey: string         // Optional — only needed for advanced/local_compute mode
   llmModel: string
   pollingIntervalMs: number
@@ -49,15 +66,13 @@ export interface MinerConfig {
 }
 
 export function loadConfig(): MinerConfig {
-  const provider = (process.env.LLM_PROVIDER || 'anthropic') as MinerConfig['llmProvider']
+  const provider = (process.env.LLM_PROVIDER || 'anthropic') as LLMProvider
+  const preset = PROVIDER_PRESETS[provider]
 
-  const defaultModels: Record<string, string> = {
-    anthropic: 'claude-haiku-4-5',
-    openai: 'gpt-4o-mini',
-    deepseek: 'deepseek-chat',
-  }
+  // Custom base URL: LLM_BASE_URL > OPENAI_BASE_URL > provider preset > undefined
+  const llmBaseUrl = process.env.LLM_BASE_URL || process.env.OPENAI_BASE_URL || preset?.baseUrl || ''
 
-  const llmApiKey = process.env.LLM_API_KEY || process.env.ANTHROPIC_API_KEY || ''
+  const llmApiKey = process.env.LLM_API_KEY || process.env.ANTHROPIC_API_KEY || process.env.GEMINI_API_KEY || ''
   const executionMode = (process.env.EXECUTION_MODE || 'sandbox_only') as ExecutionMode
   const miningMode = inferMiningMode()
 
@@ -66,8 +81,9 @@ export function loadConfig(): MinerConfig {
     walletPrivateKey: process.env.WALLET_PRIVATE_KEY || '',
     shellApiKey: process.env.SHELL_API_KEY || '',
     llmProvider: provider,
+    llmBaseUrl,
     llmApiKey,
-    llmModel: process.env.LLM_MODEL || defaultModels[provider],
+    llmModel: process.env.LLM_MODEL || preset?.defaultModel || provider,
     pollingIntervalMs: Number(process.env.POLLING_INTERVAL_MS) || getRandomPollInterval(miningMode),
     executionMode,
     miningMode,
@@ -103,6 +119,14 @@ export function validateConfig(config: MinerConfig): string[] {
     errors.push(
       'EXECUTION_MODE=auto requires LLM_API_KEY.\n'
       + '  Without a local model key, use EXECUTION_MODE=sandbox_only.',
+    )
+  }
+
+  // Warn if unknown provider without base URL
+  if (config.llmApiKey && !PROVIDER_PRESETS[config.llmProvider] && !config.llmBaseUrl) {
+    errors.push(
+      `Unknown LLM provider "${config.llmProvider}" — set LLM_BASE_URL for custom providers.\n`
+      + `  Supported presets: ${Object.keys(PROVIDER_PRESETS).join(', ')}`,
     )
   }
 
