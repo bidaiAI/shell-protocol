@@ -62,7 +62,7 @@ export function loadConfig(): MinerConfig {
   const miningMode = inferMiningMode()
 
   return {
-    oracleUrl: process.env.ORACLE_URL || 'https://oracle.openshell.cc',
+    oracleUrl: process.env.ORACLE_URL || 'https://oracle-production-252f.up.railway.app',
     walletPrivateKey: process.env.WALLET_PRIVATE_KEY || '',
     shellApiKey: process.env.SHELL_API_KEY || '',
     llmProvider: provider,
