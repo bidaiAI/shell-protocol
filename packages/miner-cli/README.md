@@ -70,8 +70,9 @@ node dist/index.js start
 | 变量 | 说明 |
 |------|------|
 | `LLM_API_KEY` | LLM API Key（设置后自动切换到高效模式，Key 仅本地使用） |
-| `LLM_PROVIDER` | LLM 提供商：`anthropic` / `openai` / `deepseek`（默认自动检测） |
+| `LLM_PROVIDER` | LLM 提供商（见下表，默认按 Key 前缀自动检测） |
 | `LLM_MODEL` | 指定模型（可选，各提供商有默认值） |
+| `LLM_BASE_URL` | 自定义 OpenAI 兼容 API 端点（用于 Ollama / vLLM / 自托管等） |
 | `EXECUTION_MODE` | `sandbox_only`（默认）/ `auto`（有 LLM Key 时推荐） |
 
 > **轮询间隔自动调整**：免费模式 20-40 分钟随机间隔，高效模式 60-120 秒随机间隔，无需手动配置。
@@ -83,6 +84,33 @@ node dist/index.js start
 | Anthropic | `anthropic` | `claude-haiku-4-5` | [console.anthropic.com](https://console.anthropic.com) |
 | OpenAI | `openai` | `gpt-4o-mini` | [platform.openai.com](https://platform.openai.com) |
 | DeepSeek | `deepseek` | `deepseek-chat` | [platform.deepseek.com](https://platform.deepseek.com) |
+| Google Gemini | `gemini` | `gemini-2.5-flash` | [aistudio.google.com](https://aistudio.google.com) |
+| xAI Grok | `grok` | `grok-3-mini-fast` | [console.x.ai](https://console.x.ai) |
+| **自定义** | 任意名称 | 需指定 `LLM_MODEL` | 需设置 `LLM_BASE_URL` |
+
+#### 自定义 OpenAI 兼容 API
+
+任何支持 OpenAI Chat Completions API 格式的服务都可以使用：
+
+```bash
+# Ollama 本地推理
+LLM_PROVIDER=openai
+LLM_BASE_URL=http://localhost:11434/v1
+LLM_MODEL=llama3
+LLM_API_KEY=ollama
+
+# Together AI
+LLM_PROVIDER=openai
+LLM_BASE_URL=https://api.together.xyz/v1
+LLM_MODEL=meta-llama/Llama-3-70b-chat-hf
+LLM_API_KEY=your-together-key
+
+# 其他 OpenAI 兼容 API（vLLM, Fireworks, Groq 等）
+LLM_PROVIDER=openai
+LLM_BASE_URL=https://your-api-endpoint/v1
+LLM_MODEL=your-model
+LLM_API_KEY=your-key
+```
 
 ---
 
@@ -131,7 +159,7 @@ miner-cli status
 
 ## API Key 安全说明
 
-高效模式中，你的 LLM API Key（Anthropic / OpenAI / DeepSeek）：
+高效模式中，你的 LLM API Key：
 
 - **仅在你的本地机器上运行**，用于生成攻击 payload 和执行验证任务
 - **不会上传到平台服务器**（Oracle 不接收也不存储你的 Key）
