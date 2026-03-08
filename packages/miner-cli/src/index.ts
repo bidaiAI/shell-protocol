@@ -371,6 +371,23 @@ program
           continue
         }
 
+        // Free mode: nodes congested (too many free miners online)
+        if (errMsg.startsWith('FREE_MODE_CONGESTED')) {
+          const parts = errMsg.split(':')
+          const online = parts[1] || '?'
+          const cap = parts[2] || '?'
+          pollSpinner.fail(chalk.yellow(`免费节点拥堵 (${online}/${cap} 在线)`))
+          console.log(chalk.cyan('  ⏳ 当前免费矿工过多，节点资源紧张'))
+          console.log(chalk.cyan('  → 解决方案: 在 .env 中配置 LLM_API_KEY 升级到⚡高效模式'))
+          console.log(chalk.cyan('  → 高效模式无排队限制，更强模型，5x 积分！'))
+          console.log(chalk.gray('  → 支持 Anthropic/OpenAI/DeepSeek/Gemini/xAI 等'))
+          console.log(chalk.gray('  → 密钥仅在你本地运行，绝不上传到平台，完全安全'))
+          console.log()
+          console.log(chalk.gray('  Retrying in 3 minutes...'))
+          await sleep(3 * 60_000)
+          continue
+        }
+
         // Free mode: daily limit reached
         if (errMsg === 'FREE_MODE_DAILY_LIMIT') {
           pollSpinner.info(chalk.yellow('Free mode daily limit reached'))

@@ -61,11 +61,17 @@ export async function pollForTask(
       if (res.status === 429 && errBody.code === 'FREE_MODE_DAILY_LIMIT') {
         throw new Error('FREE_MODE_DAILY_LIMIT')
       }
+      if (res.status === 503 && errBody.code === 'FREE_MODE_CONGESTED') {
+        const online = (errBody as Record<string, unknown>).freeMinersOnline ?? '?'
+        const cap = (errBody as Record<string, unknown>).hardCap ?? '?'
+        throw new Error(`FREE_MODE_CONGESTED:${online}:${cap}`)
+      }
       throw new Error(`Poll failed: ${errBody.error || res.statusText}`)
     } catch (e) {
       if (e instanceof Error && e.message === 'MINING_ACCESS_RESTRICTED') throw e
       if (e instanceof Error && e.message.startsWith('FREE_MODE_IP_LIMIT')) throw e
       if (e instanceof Error && e.message === 'FREE_MODE_DAILY_LIMIT') throw e
+      if (e instanceof Error && e.message.startsWith('FREE_MODE_CONGESTED')) throw e
       if (e instanceof Error && e.message === 'ORACLE_UNAVAILABLE') throw e
       throw new Error(`Poll failed: ${res.statusText}`)
     }
