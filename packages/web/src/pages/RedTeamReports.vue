@@ -203,7 +203,13 @@ onMounted(async () => {
     )
     if (match) {
       toggleAgent(match.agentName)
+      return
     }
+  }
+  // Default: auto-expand the first promoted (public) agent for visibility & crawlers
+  const promoted = agents.value.find(a => a.isPromoted)
+  if (promoted) {
+    toggleAgent(promoted.agentName)
   }
 })
 </script>
