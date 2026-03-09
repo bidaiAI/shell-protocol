@@ -329,6 +329,15 @@ program
             console.log(chalk.yellow(`  💡 配置 LLM_API_KEY 可获得 5x 积分倍率！本地运行，密钥安全不上传`))
           }
         }
+        else if (result.result === 'penalty') {
+          consecutiveFails++
+          const level = result.warningLevel ?? 0
+          if (result.penaltyRate === 0) {
+            console.log(chalk.yellow(`  ⚠ 蜜罐警告 (${level}/3): ${result.message}`))
+          } else {
+            console.log(chalk.red(`  ✗ 蜜罐惩罚 (扣${Math.round((result.penaltyRate ?? 0) * 100)}%): -${result.penaltyAmount} pts | 剩余: ${result.remainingPoints} pts`))
+          }
+        }
         else if (result.result === 'slashed') {
           consecutiveFails++
           console.log(chalk.red(`  ✗ SLASHED! ${result.message}`))

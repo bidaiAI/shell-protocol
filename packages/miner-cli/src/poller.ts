@@ -217,10 +217,15 @@ export async function submitLocalComputeResult(
 }
 
 export interface SubmitResult {
-  result: 'success' | 'submitted' | 'slashed' | 'failed'
+  result: 'success' | 'submitted' | 'slashed' | 'failed' | 'penalty'
   message: string
   pointsAwarded?: number
   submissionId?: string
   slashedAmount?: number
   spotCheckSelected?: boolean
+  // Progressive penalty fields (honeypot)
+  penaltyAmount?: number
+  penaltyRate?: number
+  remainingPoints?: number
+  warningLevel?: number
 }
