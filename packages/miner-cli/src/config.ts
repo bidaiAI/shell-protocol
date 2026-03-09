@@ -24,7 +24,7 @@ export function inferMiningMode(): MiningMode {
 /** Polling interval ranges by mining mode (in milliseconds) */
 const POLL_INTERVALS = {
   free: { min: 20 * 60 * 1000, max: 40 * 60 * 1000 },       // 20-40 minutes
-  self_llm: { min: 60 * 1000, max: 120 * 1000 },              // 60-120 seconds
+  self_llm: { min: 5 * 60 * 1000, max: 10 * 60 * 1000 },    // 5-10 minutes (matches server-side enforcement)
 } as const
 
 /** Get a random polling interval for the given mode */
@@ -36,7 +36,7 @@ export function getRandomPollInterval(mode: MiningMode): number {
 /** Get human-readable poll interval label */
 export function getPollIntervalLabel(mode: MiningMode): string {
   if (mode === 'free') return '20-40 minutes'
-  return '60-120 seconds'
+  return '5-10 minutes'
 }
 
 /**
