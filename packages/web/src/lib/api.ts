@@ -157,6 +157,7 @@ export interface LeaderboardEntry {
   totalSuccessfulAttacks: number
   totalTasksCompleted: number
   miningMode?: 'free' | 'self_llm'
+  slashCount?: number
 }
 
 export async function getLeaderboard(limit = 50, offset = 0) {

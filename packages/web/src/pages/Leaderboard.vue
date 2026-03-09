@@ -18,6 +18,8 @@ const T = computed(() => lang.value === 'en' ? {
   loading: 'Loading...', prev: 'Prev', next: 'Next',
   pageLabel: `Page ${page.value + 1}`,
   modeFree: 'Free', modeSelfLlm: 'Pro',
+  slashedTag: 'Penalized',
+  slashedTip: 'Points deducted due to honeypot detection failures',
 } : {
   title: '排行榜',
   colMiner: '矿工', colTier: '段位', colPoints: '积分',
@@ -26,6 +28,8 @@ const T = computed(() => lang.value === 'en' ? {
   loading: '加载中...', prev: '上一页', next: '下一页',
   pageLabel: `第 ${page.value + 1} 页`,
   modeFree: '免费', modeSelfLlm: '高效',
+  slashedTag: '已处罚',
+  slashedTip: '因蜜罐检测失败被扣除积分',
 })
 
 onMounted(() => loadPage())

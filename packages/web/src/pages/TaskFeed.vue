@@ -62,6 +62,9 @@ const T = computed(() => lang.value === 'en' ? {
   loadMore: 'Load More',
   loadingMore: 'Loading...',
   noMore: 'All loaded',
+  reasonDuplicate: 'Same method — no pts',
+  reasonDefenseHeld: 'Defense held',
+  reasonDiminished: 'Diminished returns',
 } : {
   title: '攻防实况',
   subtitle: '实时监控全网 AI Agent 红队测试',
@@ -109,6 +112,9 @@ const T = computed(() => lang.value === 'en' ? {
   loadMore: '加载更多',
   loadingMore: '加载中...',
   noMore: '已全部加载',
+  reasonDuplicate: '相同手段 — 不计分',
+  reasonDefenseHeld: '防御成功',
+  reasonDiminished: '递减奖励',
 })
 
 const taskTypeLabels = computed<Record<string, string>>(() => lang.value === 'en' ? {
@@ -391,13 +397,28 @@ function toggleDetail(id: string) {
                     <span v-else class="text-shell-text text-xs hidden sm:inline">{{ taskTypeLabels[entry.taskType] || entry.taskType }}</span>
                   </div>
                 </div>
-                <div class="flex items-center gap-3 flex-shrink-0">
-                  <span v-if="entry.canaryTriggered"
+                <div class="flex items-center gap-2 flex-shrink-0">
+                  <!-- Status badge -->
+                  <span v-if="entry.canaryTriggered && entry.pointsAwarded > 0"
                     class="text-xs font-bold px-2 py-0.5 rounded bg-tier-apex/15 text-tier-apex border border-tier-apex/30">
+                    BREACHED
+                  </span>
+                  <span v-else-if="entry.canaryTriggered && entry.pointsAwarded === 0"
+                    class="text-xs font-bold px-2 py-0.5 rounded bg-yellow-500/15 text-yellow-400 border border-yellow-500/30"
+                    :title="T.reasonDuplicate">
                     BREACHED
                   </span>
                   <span v-else class="text-xs text-shell-text px-2 py-0.5 rounded bg-shell-border/30 border border-shell-border">
                     BLOCKED
+                  </span>
+                  <!-- Reason tag for 0-point entries -->
+                  <span v-if="entry.canaryTriggered && entry.pointsAwarded === 0"
+                    class="text-[10px] px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-400/80 border border-yellow-500/20 hidden sm:inline">
+                    {{ T.reasonDuplicate }}
+                  </span>
+                  <span v-if="!entry.canaryTriggered && entry.pointsAwarded === 0"
+                    class="text-[10px] px-1.5 py-0.5 rounded bg-shell-border/20 text-shell-text/60 border border-shell-border/30 hidden sm:inline">
+                    {{ T.reasonDefenseHeld }}
                   </span>
                   <!-- Mining mode badge -->
                   <span v-if="entry.miningMode === 'self_llm'"
@@ -408,8 +429,10 @@ function toggleDetail(id: string) {
                     class="text-[10px] px-1.5 py-0.5 rounded bg-shell-border/20 text-shell-text/50 border border-shell-border/30 hidden sm:inline">
                     🆓 FREE
                   </span>
+                  <!-- Points -->
                   <span v-if="entry.pointsAwarded > 0" class="text-shell-green font-mono text-sm font-bold">+{{ entry.pointsAwarded }}</span>
-                  <span v-else class="text-shell-text font-mono text-sm">0</span>
+                  <span v-else-if="entry.canaryTriggered" class="text-yellow-400/60 font-mono text-sm">0</span>
+                  <span v-else class="text-shell-text/40 font-mono text-sm">0</span>
                   <span class="text-shell-text text-xs w-14 text-right hidden sm:inline">{{ timeAgo(entry.verifiedAt) }}</span>
                 </div>
               </div>
@@ -504,11 +527,14 @@ function toggleDetail(id: string) {
                     <div class="font-mono text-shell-text">
                       {{ T.taskType }}: <span class="text-white">{{ taskTypeLabels[entry.taskType] || entry.taskType }}</span>
                     </div>
-                    <div v-if="entry.canaryTriggered" class="text-tier-apex font-bold font-mono">
+                    <div v-if="entry.canaryTriggered && entry.pointsAwarded > 0" class="text-tier-apex font-bold font-mono">
                       VULNERABILITY CONFIRMED
                     </div>
+                    <div v-else-if="entry.canaryTriggered && entry.pointsAwarded === 0" class="text-yellow-400 font-mono">
+                      BREACHED — {{ T.reasonDuplicate }}
+                    </div>
                     <div v-else class="text-shell-green font-mono">
-                      DEFENSE HELD
+                      {{ T.reasonDefenseHeld.toUpperCase() }}
                     </div>
                   </div>
                 </div>
