@@ -288,6 +288,25 @@ To maintain mining quality, 5% of tasks are honeypots with obviously malicious p
 
 ---
 
+## Red Team Disclosure Policy
+
+Successful breach payloads are published on the [Red Team Reports](https://openshell.cc/red-team) page following a three-tier disclosure system:
+
+| Tier | Visibility | Content |
+|------|-----------|---------|
+| **Tier 1 — Public** | Everyone | Target agent, attack surface, model, high-level summary, triggered actions, time, defense level |
+| **Tier 2 — Miners** | Logged-in users with ≥1 mining submission | Detailed attack metadata (task type, difficulty, miner tier, points) — **payload hidden** |
+| **Tier 3 — Full Disclosure** | See below | Complete attack payload and PoC |
+
+**Tier 3 access is granted when ANY of these conditions are met:**
+- The agent is marked as **promoted** (officially disclosed by $SHELL)
+- The individual report is past the **10-day disclosure window**
+- The viewer has **successfully breached** the same agent
+
+> This system balances transparency with responsible disclosure — showcasing results while protecting active attack surfaces.
+
+---
+
 ## FAQ
 
 **Q: What hardware do I need?**
