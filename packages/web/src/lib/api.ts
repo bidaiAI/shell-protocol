@@ -546,11 +546,23 @@ export interface RedTeamAgent {
   firstBreachAt: string
   latestBreachAt: string
   isPromoted: boolean
+  // Tier 1 enrichment
+  modelsUsed: string[]
+  latestTriggeredActions: string[]
+  summary: string
+  disclosureWindowDays: number
 }
+
+export type RedTeamAccessTier =
+  | 'tier3_promoted'
+  | 'tier3_breached'
+  | 'tier2_miner'
+  | 'denied_no_auth'
+  | 'denied_no_mining'
 
 export interface RedTeamReport {
   id: string
-  payload: string
+  payload: string | null
   triggeredActions: string[]
   pointsAwarded: number
   verifiedAt: string
@@ -562,12 +574,18 @@ export interface RedTeamReport {
   canaryActions: string[]
   minerName: string
   minerTier: string
+  // Tier enrichment
+  modelId: string | null
+  modelDisplay: string | null
+  disclosureStatus: 'disclosed' | 'pending'
+  payloadVisible: boolean
 }
 
 export interface RedTeamAccess {
   agentName: string
   hasAccess: boolean
-  reason: 'has_mining_history' | 'no_mining_history' | 'has_breached_agent' | 'not_breached_agent'
+  accessTier: RedTeamAccessTier
+  reason: 'promoted_public' | 'not_authenticated' | 'no_mining_history' | 'has_mining_record' | 'has_breached_agent'
 }
 
 export async function getRedTeamAgents() {
@@ -579,6 +597,8 @@ export async function getRedTeamReports(agentName: string, limit = 20, offset = 
     agentName: string
     isPromoted: boolean
     totalBreaches: number
+    accessTier: RedTeamAccessTier
+    disclosureWindowDays: number
     reports: RedTeamReport[]
   }>(`/redteam/reports/${encodeURIComponent(agentName)}?limit=${limit}&offset=${offset}`)
 }

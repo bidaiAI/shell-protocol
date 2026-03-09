@@ -721,7 +721,7 @@ function toggleExpand(id: string) {
                 <span>&#183;</span>
                 <span class="text-red-400">+{{ report.pointsAwarded }}pts</span>
               </div>
-              <pre class="text-xs font-mono text-red-200/80 overflow-x-auto leading-relaxed whitespace-pre-wrap max-h-32 overflow-y-auto">{{ report.payload.slice(0, 400) }}{{ report.payload.length > 400 ? '...' : '' }}</pre>
+              <pre class="text-xs font-mono text-red-200/80 overflow-x-auto leading-relaxed whitespace-pre-wrap max-h-32 overflow-y-auto">{{ (report.payload || '').slice(0, 400) }}{{ (report.payload || '').length > 400 ? '...' : '' }}</pre>
               <div v-if="report.triggeredActions?.length" class="mt-2 flex gap-1.5 flex-wrap">
                 <span v-for="a in report.triggeredActions" :key="String(a)"
                   class="text-xs bg-red-400/10 text-red-300 px-1.5 py-0.5 rounded font-mono border border-red-400/15">
