@@ -27,7 +27,7 @@ const T = computed(() => lang.value === 'en' ? {
   close: 'Close',
   statusSuccess: 'Attack Success', statusFail: 'Attack Failed',
   statusVerified: 'Verified', statusPending: 'Verifying...',
-  localExec: 'Local Compute', sandboxExec: 'Sandbox',
+  localExec: '⚡ LLM Mode', sandboxExec: '🆓 Free Mode',
   yes: 'Yes', no: 'No',
   agentDirectory: 'Attack Target Directory',
   agentDirectoryDesc: 'All 26 AI Agent profiles in the sandbox — choose your target',
@@ -57,7 +57,7 @@ const T = computed(() => lang.value === 'en' ? {
   close: '关闭',
   statusSuccess: '攻击成功', statusFail: '攻击失败',
   statusVerified: '已验证', statusPending: '验证中...',
-  localExec: '本地执行', sandboxExec: '沙盒验证',
+  localExec: '⚡ LLM 模式', sandboxExec: '🆓 免费模式',
   yes: '是', no: '否',
   agentDirectory: '攻击目标一览',
   agentDirectoryDesc: '沙盒中全部 26 个 AI Agent 档案 — 选择你的目标',
@@ -302,10 +302,10 @@ const defenseLevelText: Record<string, { en: string; zh: string }> = {
                 </span>
               </td>
               <td class="px-4 py-2.5 hidden sm:table-cell">
-                <span class="text-xs font-mono" :class="sub.executionMode === 'local_compute' ? 'text-blue-400' : 'text-shell-text'">
+                <span class="text-xs font-mono" :class="sub.executionMode === 'local_compute' ? 'text-blue-400 font-semibold' : 'text-shell-text/60'">
                   {{ executionModeLabel(sub.executionMode) }}
                 </span>
-                <span v-if="sub.spotCheckSelected" class="text-yellow-400 text-xs ml-1" title="Spot checked">⚡</span>
+                <span v-if="sub.spotCheckSelected" class="text-yellow-400 text-xs ml-1" title="Spot checked">🔍</span>
               </td>
               <td class="px-4 py-2.5 hidden sm:table-cell">
                 <span class="text-xs" :class="settlementColor(sub.settlementStatus)">
@@ -339,7 +339,7 @@ const defenseLevelText: Record<string, { en: string; zh: string }> = {
           </div>
           <div>
             <span class="text-shell-text">{{ T.execMode }}</span>
-            <p :class="selectedResult.executionMode === 'local_compute' ? 'text-blue-400' : 'text-shell-text'" class="font-mono">
+            <p :class="selectedResult.executionMode === 'local_compute' ? 'text-blue-400 font-semibold' : 'text-shell-text/70'" class="font-mono">
               {{ executionModeLabel(selectedResult.executionMode) }}
             </p>
           </div>
