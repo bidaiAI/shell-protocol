@@ -254,6 +254,30 @@ export async function getGlobalStats() {
   return request<GlobalStats>('/stats')
 }
 
+// ── Agent Profiles ──
+
+export interface AgentProfile {
+  id: string
+  name: string
+  defenseLevel: string
+  injectionSurface: string
+  targetChain: string | null
+  toolCount: number
+  canaryActionCount: number
+  tools: string[]
+  canaryActions: string[]
+}
+
+export interface AgentProfilesResponse {
+  total: number
+  byDifficulty: { easy: number; medium: number; hard: number }
+  profiles: AgentProfile[]
+}
+
+export async function getAgentProfiles() {
+  return request<AgentProfilesResponse>('/feed/agents')
+}
+
 // ── Feed ──
 
 export interface FeedEntry {
