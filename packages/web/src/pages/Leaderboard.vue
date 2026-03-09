@@ -14,22 +14,28 @@ const T = computed(() => lang.value === 'en' ? {
   title: 'Leaderboard',
   colMiner: 'Miner', colTier: 'Tier', colPoints: 'Points',
   colMode: 'Mode',
-  colAttacks: 'Attacks', colSuccessRate: 'Success Rate',
+  colAttacks: 'Breaches', colSuccessRate: 'Success Rate',
   loading: 'Loading...', prev: 'Prev', next: 'Next',
   pageLabel: `Page ${page.value + 1}`,
   modeFree: 'Free', modeSelfLlm: 'Pro',
   slashedTag: 'Penalized',
   slashedTip: 'Points deducted due to honeypot detection failures',
+  tierScout: 'Scout', tierHunter: 'Hunter', tierApex: 'Apex',
+  toHunter: (n: number) => `${n} to Hunter`,
+  toApex: (n: number) => `${n} to Apex`,
 } : {
   title: '排行榜',
   colMiner: '矿工', colTier: '段位', colPoints: '积分',
   colMode: '模式',
-  colAttacks: '攻击数', colSuccessRate: '成功率',
+  colAttacks: '攻破数', colSuccessRate: '成功率',
   loading: '加载中...', prev: '上一页', next: '下一页',
   pageLabel: `第 ${page.value + 1} 页`,
   modeFree: '免费', modeSelfLlm: '高效',
   slashedTag: '已处罚',
   slashedTip: '因蜜罐检测失败被扣除积分',
+  tierScout: '侦察者', tierHunter: '猎手', tierApex: '顶点',
+  toHunter: (n: number) => `差 ${n} 升猎手`,
+  toApex: (n: number) => `差 ${n} 升顶点`,
 })
 
 onMounted(() => loadPage())
@@ -79,6 +85,28 @@ function tierDot(tier: string) {
   }
 }
 
+function tierLabel(tier: string) {
+  switch (tier) {
+    case 'apex': return T.value.tierApex
+    case 'hunter': return T.value.tierHunter
+    default: return T.value.tierScout
+  }
+}
+
+// Progress to next tier (hunter=10 attacks, apex=50 attacks)
+function tierProgress(entry: LeaderboardEntry): string | null {
+  if (entry.tier === 'apex') return null
+  if (entry.tier === 'hunter') {
+    const needed = 50 - entry.totalSuccessfulAttacks
+    return needed > 0 ? T.value.toApex(needed) : null
+  }
+  // scout
+  const toHunter = 10 - entry.totalSuccessfulAttacks
+  if (toHunter > 0) return T.value.toHunter(toHunter)
+  const toApex = 50 - entry.totalSuccessfulAttacks
+  return toApex > 0 ? T.value.toApex(toApex) : null
+}
+
 function formatPoints(n: number) {
   return n.toLocaleString()
 }
@@ -111,10 +139,15 @@ function formatPoints(n: number) {
             <td class="px-4 py-3 text-shell-text">{{ page * pageSize + i + 1 }}</td>
             <td class="px-4 py-3 font-mono text-xs">{{ entry.displayName }}</td>
             <td class="px-4 py-3">
-              <span class="flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full" :class="tierDot(entry.tier)"></span>
-                <span class="capitalize" :class="tierColor(entry.tier)">{{ entry.tier }}</span>
-              </span>
+              <div class="flex flex-col gap-0.5">
+                <span class="flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full flex-shrink-0" :class="tierDot(entry.tier)"></span>
+                  <span :class="tierColor(entry.tier)" class="font-semibold text-xs">{{ tierLabel(entry.tier) }}</span>
+                </span>
+                <span v-if="tierProgress(entry)" class="text-xs text-shell-text/30 pl-3.5 font-mono">
+                  {{ tierProgress(entry) }}
+                </span>
+              </div>
             </td>
             <td class="px-4 py-3 hidden sm:table-cell">
               <span

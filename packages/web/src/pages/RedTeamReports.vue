@@ -21,6 +21,14 @@ const accessTier = ref<RedTeamAccessTier | ''>('')
 const reportsOffset = ref(0)
 const hasMore = ref(false)
 
+// Achievement wall stats (computed from loaded agents)
+const totalBreachesAll = computed(() => agents.value.reduce((s, a) => s + a.breachCount, 0))
+const agentsBreached = computed(() => agents.value.filter(a => a.breachCount > 0).length)
+const uniqueAttackersAll = computed(() => {
+  // uniqueAttackers per agent can overlap; take the max as a lower bound
+  return agents.value.reduce((s, a) => s + a.uniqueAttackers, 0)
+})
+
 // Bilingual translations
 const T = computed(() => lang.value === 'en' ? {
   title: 'Red Team Reports',
@@ -252,6 +260,23 @@ onMounted(async () => {
     <div class="mb-6 border border-yellow-400/30 bg-yellow-400/5 rounded-lg px-4 py-3 text-xs text-yellow-300/80 flex items-start gap-2">
       <span class="text-base leading-none mt-0.5 flex-shrink-0">&#9888;&#65039;</span>
       <p>{{ T.disclaimer }}</p>
+    </div>
+
+    <!-- Achievement Wall Stats (visible once agents loaded) -->
+    <div v-if="!loading && agents.length > 0"
+      class="mb-6 grid grid-cols-3 gap-3">
+      <div class="border border-red-400/20 bg-red-400/5 rounded-lg px-4 py-3 text-center">
+        <div class="text-2xl font-mono font-bold text-red-400">{{ totalBreachesAll }}</div>
+        <div class="text-xs text-shell-text/40 mt-0.5 font-mono">{{ lang === 'en' ? 'Total Breaches' : '总攻破次数' }}</div>
+      </div>
+      <div class="border border-orange-400/20 bg-orange-400/5 rounded-lg px-4 py-3 text-center">
+        <div class="text-2xl font-mono font-bold text-orange-400">{{ agentsBreached }}<span class="text-sm text-shell-text/30">/{{ agents.length }}</span></div>
+        <div class="text-xs text-shell-text/40 mt-0.5 font-mono">{{ lang === 'en' ? 'Agents Breached' : '被攻破 Agent' }}</div>
+      </div>
+      <div class="border border-yellow-400/20 bg-yellow-400/5 rounded-lg px-4 py-3 text-center">
+        <div class="text-2xl font-mono font-bold text-yellow-400">{{ uniqueAttackersAll }}</div>
+        <div class="text-xs text-shell-text/40 mt-0.5 font-mono">{{ lang === 'en' ? 'Attacker Instances' : '攻击者实例数' }}</div>
+      </div>
     </div>
 
     <!-- Loading -->
