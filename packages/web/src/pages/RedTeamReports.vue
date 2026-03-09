@@ -318,6 +318,10 @@ onMounted(async () => {
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
               <span class="font-mono text-white font-semibold text-sm">{{ agent.agentDisplayName || agent.agentName }}</span>
+              <a v-if="agent.officialUrl" :href="agent.officialUrl" target="_blank" rel="noopener"
+                class="text-xs text-blue-400/60 hover:text-blue-400 transition-colors ml-0.5" title="Official">🔗</a>
+              <a v-if="agent.twitterHandle" :href="`https://x.com/${agent.twitterHandle.replace('@','')}`" target="_blank" rel="noopener"
+                class="text-xs text-shell-text/40 hover:text-white transition-colors" title="X/Twitter">𝕏</a>
               <span v-if="agent.isPromoted"
                 class="text-xs px-1.5 py-0.5 rounded border border-red-400/40 text-red-400 bg-red-400/10 font-mono uppercase">
                 {{ T.promoted }}

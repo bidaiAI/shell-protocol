@@ -551,6 +551,9 @@ export interface RedTeamAgent {
   latestTriggeredActions: string[]
   summary: string
   disclosureWindowDays: number
+  // Official links
+  officialUrl?: string
+  twitterHandle?: string
 }
 
 export type RedTeamAccessTier =
