@@ -514,7 +514,9 @@ export async function adminListInviteCodes(secret: string) {
 
 export interface RedTeamAgent {
   agentName: string
+  agentDisplayName?: string
   agentModel: string | null
+  agentModelDisplay?: string | null
   defenseLevel: string
   injectionSurface: string
   breachCount: number
