@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { getMySubmissions, getSubmissionResult, setToken, type Submission, type SubmissionResult } from '../lib/api'
+import { getMySubmissions, getSubmissionResult, setToken, getRedTeamAgents, type Submission, type SubmissionResult, type RedTeamAgent } from '../lib/api'
 import { useWallet } from '../lib/wallet'
 import { useLang } from '../lib/i18n'
 
@@ -29,6 +29,14 @@ const T = computed(() => lang.value === 'en' ? {
   statusVerified: 'Verified', statusPending: 'Verifying...',
   localExec: 'Local Compute', sandboxExec: 'Sandbox',
   yes: 'Yes', no: 'No',
+  agentDirectory: 'Attack Target Directory',
+  agentDirectoryDesc: 'All 26 AI Agent profiles in the sandbox — choose your target',
+  breaches: 'breaches',
+  models: 'Models',
+  surface: 'Surface',
+  defense: 'Defense',
+  promoted: 'PUBLIC',
+  noBreaches: 'Not yet breached',
 } : {
   title: '任务中心',
   authHint: '连接钱包或输入你的 $SHELL 密钥查看提交记录。',
@@ -51,6 +59,14 @@ const T = computed(() => lang.value === 'en' ? {
   statusVerified: '已验证', statusPending: '验证中...',
   localExec: '本地执行', sandboxExec: '沙盒验证',
   yes: '是', no: '否',
+  agentDirectory: '攻击目标一览',
+  agentDirectoryDesc: '沙盒中全部 26 个 AI Agent 档案 — 选择你的目标',
+  breaches: '次攻破',
+  models: '模型',
+  surface: '注入面',
+  defense: '防御',
+  promoted: '已公开',
+  noBreaches: '尚未被攻破',
 })
 
 // API Key auth for non-wallet users
@@ -64,8 +80,20 @@ const submissions = ref<Submission[]>([])
 const loading = ref(true)
 const selectedResult = ref<SubmissionResult | null>(null)
 const loadingResult = ref(false)
+const agents = ref<RedTeamAgent[]>([])
 
 onMounted(async () => {
+  // Load agent directory (public, no auth required)
+  try {
+    const data = await getRedTeamAgents()
+    // Show unbreached agents first, then sort by breach count desc
+    agents.value = [...data.agents].sort((a, b) => {
+      if (a.breachCount === 0 && b.breachCount > 0) return -1
+      if (a.breachCount > 0 && b.breachCount === 0) return 1
+      return b.breachCount - a.breachCount
+    })
+  } catch { /* non-critical */ }
+
   if (!authed.value) {
     loading.value = false
     return
@@ -195,6 +223,19 @@ function settlementColor(status: string) {
 function formatDate(dateStr: string | null) {
   if (!dateStr) return '—'
   return new Date(dateStr).toLocaleString(lang.value === 'en' ? 'en-US' : 'zh-CN')
+}
+
+const defenseLevelCls: Record<string, string> = {
+  none:     'text-red-400 border-red-400/30',
+  basic:    'text-yellow-400 border-yellow-400/30',
+  moderate: 'text-orange-400 border-orange-400/30',
+  advanced: 'text-purple-400 border-purple-400/30',
+}
+const defenseLevelText: Record<string, { en: string; zh: string }> = {
+  none:     { en: 'None', zh: '无防御' },
+  basic:    { en: 'Basic', zh: '基础' },
+  moderate: { en: 'Moderate', zh: '中等' },
+  advanced: { en: 'Advanced', zh: '高级' },
 }
 </script>
 
@@ -336,6 +377,74 @@ function formatDate(dateStr: string | null) {
         <button class="mt-4 text-xs text-shell-text hover:text-white transition-colors" @click="selectedResult = null">
           {{ T.close }}
         </button>
+      </div>
+    </div>
+
+    <!-- ── Agent Target Directory ── -->
+    <div v-if="agents.length > 0" class="mt-10">
+      <div class="mb-4">
+        <h2 class="text-lg font-bold font-mono text-white flex items-center gap-2">
+          <span class="text-red-400">&#9679;</span> {{ T.agentDirectory }}
+        </h2>
+        <p class="text-xs text-shell-text/50 mt-1">{{ T.agentDirectoryDesc }}</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div
+          v-for="agent in agents" :key="agent.agentName"
+          class="bg-shell-card border rounded-xl p-4 transition-colors hover:border-red-400/30"
+          :class="agent.isPromoted ? 'border-red-400/40' : 'border-shell-border'"
+        >
+          <!-- Header row -->
+          <div class="flex items-start justify-between gap-2 mb-2">
+            <span class="font-mono font-semibold text-sm text-white leading-tight">
+              {{ agent.agentDisplayName || agent.agentName }}
+            </span>
+            <div class="flex items-center gap-1 flex-shrink-0">
+              <span v-if="agent.isPromoted"
+                class="text-xs px-1.5 py-0.5 rounded border border-red-400/40 text-red-400 bg-red-400/10 font-mono">
+                {{ T.promoted }}
+              </span>
+              <span v-if="agent.defenseLevel"
+                :class="['text-xs px-1.5 py-0.5 rounded border font-mono', defenseLevelCls[agent.defenseLevel] || 'text-shell-text/50 border-shell-border']">
+                {{ defenseLevelText[agent.defenseLevel]?.[lang] || agent.defenseLevel }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Summary -->
+          <p v-if="agent.summary" class="text-xs text-shell-text/50 mb-2 leading-relaxed line-clamp-2">
+            {{ agent.summary }}
+          </p>
+
+          <!-- Meta row -->
+          <div class="flex items-center gap-3 text-xs text-shell-text/40 font-mono mb-2">
+            <span>{{ T.surface }}: {{ agent.injectionSurface }}</span>
+            <span v-if="agent.breachCount > 0" class="text-red-400/70">
+              {{ agent.breachCount }} {{ T.breaches }}
+            </span>
+            <span v-else class="text-shell-text/25">{{ T.noBreaches }}</span>
+          </div>
+
+          <!-- Models used -->
+          <div v-if="agent.modelsUsed && agent.modelsUsed.length > 0" class="flex flex-wrap gap-1">
+            <span
+              v-for="m in agent.modelsUsed.slice(0, 3)" :key="m"
+              class="text-xs bg-black/40 border border-shell-border text-shell-text/40 px-1.5 py-0.5 rounded font-mono"
+            >{{ m }}</span>
+            <span v-if="agent.modelsUsed.length > 3"
+              class="text-xs text-shell-text/25 font-mono">+{{ agent.modelsUsed.length - 3 }}</span>
+          </div>
+
+          <!-- Triggered actions (if any) -->
+          <div v-if="agent.latestTriggeredActions && agent.latestTriggeredActions.length > 0"
+            class="mt-2 flex flex-wrap gap-1">
+            <span
+              v-for="action in agent.latestTriggeredActions.slice(0, 3)" :key="action"
+              class="text-xs bg-red-400/10 text-red-300/60 px-1.5 py-0.5 rounded font-mono border border-red-400/15"
+            >{{ action.replace(/_/g, ' ') }}</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
