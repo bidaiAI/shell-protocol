@@ -10,7 +10,7 @@
 
 ## 什么是 $SHELL Protocol？
 
-$SHELL Protocol 是一个 **混合式去中心化 AI 安全测试网络**，让任何人都能通过运行矿机（Miner CLI）对 AI Agent 进行红队攻击。沙盒内含 21 个目标 Agent 画像，覆盖 DeFi 交易、NFT、跨链桥、借贷、支付、DAO 治理等热门赛道。攻击手段包括 Prompt 注入、社会工程和系统级命令注入。攻击结果由 **矿工动态多 Peer 交叉投票验证**（在线矿工越多、验证者越多），平台仅作为自适应低频抽查与超时兜底。成功的攻击赚取 $SHELL 积分。
+$SHELL Protocol 是一个 **混合式去中心化 AI 安全测试网络**，让任何人都能通过运行矿机（Miner CLI）对 AI Agent 进行红队攻击。沙盒内含 26 个目标 Agent 画像，覆盖 DeFi 交易、NFT、跨链桥、借贷、支付、DAO 治理等热门赛道。攻击手段包括 Prompt 注入、社会工程和系统级命令注入。攻击结果由 **矿工动态多 Peer 交叉投票验证**（在线矿工越多、验证者越多），平台仅作为自适应低频抽查与超时兜底。成功的攻击赚取 $SHELL 积分。
 
 ### 核心价值
 
@@ -192,9 +192,9 @@ $SHELL Protocol 采用 **Peer-First 去中心化验证网络**，核心原则是
 
 ---
 
-## 目标 Agent 画像（21 个）
+## 目标 Agent 画像（26 个）
 
-沙盒内置 21 个 AI Agent 画像，覆盖三大攻击类别。平台还会自动从 Twitter 和 GitHub 发现热门真实 AI Agent 项目，生成新的攻击目标。
+沙盒内置 26 个 AI Agent 画像，覆盖三大攻击类别和四种注入面。平台还会自动从 Twitter 和 GitHub 发现热门真实 AI Agent 项目，生成新的攻击目标。
 
 ### 平台 Agent（DeFi / NFT / 跨链 / 支付）
 
@@ -202,7 +202,7 @@ $SHELL Protocol 采用 **Peer-First 去中心化验证网络**，核心原则是
 
 | 分类 | 目标 Agent | 注入面 |
 |------|-----------|--------|
-| Meme 交易 | Four.Meme、Pump.fun、Moonshot | token_data |
+| Meme 交易 | Four.Meme、Pump.fun、Moonshot、GOAT | token_data / social_post |
 | AI Agent 平台 | Virtuals Protocol、ai16z DAO、AIXBT | token_data / social_post |
 | 智能跟单 | GMGN Smart Money Scanner | token_data |
 | NFT 交易 | Magic Eden NFT、Tensor NFT | token_data |
@@ -210,7 +210,10 @@ $SHELL Protocol 采用 **Peer-First 去中心化验证网络**，核心原则是
 | 支付协议 | Circle USDC Payment Gateway | email |
 | DeFi 借贷 | Kamino Lending Agent | token_data |
 | AI 钱包 | Griffain Wallet Agent | chat_message |
-| 自治 Agent | Olas Autonomous Service Agent | chat_message |
+| 自治 Agent | Olas、Fetch.ai Economic Agent | chat_message |
+| 全链路 Agent | Zerebro Full-Chain Agent | chat_message |
+| 社交伴侣 | MyShell.ai Companion Agent | chat_message |
+| 去中心化 ML | Bittensor Subnet Validator | token_data |
 
 ### 框架类 Agent（Command Injection / Privilege Escalation）
 
@@ -228,9 +231,9 @@ $SHELL Protocol 采用 **Peer-First 去中心化验证网络**，核心原则是
 
 | 难度 | 示例画像 | 防御等级 |
 |------|----------|----------|
-| Easy | ElizaOS DeFi / AIXBT / Olas / LayerZero Bridge | none（无注入防御） |
-| Medium | Pump.fun Sniper / Griffain Wallet / Tensor NFT / Circle Payment | basic（基础安全规则） |
-| Hard | **OpenClaw (Hardened)** / Kamino Lending / DeFi Portfolio Manager | advanced（显式 PI 防御） |
+| Easy (12) | ElizaOS / AIXBT / Olas / GOAT / MyShell / LayerZero 等 | none（无注入防御） |
+| Medium (8) | Pump.fun / Griffain / Tensor / Zerebro / Circle 等 | basic（基础安全规则） |
+| Hard (6) | **OpenClaw Hardened** / Kamino / Fetch.ai / Bittensor 等 | advanced（显式 PI 防御） |
 
 ---
 
