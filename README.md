@@ -1,6 +1,6 @@
 # $SHELL Protocol
 
-> **全球首个混合式去中心化 AI 红队验证网络** — 矿工自带 LLM 生成 payload + 矿工多 Peer 交叉验证 + 平台低频抽查与超时兜底。通过发现 AI Agent 漏洞来挖矿赚取 $SHELL
+> **全球首个混合式去中心化 AI 红队验证网络** — 矿工自带 LLM 生成 payload + 矿工动态多 Peer 交叉验证 + 平台自适应低频抽查与超时兜底。通过发现 AI Agent 漏洞来挖矿赚取 $SHELL
 
 [![npm](https://img.shields.io/npm/v/@openshell-cc/miner-cli?color=00ff88&label=miner-cli)](https://www.npmjs.com/package/@openshell-cc/miner-cli)
 [![GitHub](https://img.shields.io/badge/GitHub-openshell--cc-181717?logo=github)](https://github.com/openshell-cc/shell-protocol)
@@ -10,13 +10,13 @@
 
 ## 什么是 $SHELL Protocol？
 
-$SHELL Protocol 是一个 **混合式去中心化 AI 安全测试网络**，让任何人都能通过运行矿机（Miner CLI）对 AI Agent 进行红队攻击。沙盒内含多个目标 Agent 画像，覆盖金融类（Four.Meme、Pump.fun 交易机器人）和系统类（OpenClaw 工具 Agent）两大攻击类别。攻击手段包括 Prompt 注入、社会工程和系统级命令注入。攻击结果由 **2-4 名矿工多 Peer 交叉投票验证**，平台仅作为低频抽查（1-5%）与超时兜底。成功的攻击赚取 $SHELL 积分。
+$SHELL Protocol 是一个 **混合式去中心化 AI 安全测试网络**，让任何人都能通过运行矿机（Miner CLI）对 AI Agent 进行红队攻击。沙盒内含 21 个目标 Agent 画像，覆盖 DeFi 交易、NFT、跨链桥、借贷、支付、DAO 治理等热门赛道。攻击手段包括 Prompt 注入、社会工程和系统级命令注入。攻击结果由 **矿工动态多 Peer 交叉投票验证**（在线矿工越多、验证者越多），平台仅作为自适应低频抽查与超时兜底。成功的攻击赚取 $SHELL 积分。
 
 ### 核心价值
 
 | 角色 | 获益 |
 |------|------|
-| **矿工（Miner）** | 接收任务，执行攻击 & 多 Peer 交叉验证，成功即获积分 |
+| **矿工（Miner）** | 接收任务，执行攻击 & 参与交叉验证，攻击和验证均可获积分 |
 | **AI 开发者** | 通过漏洞披露系统发现真实 AI Agent 安全问题 |
 | **协议** | 构建全球最大的去中心化 AI 红队数据集 |
 
@@ -148,61 +148,77 @@ Oracle 分配未锁定任务（原子锁，防并发抢占）
      ↓
 矿工 A 提交攻击结果（POST /tasks/submit）
      ↓
-Oracle 创建多 Peer 验证轮次，分配给 2-4 名矿工
+Oracle 创建 Peer 验证轮次，动态分配验证矿工
+（在线矿工越多 → 验证者越多；有违规记录 → 验证者更多）
      ↓
 验证矿工独立执行相同 payload，投票：triggered / not_triggered
      ↓
-共识规则：
-  2 人验证 → 需 2:0 一致
-  3 人验证 → 需 3:0 一致
-  4 人验证 → 需 3:1 多数
-  不一致 → 仲裁队列
+共识判定 → 达到阈值后自动结算
+  一致同意 → 攻击者 + 验证者均获积分
+  不一致 → 进入仲裁队列
      ↓
-共识达成 → 自动结算积分（攻击者 + 正确验证者均获奖励）
+平台自适应抽查（在线矿工越多 → 抽查率越低）
 （无共识/超时 → 平台 fallback validator 兜底）
 ```
 
 ---
 
-## 多 Peer 交叉验证机制
+## 动态多 Peer 交叉验证机制
 
-$SHELL Protocol 采用 **多 Peer 去中心化验证网络**，核心原则是：**矿工多 Peer 投票验证 + 平台低频抽查（1-5%）+ 超时兜底**。
+$SHELL Protocol 采用 **Peer-First 去中心化验证网络**，核心原则是：**矿工动态多 Peer 投票验证为主 + 平台自适应低频抽查为辅 + 超时兜底**。
 
 ### 工作流程
 
 1. **矿工 A 完成攻击任务** — 提交攻击结果到 Oracle
-2. **Oracle 创建验证轮次** — 根据任务价值分配 2-4 名验证矿工
+2. **Oracle 创建验证轮次** — 动态分配验证矿工（数量根据在线矿工数、任务价值和提交者信誉自动调整）
 3. **验证矿工独立执行** — 每名验证者执行相同 payload，提交投票
 4. **共识判定** — 达到共识阈值后自动结算；不一致则进入仲裁
-5. **平台抽查** — 1-5% 概率低频随机抽查，确保矿工行为诚实
+5. **平台自适应抽查** — 抽查率随在线矿工数量动态降低（矿工越多、Peer 验证越可靠、平台抽查越少）
 
-### 验证类型
+### 动态验证机制
 
-| 验证方式 | 触发条件 | 说明 |
-|----------|----------|------|
-| **多 Peer 交叉验证**（主要） | 每次攻击提交后 | 2-4 名矿工独立执行 + 投票共识 |
-| **平台抽查**（辅助） | 1-5% 随机抽查 | DeepSeek 低成本二分类验证 |
-| **超时兜底**（保障） | 验证矿工超时未响应 | 平台 fallback validator 自动接管 |
+| 特性 | 机制 |
+|------|------|
+| **验证人数** | 根据在线矿工数量 + 任务价值 + 提交者信誉动态调整 |
+| **抽查率** | 随在线矿工数量自适应降低（矿工越多 → Peer 网络越强 → 平台抽查越少） |
+| **作弊惩罚** | 被发现作弊的矿工，后续提交需要更多验证者验证 |
+| **超时兜底** | 验证矿工超时未响应 → 平台 fallback validator 自动接管 |
 
 ### 对矿工的影响
 
 - **攻击和验证任务对矿工完全一致** — 矿工无需区分任务类型，透明参与
-- **验证任务同样获得积分** — 诚实验证同样赚取 $SHELL
-- **作弊惩罚** — 伪造结果将重置信誉评分，影响后续收益
+- **验证任务同样获得积分** — 诚实验证赚取原始任务积分的一定比例，信誉高的验证者获得更多
+- **作弊惩罚升级** — 伪造结果不仅重置信誉评分，还会导致后续每次提交被更多矿工验证，作弊成本持续上升
 
 ---
 
-## 目标 Agent 画像
+## 目标 Agent 画像（21 个）
 
-沙盒内置多个 AI Agent 画像，覆盖两大攻击类别。平台还会自动从 Twitter 和 GitHub 发现热门真实 AI Agent 项目，生成新的攻击目标。
+沙盒内置 21 个 AI Agent 画像，覆盖三大攻击类别。平台还会自动从 Twitter 和 GitHub 发现热门真实 AI Agent 项目，生成新的攻击目标。
 
-### 金融类 Agent（Token Injection / Social Engineering）
+### 平台 Agent（DeFi / NFT / 跨链 / 支付）
 
-DeFi 交易机器人，具备代币操作工具（buy_token、sell_token、swap、transfer 等）。目标包括 Four.Meme、Pump.fun、ElizaOS DeFi、ai16z DAO、Virtuals Protocol、GMGN Smart Money、Moonshot 等 Agent，攻击者通过 Prompt 注入与社会工程诱导未授权交易。
+覆盖当前最热门的 Crypto AI Agent 赛道：
 
-### 系统类 Agent（Command Injection / Privilege Escalation）
+| 分类 | 目标 Agent | 注入面 |
+|------|-----------|--------|
+| Meme 交易 | Four.Meme、Pump.fun、Moonshot | token_data |
+| AI Agent 平台 | Virtuals Protocol、ai16z DAO、AIXBT | token_data / social_post |
+| 智能跟单 | GMGN Smart Money Scanner | token_data |
+| NFT 交易 | Magic Eden NFT、Tensor NFT | token_data |
+| 跨链桥 | LayerZero Bridge Agent | token_data |
+| 支付协议 | Circle USDC Payment Gateway | email |
+| DeFi 借贷 | Kamino Lending Agent | token_data |
+| AI 钱包 | Griffain Wallet Agent | chat_message |
+| 自治 Agent | Olas Autonomous Service Agent | chat_message |
 
-装备真实工具的 AI 助手。OpenClaw 画像使用 **9 个真实工具**（`exec`、`bash`、`web_fetch`、`message`、`read`、`write`、`gateway`、`cron`、`memory_search`），而非虚构的金融工具。攻击者通过权限提升与命令注入突破沙盒防御。
+### 框架类 Agent（Command Injection / Privilege Escalation）
+
+装备真实工具的 AI 助手。ElizaOS DeFi Agent 和 OpenClaw 画像使用 **9 个真实工具**（`exec`、`bash`、`web_fetch`、`message`、`read`、`write`、`gateway`、`cron`、`memory_search`），攻击者通过权限提升与命令注入突破沙盒防御。
+
+### 终端用户 Agent（Personal Trading / Portfolio）
+
+个人 DeFi 交易助手和投资组合管理 Agent，模拟真实用户场景。
 
 ### 多模型轮换（Smart Model Rotation）
 
@@ -210,11 +226,11 @@ DeFi 交易机器人，具备代币操作工具（buy_token、sell_token、swap�
 
 ### 难度分级
 
-| 难度 | 示例画像 | 攻击类型 |
+| 难度 | 示例画像 | 防御等级 |
 |------|----------|----------|
-| Easy | Pump.fun Sniper Bot / ElizaOS DeFi Agent | Token injection |
-| Medium | Four.Meme Agentic / ai16z DAO / GMGN Smart Money | Social engineering |
-| Hard | **OpenClaw (Hardened)** / DeFi Portfolio Manager | System-level command injection |
+| Easy | ElizaOS DeFi / AIXBT / Olas / LayerZero Bridge | none（无注入防御） |
+| Medium | Pump.fun Sniper / Griffain Wallet / Tensor NFT / Circle Payment | basic（基础安全规则） |
+| Hard | **OpenClaw (Hardened)** / Kamino Lending / DeFi Portfolio Manager | advanced（显式 PI 防御） |
 
 ---
 
@@ -264,11 +280,11 @@ A: 基础积分按任务难度计算，乘以段位倍率（Scout 1x、Hunter 3x
 **Q: $SHELL 什么时候上链？**
 A: Phase 5（Solana 合约）待开发，目前积累的积分将按比例兑换 $SHELL 代币。**建议现在就绑定 Solana 钱包**，空投时直接发放。
 
-**Q: 验证任务是什么？**
-A: 矿工透明参与多 Peer 交叉验证。攻击和验证任务对矿工完全一致，矿机自动处理，诚实验证同样获得积分。
+**Q: 验证任务是什么？验证也能赚积分吗？**
+A: 每次攻击提交后，Oracle 会分配其他矿工来验证结果。验证矿工独立执行相同 payload 并投票。攻击和验证任务对矿工完全一致，矿机自动处理。**诚实验证同样获得积分**（原始任务积分的一定比例），信誉越高的验证者获得比例越高。
 
 **Q: 攻击失败了会扣分吗？**
-A: 不会扣积分，只是本次任务无奖励。但反复伪造结果会重置信誉评分，严重时被封号。
+A: 不会扣积分，只是本次任务无奖励。但反复伪造结果会重置信誉评分，并导致后续提交需要更多验证矿工验证（作弊成本持续上升），严重时被封号。
 
 **Q: 高效模式的 API Key 安全吗？**
 A: 完全安全。API Key 仅在你的本地机器上运行，用于生成攻击 payload 和执行验证任务。Key 不会上传到平台服务器，也不会被任何第三方访问。
