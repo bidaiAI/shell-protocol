@@ -19,6 +19,7 @@ let pollTimer: ReturnType<typeof setInterval> | null = null
 const agentProfiles = ref<AgentProfile[]>([])
 const agentDifficulty = ref<{ easy: number; medium: number; hard: number }>({ easy: 0, medium: 0, hard: 0 })
 const agentFilterLevel = ref<'all' | 'none' | 'basic' | 'advanced'>('all')
+const agentShowcaseExpanded = ref(false)
 const filteredAgents = computed(() => {
   if (agentFilterLevel.value === 'all') return agentProfiles.value
   return agentProfiles.value.filter(p => p.defenseLevel === agentFilterLevel.value)
@@ -384,20 +385,27 @@ function toggleDetail(id: string) {
       </div>
     </div>
 
-    <!-- Agent Showcase -->
+    <!-- Agent Showcase (Collapsible) -->
     <div v-if="agentProfiles.length > 0" class="mb-6 bg-shell-card border border-shell-border rounded-lg overflow-hidden">
-      <!-- Header -->
-      <div class="px-5 py-4 border-b border-shell-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h2 class="text-sm font-semibold flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-purple-400"></span>
-            {{ T.agentShowcaseTitle }}
-            <span class="text-xs font-normal text-shell-text ml-1">({{ agentProfiles.length }})</span>
-          </h2>
-          <p class="text-xs text-shell-text mt-0.5">{{ T.agentShowcaseSubtitle }}</p>
+      <!-- Clickable Header -->
+      <button
+        class="w-full px-5 py-3 flex items-center justify-between hover:bg-white/[0.02] transition-colors"
+        @click="agentShowcaseExpanded = !agentShowcaseExpanded"
+      >
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+          <span class="text-sm font-semibold">{{ T.agentShowcaseTitle }}</span>
+          <span class="text-xs text-shell-text">({{ agentProfiles.length }})</span>
+          <span class="text-[10px] text-shell-text/50 hidden sm:inline ml-1">
+            {{ agentDifficulty.easy }} {{ T.agentFilterEasy }} · {{ agentDifficulty.medium }} {{ T.agentFilterMedium }} · {{ agentDifficulty.hard }} {{ T.agentFilterHard }}
+          </span>
         </div>
+        <span class="text-shell-text/30 text-xs transition-transform duration-200" :class="agentShowcaseExpanded ? 'rotate-180' : ''">▼</span>
+      </button>
+      <!-- Expandable Content -->
+      <div v-if="agentShowcaseExpanded">
         <!-- Difficulty filter -->
-        <div class="flex gap-1">
+        <div class="px-5 py-2 border-t border-shell-border flex gap-1">
           <button
             class="text-[10px] px-2 py-0.5 rounded font-mono border transition-colors"
             :class="agentFilterLevel === 'all'
@@ -427,44 +435,39 @@ function toggleDetail(id: string) {
             @click="agentFilterLevel = 'advanced'"
           >{{ T.agentFilterHard }} ({{ agentDifficulty.hard }})</button>
         </div>
-      </div>
-      <!-- Agent Grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-px bg-shell-border/30">
-        <div
-          v-for="agent in filteredAgents"
-          :key="agent.id"
-          class="bg-shell-card p-3 hover:bg-white/[0.02] transition-colors"
-        >
-          <!-- Agent name + chain -->
-          <div class="flex items-start justify-between gap-2 mb-2">
-            <h3 class="text-xs font-mono font-medium text-white leading-tight truncate" :title="agent.name">{{ agent.name }}</h3>
-            <span v-if="agent.targetChain" class="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex-shrink-0">
-              {{ agent.targetChain }}
-            </span>
-          </div>
-          <!-- Tags row -->
-          <div class="flex flex-wrap gap-1 mb-2">
-            <!-- Defense level -->
-            <span class="text-[10px] px-1.5 py-0.5 rounded font-mono border"
-              :class="agent.defenseLevel === 'none'
-                ? 'bg-red-500/10 text-red-400 border-red-500/20'
-                : agent.defenseLevel === 'basic'
-                  ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
-                  : 'bg-shell-green/10 text-shell-green border-shell-green/20'"
-            >{{ agent.defenseLevel === 'none' ? T.agentDefNone : agent.defenseLevel === 'basic' ? T.agentDefBasic : T.agentDefAdvanced }}</span>
-            <!-- Injection surface -->
-            <span class="text-[10px] px-1.5 py-0.5 rounded font-mono bg-purple-500/10 text-purple-400 border border-purple-500/20">
-              {{ agent.injectionSurface === 'token_data' ? T.agentSurfToken
-                : agent.injectionSurface === 'chat_message' ? T.agentSurfChat
-                : agent.injectionSurface === 'social_post' ? T.agentSurfSocial
-                : agent.injectionSurface === 'email' ? T.agentSurfEmail
-                : agent.injectionSurface }}
-            </span>
-          </div>
-          <!-- Tool / Canary counts -->
-          <div class="flex items-center gap-3 text-[10px] text-shell-text font-mono">
-            <span>{{ T.agentTools }}: <span class="text-white">{{ agent.toolCount }}</span></span>
-            <span>{{ T.agentCanary }}: <span class="text-tier-apex">{{ agent.canaryActionCount }}</span></span>
+        <!-- Agent Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-px bg-shell-border/30">
+          <div
+            v-for="agent in filteredAgents"
+            :key="agent.id"
+            class="bg-shell-card p-3 hover:bg-white/[0.02] transition-colors"
+          >
+            <div class="flex items-start justify-between gap-2 mb-2">
+              <h3 class="text-xs font-mono font-medium text-white leading-tight truncate" :title="agent.name">{{ agent.name }}</h3>
+              <span v-if="agent.targetChain" class="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex-shrink-0">
+                {{ agent.targetChain }}
+              </span>
+            </div>
+            <div class="flex flex-wrap gap-1 mb-2">
+              <span class="text-[10px] px-1.5 py-0.5 rounded font-mono border"
+                :class="agent.defenseLevel === 'none'
+                  ? 'bg-red-500/10 text-red-400 border-red-500/20'
+                  : agent.defenseLevel === 'basic'
+                    ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                    : 'bg-shell-green/10 text-shell-green border-shell-green/20'"
+              >{{ agent.defenseLevel === 'none' ? T.agentDefNone : agent.defenseLevel === 'basic' ? T.agentDefBasic : T.agentDefAdvanced }}</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded font-mono bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                {{ agent.injectionSurface === 'token_data' ? T.agentSurfToken
+                  : agent.injectionSurface === 'chat_message' ? T.agentSurfChat
+                  : agent.injectionSurface === 'social_post' ? T.agentSurfSocial
+                  : agent.injectionSurface === 'email' ? T.agentSurfEmail
+                  : agent.injectionSurface }}
+              </span>
+            </div>
+            <div class="flex items-center gap-3 text-[10px] text-shell-text font-mono">
+              <span>{{ T.agentTools }}: <span class="text-white">{{ agent.toolCount }}</span></span>
+              <span>{{ T.agentCanary }}: <span class="text-tier-apex">{{ agent.canaryActionCount }}</span></span>
+            </div>
           </div>
         </div>
       </div>

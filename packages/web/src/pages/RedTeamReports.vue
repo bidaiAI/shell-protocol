@@ -132,7 +132,12 @@ function timeAgo(d: string | Date | null) {
 async function loadAgents() {
   try {
     const data = await getRedTeamAgents()
-    agents.value = data.agents
+    // Sort: promoted agents at the end so users see the full list first
+    agents.value = [...data.agents].sort((a, b) => {
+      if (a.isPromoted && !b.isPromoted) return 1
+      if (!a.isPromoted && b.isPromoted) return -1
+      return 0 // keep original order (breach_count DESC) within each group
+    })
   } catch {
     // non-critical
   } finally {
@@ -206,7 +211,7 @@ onMounted(async () => {
       return
     }
   }
-  // Default: auto-expand the first promoted (public) agent for visibility & crawlers
+  // Auto-expand promoted agent at bottom (for SEO/crawlers)
   const promoted = agents.value.find(a => a.isPromoted)
   if (promoted) {
     toggleAgent(promoted.agentName)
@@ -282,7 +287,6 @@ onMounted(async () => {
               </span>
             </div>
             <div class="flex items-center gap-4 mt-1.5 text-xs text-shell-text/50">
-              <span v-if="agent.agentModelDisplay || agent.agentModel" class="font-mono">{{ agent.agentModelDisplay || agent.agentModel }}</span>
               <span class="text-red-400/70 font-mono font-bold">{{ agent.breachCount }} {{ T.breaches }}</span>
               <span>{{ agent.uniqueAttackers }} {{ T.attackers }}</span>
               <span class="hidden sm:inline">{{ T.latestBreach }}: {{ timeAgo(agent.latestBreachAt) }}</span>

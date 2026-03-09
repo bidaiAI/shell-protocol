@@ -684,7 +684,7 @@ function toggleExpand(id: string) {
               </span>
             </div>
             <div class="text-xs text-shell-text/50 text-right">
-              <div>Agent <span class="text-white font-mono">{{ elizaAgent.agentModel }}</span></div>
+              <div>Agent <span class="text-white font-mono">{{ elizaAgent.agentDisplayName || elizaAgent.agentName }}</span></div>
               <div>{{ elizaAgent.uniqueAttackers }} 位矿工参与攻击</div>
               <div>攻击面: {{ elizaAgent.injectionSurface }}</div>
             </div>
