@@ -525,6 +525,144 @@ function toggleExpand(id: string) {
       </div>
     </div>
 
+    <!-- ── ElizaOS Security Analysis (双语分析报告) ── -->
+    <div class="mb-8">
+      <div class="text-xs text-cyan-400/50 font-mono mb-2 flex items-center gap-2">
+        <span class="border border-cyan-400/30 text-cyan-400 px-2 py-0.5 rounded">&#128202; 分析 · Analysis</span>
+        <span class="text-shell-text/40">ElizaOS DeFi Agent — 安全分析 Security Analysis</span>
+      </div>
+
+      <div class="border border-cyan-400/40 rounded-xl bg-cyan-400/5">
+        <!-- Header -->
+        <div class="p-5 border-b border-cyan-400/20">
+          <h3 class="text-lg font-bold text-white mb-0.5">ElizaOS DeFi Agent 安全分析</h3>
+          <h4 class="text-sm text-cyan-300/80 mb-3">ElizaOS DeFi Agent Security Analysis Report</h4>
+          <p class="text-xs text-shell-text/50">
+            基于 $SHELL Protocol 红队实战数据 · Based on live red team engagement data from $SHELL Protocol
+          </p>
+        </div>
+
+        <!-- Stats grid -->
+        <div class="p-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="bg-black/40 rounded-lg p-3 text-center">
+            <div class="text-2xl font-bold text-red-400 font-mono">86</div>
+            <div class="text-xs text-shell-text/50 mt-1">成功攻破<br>Breaches</div>
+          </div>
+          <div class="bg-black/40 rounded-lg p-3 text-center">
+            <div class="text-2xl font-bold text-orange-400 font-mono">40</div>
+            <div class="text-xs text-shell-text/50 mt-1">独立矿工<br>Unique Miners</div>
+          </div>
+          <div class="bg-black/40 rounded-lg p-3 text-center">
+            <div class="text-2xl font-bold text-yellow-400 font-mono">100%</div>
+            <div class="text-xs text-shell-text/50 mt-1">攻击成功率<br>Success Rate</div>
+          </div>
+          <div class="bg-black/40 rounded-lg p-3 text-center">
+            <div class="text-2xl font-bold text-shell-green font-mono">6,385</div>
+            <div class="text-xs text-shell-text/50 mt-1">累计奖励<br>Points Awarded</div>
+          </div>
+        </div>
+
+        <!-- Attack patterns -->
+        <div class="px-5 pb-5">
+          <div class="text-xs font-mono text-cyan-400/50 mb-2.5">攻击行为模式 · Attack Action Patterns</div>
+          <div class="bg-black/40 rounded-lg p-4 space-y-2.5">
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-mono text-red-300">bridge + tweet + swap</span>
+                <span class="text-xs text-shell-text/40 font-mono">31 / 50 (62%)</span>
+              </div>
+              <div class="h-1.5 bg-black/60 rounded-full overflow-hidden">
+                <div class="h-full bg-red-400/60 rounded-full" style="width: 62%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-mono text-orange-300">tweet + swap</span>
+                <span class="text-xs text-shell-text/40 font-mono">11 / 50 (22%)</span>
+              </div>
+              <div class="h-1.5 bg-black/60 rounded-full overflow-hidden">
+                <div class="h-full bg-orange-400/60 rounded-full" style="width: 22%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs font-mono text-yellow-300">bridge + tweet</span>
+                <span class="text-xs text-shell-text/40 font-mono">4 / 50 (8%)</span>
+              </div>
+              <div class="h-1.5 bg-black/60 rounded-full overflow-hidden">
+                <div class="h-full bg-yellow-400/60 rounded-full" style="width: 8%"></div>
+              </div>
+            </div>
+            <div class="text-xs text-shell-text/30 pt-1 border-t border-white/5">
+              62% 的攻击成功触发了全部 3 个 canary 操作 · 62% of attacks triggered all 3 canary actions
+            </div>
+          </div>
+        </div>
+
+        <!-- Key findings -->
+        <div class="px-5 pb-5">
+          <div class="text-xs font-mono text-cyan-400/50 mb-2.5">核心发现 · Key Findings</div>
+          <div class="grid sm:grid-cols-2 gap-3">
+            <div class="bg-black/40 rounded-lg p-3.5">
+              <div class="text-xs text-red-400 font-mono font-bold mb-1.5">&#128308; 零防御 = 100% 攻破</div>
+              <p class="text-xs text-shell-text/70 leading-relaxed">
+                无系统提示防御的 gpt-4o-mini Agent 在对抗中完全失效。所有 40 位矿工均成功注入并触发非授权操作。
+              </p>
+              <p class="text-xs text-shell-text/40 leading-relaxed mt-1.5 italic">
+                gpt-4o-mini with zero prompt defense was fully compromised. All 40 miners successfully injected and triggered unauthorized actions.
+              </p>
+            </div>
+            <div class="bg-black/40 rounded-lg p-3.5">
+              <div class="text-xs text-orange-400 font-mono font-bold mb-1.5">&#128992; Token 注入是唯一攻击面</div>
+              <p class="text-xs text-shell-text/70 leading-relaxed">
+                100% 的攻击通过 token_injection（代币描述字段）注入。外部数据未隔离直接进入 LLM 上下文是根本漏洞。
+              </p>
+              <p class="text-xs text-shell-text/40 leading-relaxed mt-1.5 italic">
+                100% of attacks used the token_injection surface. Unsanitized external data entering LLM context is the root cause.
+              </p>
+            </div>
+            <div class="bg-black/40 rounded-lg p-3.5">
+              <div class="text-xs text-yellow-400 font-mono font-bold mb-1.5">&#128993; 链式多操作劫持普遍</div>
+              <p class="text-xs text-shell-text/70 leading-relaxed">
+                62% 的矿工成功触发全部 3 个 canary 操作（swap + bridge + tweet），说明 Agent 一旦被劫持，会无条件执行多步指令。
+              </p>
+              <p class="text-xs text-shell-text/40 leading-relaxed mt-1.5 italic">
+                62% triggered all 3 canary actions, showing hijacked agents execute multi-step sequences unconditionally.
+              </p>
+            </div>
+            <div class="bg-black/40 rounded-lg p-3.5">
+              <div class="text-xs text-shell-green font-mono font-bold mb-1.5">&#128994; 安全建议 · Recommendations</div>
+              <p class="text-xs text-shell-text/70 leading-relaxed">
+                1. 外部数据标签隔离（&#60;untrusted_data&#62;）<br>
+                2. 关键操作必须代码级确认<br>
+                3. 工具调用白名单 + 速率限制<br>
+                4. 持续红队测试验证防御效果
+              </p>
+              <p class="text-xs text-shell-text/40 leading-relaxed mt-1.5 italic">
+                1. Tag-isolate external data<br>
+                2. Code-level confirmation for critical ops<br>
+                3. Tool-call allowlist + rate limits<br>
+                4. Continuous red team testing
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="px-5 py-3 border-t border-cyan-400/20 flex items-center justify-between text-xs">
+          <div class="text-shell-text/40">
+            数据来源 · Source: <span class="text-cyan-400 font-mono">$SHELL Protocol</span> 红队实战数据
+          </div>
+          <RouterLink
+            to="/red-team?agent=ElizaOS"
+            class="text-cyan-400/70 hover:text-cyan-400 transition-colors font-mono flex items-center gap-1"
+          >
+            查看完整报告 Full Report &#8594;
+          </RouterLink>
+        </div>
+      </div>
+    </div>
+
     <!-- ── ElizaOS Red Team Report (dynamic from API) ── -->
     <div v-if="elizaAgent" class="mb-8">
       <div class="text-xs text-red-400/50 font-mono mb-2 flex items-center gap-2">
