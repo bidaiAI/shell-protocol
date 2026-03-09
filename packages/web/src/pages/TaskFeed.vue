@@ -10,7 +10,7 @@ const topMiners = ref<LeaderboardEntry[]>([])
 const loading = ref(true)
 const feed = ref<FeedEntry[]>([])
 const newEntryIds = ref<Set<string>>(new Set())
-const feedFilter = ref<'all' | 'success'>('all')
+const feedFilter = ref<'all' | 'success' | 'rewarded'>('all')
 const hasMore = ref(true)
 const loadingMore = ref(false)
 let pollTimer: ReturnType<typeof setInterval> | null = null
@@ -59,6 +59,7 @@ const T = computed(() => lang.value === 'en' ? {
   sandboxExec: 'Sandbox',
   filterAll: 'All',
   filterSuccess: 'Breached Only',
+  filterRewarded: 'Rewarded Only',
   loadMore: 'Load More',
   loadingMore: 'Loading...',
   noMore: 'All loaded',
@@ -109,6 +110,7 @@ const T = computed(() => lang.value === 'en' ? {
   sandboxExec: '沙盒验证',
   filterAll: '全部',
   filterSuccess: '仅成功',
+  filterRewarded: '仅计分',
   loadMore: '加载更多',
   loadingMore: '加载中...',
   noMore: '已全部加载',
@@ -152,10 +154,11 @@ const PAGE_SIZE = 20
 
 async function fetchFeed(reset = false) {
   const breached = feedFilter.value === 'success'
+  const rewarded = feedFilter.value === 'rewarded'
   const offset = reset ? 0 : feed.value.length
   if (!reset) loadingMore.value = true
   try {
-    const f = await getRecentFeed(PAGE_SIZE, offset, breached)
+    const f = await getRecentFeed(PAGE_SIZE, offset, breached, rewarded)
     if (reset) {
       feed.value = f.feed
     } else {
@@ -364,6 +367,13 @@ function toggleDetail(id: string) {
                   : 'bg-transparent text-shell-text border-shell-border hover:border-shell-text/50'"
                 @click="feedFilter = 'success'"
               >{{ T.filterSuccess }}</button>
+              <button
+                class="text-[10px] px-2 py-0.5 rounded font-mono border transition-colors"
+                :class="feedFilter === 'rewarded'
+                  ? 'bg-shell-green/15 text-shell-green border-shell-green/40'
+                  : 'bg-transparent text-shell-text border-shell-border hover:border-shell-text/50'"
+                @click="feedFilter = 'rewarded'"
+              >{{ T.filterRewarded }}</button>
             </div>
           </div>
 

@@ -141,6 +141,8 @@ export interface SubmissionResult {
   verificationStatus: string | null
   settlementStatus: string | null
   spotCheckSelected: boolean
+  /** Server hint explaining 0-point breaches or diminished rewards */
+  hint?: string
 }
 
 /**

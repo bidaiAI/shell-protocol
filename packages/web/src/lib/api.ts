@@ -278,9 +278,10 @@ export interface FeedEntry {
   verifiedAt: string
 }
 
-export async function getRecentFeed(limit = 20, offset = 0, breachedOnly = false) {
+export async function getRecentFeed(limit = 20, offset = 0, breachedOnly = false, rewardedOnly = false) {
   const params = new URLSearchParams({ limit: String(limit), offset: String(offset) })
-  if (breachedOnly) params.set('breached', '1')
+  if (rewardedOnly) params.set('rewarded', '1')
+  else if (breachedOnly) params.set('breached', '1')
   return request<{ feed: FeedEntry[]; hasMore: boolean }>(`/feed/recent?${params}`)
 }
 

@@ -615,11 +615,18 @@ async function handleSandboxVerified(
       return submitResult
     }
 
+    // Display hint from server (explains 0-point breaches, suggests new approaches)
+    if (final.hint) {
+      console.log(chalk.yellow(`  💡 ${final.hint}`))
+    }
+
     // Map SubmissionResult → SubmitResult shape for unified display
     return {
       result: final.isValid ? 'success' : 'failed',
       message: final.isValid
-        ? `Sandbox verified! Attack successful.`
+        ? (final.pointsAwarded > 0
+          ? `Sandbox verified! Attack successful.`
+          : `Breach confirmed but duplicate method — 0 pts. Try a different approach!`)
         : `Sandbox did not detect a canary trigger.`,
       pointsAwarded: final.pointsAwarded ?? 0,
       submissionId: final.submissionId,
