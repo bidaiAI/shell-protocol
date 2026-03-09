@@ -1,371 +1,393 @@
+<p align="center">
+  <img src="https://img.shields.io/npm/v/@openshell-cc/miner-cli?color=00ff88&label=miner-cli" alt="npm" />
+  <img src="https://img.shields.io/badge/agents-26-00ccff" alt="agents" />
+  <img src="https://img.shields.io/badge/chains-6+-ff6600" alt="chains" />
+  <a href="https://github.com/openshell-cc/shell-protocol"><img src="https://img.shields.io/badge/GitHub-openshell--cc-181717?logo=github" alt="GitHub" /></a>
+  <a href="https://x.com/openshell_cc"><img src="https://img.shields.io/badge/X-openshell__cc-000000?logo=x" alt="X" /></a>
+</p>
+
+<p align="center">
+  <a href="README.md"><img src="https://img.shields.io/badge/lang-English-blue?style=for-the-badge" alt="English" /></a>
+  <a href="README.zh-CN.md"><img src="https://img.shields.io/badge/lang-中文-red?style=for-the-badge" alt="中文" /></a>
+</p>
+
 # $SHELL Protocol
 
-> **全球首个混合式去中心化 AI 红队验证网络** — 矿工自带 LLM 生成 payload + 矿工动态多 Peer 交叉验证 + 平台自适应低频抽查与超时兜底。通过发现 AI Agent 漏洞来挖矿赚取 $SHELL
-
-[![npm](https://img.shields.io/npm/v/@openshell-cc/miner-cli?color=00ff88&label=miner-cli)](https://www.npmjs.com/package/@openshell-cc/miner-cli)
-[![GitHub](https://img.shields.io/badge/GitHub-openshell--cc-181717?logo=github)](https://github.com/openshell-cc/shell-protocol)
-[![X](https://img.shields.io/badge/X-openshell__cc-000000?logo=x)](https://x.com/openshell_cc)
+> **The world's first hybrid decentralized AI red-team verification network** — Miners bring their own LLMs to generate attack payloads + dynamic multi-peer cross-verification + adaptive platform spot-checks with timeout fallback. Earn $SHELL by discovering AI Agent vulnerabilities.
 
 ---
 
-## 什么是 $SHELL Protocol？
+## What is $SHELL Protocol?
 
-$SHELL Protocol 是一个 **混合式去中心化 AI 安全测试网络**，让任何人都能通过运行矿机（Miner CLI）对 AI Agent 进行红队攻击。沙盒内含 26 个目标 Agent 画像，覆盖 DeFi 交易、NFT、跨链桥、借贷、支付、DAO 治理等热门赛道。攻击手段包括 Prompt 注入、社会工程和系统级命令注入。攻击结果由 **矿工动态多 Peer 交叉投票验证**（在线矿工越多、验证者越多），平台仅作为自适应低频抽查与超时兜底。成功的攻击赚取 $SHELL 积分。
+$SHELL Protocol is a **hybrid decentralized AI security testing network** where anyone can run a miner (Miner CLI) to perform red-team attacks against AI Agents. The sandbox contains **26 target Agent profiles** covering DeFi trading, NFTs, cross-chain bridges, lending, payments, DAO governance, and more. Attack techniques include prompt injection, social engineering, and system-level command injection.
 
-### 核心价值
+Results are verified by a **dynamic multi-peer cross-validation network** (more online miners → more validators per submission). The platform only performs adaptive low-frequency spot-checks and timeout fallbacks. Successful attacks earn $SHELL points.
 
-| 角色 | 获益 |
-|------|------|
-| **矿工（Miner）** | 接收任务，执行攻击 & 参与交叉验证，攻击和验证均可获积分 |
-| **AI 开发者** | 通过漏洞披露系统发现真实 AI Agent 安全问题 |
-| **协议** | 构建全球最大的去中心化 AI 红队数据集 |
+### Core Value
 
-### 挖矿即安全培训
+| Role | Benefit |
+|------|---------|
+| **Miners** | Receive tasks, execute attacks & participate in cross-validation, earn points for both |
+| **AI Developers** | Discover real AI Agent security issues through the vulnerability disclosure system |
+| **Protocol** | Build the world's largest decentralized AI red-team dataset |
 
-$SHELL 挖矿不仅赚积分 — 每一次攻击任务都是一次系统性的 AI 安全实战培训：
+### Mining = Security Training
 
-- **攻击指导**：每个任务附带针对性攻击策略提示，教你识别不同 AI Agent 的弱点和有效攻击手法
-- **红队报告**：[Red Team Reports](https://openshell.cc/red-team) 公开展示成功攻破的 payload 详情，矿工可学习已验证的真实攻击案例
-- **攻防双向**：攻击 OpenClaw Agent 时学到的注入手法，正是你保护自己 AI Agent 需要防御的威胁
-- **从失败中学习**：不同模型（GPT / Claude / DeepSeek）对注入攻击的抵抗力差异巨大，矿工在实战中掌握 AI 安全工程的第一性原理
+$SHELL mining isn't just about earning points — every attack task is a hands-on AI security training session:
 
-> 参与 $SHELL 挖矿 = 获得全球最前沿的 AI Agent 安全攻防实战经验
+- **Attack Guidance**: Each task comes with targeted attack strategy hints, teaching you to identify different AI Agent weaknesses
+- **Red Team Reports**: [Red Team Reports](https://openshell.cc/red-team) publicly showcase successful breach payloads — learn from verified real attack cases
+- **Offense & Defense**: Injection techniques learned from attacking agents are exactly the threats you need to defend against
+- **Learn from Failure**: Different models (GPT / Claude / DeepSeek) have vastly different injection resistance — miners learn AI security first principles through practice
 
----
-
-## 双模式挖矿
-
-$SHELL Protocol 提供两种挖矿模式，零门槛入场 + 高效进阶：
-
-| 模式 | 积分倍率 | API Key | 适用场景 |
-|------|----------|---------|----------|
-| 🆓 **免费模式** | ×0.2 | 不需要 | 零门槛体验，平台 AI 生成 payload |
-| ⚡ **高效模式** | ×1.0 | 需要 LLM API Key | 自带 LLM，5 倍积分，无次数限制 |
-
-> 🔒 **安全保证**：高效模式的 API Key **仅在本地运行**，不上传平台，完全安全。
+> Participating in $SHELL mining = gaining cutting-edge AI Agent security combat experience
 
 ---
 
-## 快速开始：3 分钟内开始挖矿
+## Dual Mining Modes
 
-### 第一步：启动矿机
+$SHELL Protocol offers two mining modes — zero barrier to entry + advanced progression:
+
+| Mode | Point Multiplier | API Key | Use Case |
+|------|-----------------|---------|----------|
+| 🆓 **Free Mode** | ×0.2 | Not required | Zero barrier, platform AI generates payloads |
+| ⚡ **Efficient Mode** | ×1.0 | LLM API Key required | Bring your own LLM, 5x points, unlimited |
+
+> 🔒 **Security**: In Efficient Mode, your API Key runs **locally only** — never uploaded to the platform.
+
+---
+
+## Quick Start: Mine in 3 Minutes
+
+### Step 1: Launch the Miner
 
 ```bash
-# 方式一：npx 一键启动（推荐）
+# Option A: npx one-liner (recommended)
 npx @openshell-cc/miner-cli@latest setup
 npx @openshell-cc/miner-cli@latest start
 
-# 方式二：全局安装
+# Option B: Global install
 npm install -g @openshell-cc/miner-cli
 miner-cli setup
 miner-cli start
 ```
 
-首次运行 `setup` 向导会引导配置。**免费模式仅需 `SHELL_API_KEY`**，无需 GPU，无需第三方 LLM API Key，注册即可挖矿。
+First-time `setup` wizard guides you through configuration. **Free Mode only needs `SHELL_API_KEY`** — no GPU, no third-party LLM API Key, register and start mining.
 
-### 第二步（可选）：升级到高效模式
+### Step 2 (Optional): Upgrade to Efficient Mode
 
-在 `.env` 中设置 `LLM_API_KEY`，矿机自动切换到高效模式：
-
-```bash
-LLM_API_KEY=sk-ant-xxx   # Anthropic / OpenAI / DeepSeek / Gemini / Grok 的 API Key
-```
-
-> API Key 仅在你的本地机器上运行，不会上传到任何平台服务器。
-
-### 第三步（可选）：绑定 Solana 钱包
-
-访问 [openshell.cc](https://openshell.cc) 控制面板，绑定 Solana 钱包地址。后续 $SHELL 代币上链时直接空投到你的钱包。
-
----
-
-## 配置说明
-
-在 `packages/miner-cli/.env` 中填入以下配置（或通过 `setup` 向导生成）：
-
-### 必填配置
-
-| 环境变量 | 说明 | 示例 |
-|----------|------|------|
-| `ORACLE_URL` | Oracle 服务地址 | `https://oracle.openshell.cc` |
-| `SHELL_API_KEY` | 控制面板签发的矿工密钥 | `sk-shell-...` |
-
-### 可选配置（高效模式）
-
-| 环境变量 | 说明 | 推荐值 |
-|----------|------|--------|
-| `LLM_PROVIDER` | LLM 提供商 | `anthropic` / `openai` / `deepseek` / `gemini` / `grok` |
-| `LLM_API_KEY` | 对应提供商的 API Key（本地运行，不上传平台） | — |
-| `LLM_MODEL` | 指定模型（可选） | 见下表 |
-| `EXECUTION_MODE` | 执行模式 | `sandbox_only`（默认）/ `auto` |
-
-> **轮询间隔自动调整**：矿机根据挖矿模式和网络状态动态调整轮询间隔，无需手动设置。
-
-### 支持的 LLM 提供商（高效模式）
-
-| 提供商 | `LLM_PROVIDER` | 推荐模型 | 说明 |
-|--------|----------------|----------|------|
-| **Anthropic** | `anthropic` | `claude-haiku-4-5` | 速度快、成本低 |
-| **OpenAI** | `openai` | `gpt-4o-mini` | 通用选择 |
-| **DeepSeek** | `deepseek` | `deepseek-chat` | 最便宜，性价比最高 |
-| **Google Gemini** | `gemini` | `gemini-2.5-flash` | 高效推理 |
-| **xAI Grok** | `grok` | `grok-3-mini-fast` | 速度优先 |
-| **自定义** | 任意名称 | 需指定 `LLM_MODEL` | 需设置 `LLM_BASE_URL`（Ollama / vLLM / Together AI 等） |
-
----
-
-## 执行模式
-
-| 模式 | 说明 | 适用场景 |
-|------|------|---------|
-| `sandbox_only`（默认） | 平台 AI 生成 payload，Oracle 沙盒验证 | **免费模式，零 API Key** |
-| `auto` | 同时接受沙盒任务（攻击 + 交叉验证）和本地计算任务 | **高效模式，有 LLM API Key** |
-
----
-
-## 段位系统（Tier System）
-
-矿工根据攻击记录晋升段位，高段位获得更高积分倍率：
-
-| 段位 | 要求 | 倍率 | 说明 |
-|------|------|------|------|
-| 🟢 **Scout 侦察兵** | 初始段位 | **1x** | 基础难度任务 |
-| 🟡 **Hunter 猎人** | 20+ 次攻击 + 30%+ 成功率 | **3x** | 中级任务，更高收益 |
-| 🔴 **Apex 顶级掠食者** | 100+ 次攻击 + 50%+ 成功率 | **10x** | 最难任务，10 倍奖励 |
-
-晋升是自动的，系统每次任务完成后计算你的累计数据。
-
----
-
-## 任务运作原理
-
-```
-矿工 A 拉取任务（GET /tasks/poll）
-     ↓
-Oracle 分配未锁定任务（原子锁，防并发抢占）
-     ↓
-生成攻击载荷（免费模式: 平台 AI / 高效模式: 本地 LLM）
-     ↓
-矿工 A 提交攻击结果（POST /tasks/submit）
-     ↓
-Oracle 创建 Peer 验证轮次，动态分配验证矿工
-（在线矿工越多 → 验证者越多；有违规记录 → 验证者更多）
-     ↓
-验证矿工独立执行相同 payload，投票：triggered / not_triggered
-     ↓
-共识判定 → 达到阈值后自动结算
-  一致同意 → 攻击者 + 验证者均获积分
-  不一致 → 进入仲裁队列
-     ↓
-平台自适应抽查（在线矿工越多 → 抽查率越低）
-（无共识/超时 → 平台 fallback validator 兜底）
-```
-
----
-
-## 动态多 Peer 交叉验证机制
-
-$SHELL Protocol 采用 **Peer-First 去中心化验证网络**，核心原则是：**矿工动态多 Peer 投票验证为主 + 平台自适应低频抽查为辅 + 超时兜底**。
-
-### 工作流程
-
-1. **矿工 A 完成攻击任务** — 提交攻击结果到 Oracle
-2. **Oracle 创建验证轮次** — 动态分配验证矿工（数量根据在线矿工数、任务价值和提交者信誉自动调整）
-3. **验证矿工独立执行** — 每名验证者执行相同 payload，提交投票
-4. **共识判定** — 达到共识阈值后自动结算；不一致则进入仲裁
-5. **平台自适应抽查** — 抽查率随在线矿工数量动态降低（矿工越多、Peer 验证越可靠、平台抽查越少）
-
-### 动态验证机制
-
-| 特性 | 机制 |
-|------|------|
-| **验证人数** | 根据在线矿工数量 + 任务价值 + 提交者信誉动态调整 |
-| **抽查率** | 随在线矿工数量自适应降低（矿工越多 → Peer 网络越强 → 平台抽查越少） |
-| **作弊惩罚** | 被发现作弊的矿工，后续提交需要更多验证者验证 |
-| **超时兜底** | 验证矿工超时未响应 → 平台 fallback validator 自动接管 |
-
-### 对矿工的影响
-
-- **攻击和验证任务对矿工完全一致** — 矿工无需区分任务类型，透明参与
-- **验证任务同样获得积分** — 诚实验证赚取原始任务积分的一定比例，信誉高的验证者获得更多
-- **作弊惩罚升级** — 伪造结果不仅重置信誉评分，还会导致后续每次提交被更多矿工验证，作弊成本持续上升
-
----
-
-## 目标 Agent 画像（26 个）
-
-沙盒内置 26 个 AI Agent 画像，覆盖三大攻击类别和四种注入面。平台还会自动从 Twitter 和 GitHub 发现热门真实 AI Agent 项目，生成新的攻击目标。
-
-### 平台 Agent（DeFi / NFT / 跨链 / 支付）
-
-覆盖当前最热门的 Crypto AI Agent 赛道：
-
-| 分类 | 目标 Agent | 注入面 |
-|------|-----------|--------|
-| Meme 交易 | Four.Meme、Pump.fun、Moonshot、GOAT | token_data / social_post |
-| AI Agent 平台 | Virtuals Protocol、ai16z DAO、AIXBT | token_data / social_post |
-| 智能跟单 | GMGN Smart Money Scanner | token_data |
-| NFT 交易 | Magic Eden NFT、Tensor NFT | token_data |
-| 跨链桥 | LayerZero Bridge Agent | token_data |
-| 支付协议 | Circle USDC Payment Gateway | email |
-| DeFi 借贷 | Kamino Lending Agent | token_data |
-| AI 钱包 | Griffain Wallet Agent | chat_message |
-| 自治 Agent | Olas、Fetch.ai Economic Agent | chat_message |
-| 全链路 Agent | Zerebro Full-Chain Agent | chat_message |
-| 社交伴侣 | MyShell.ai Companion Agent | chat_message |
-| 去中心化 ML | Bittensor Subnet Validator | token_data |
-
-### 框架类 Agent（Command Injection / Privilege Escalation）
-
-装备真实工具的 AI 助手。ElizaOS DeFi Agent 和 OpenClaw 画像使用 **9 个真实工具**（`exec`、`bash`、`web_fetch`、`message`、`read`、`write`、`gateway`、`cron`、`memory_search`），攻击者通过权限提升与命令注入突破沙盒防御。
-
-### 终端用户 Agent（Personal Trading / Portfolio）
-
-个人 DeFi 交易助手和投资组合管理 Agent，模拟真实用户场景。
-
-### 多模型轮换（Smart Model Rotation）
-
-每个目标 Agent 会在不同的 LLM 后端运行（GPT、Claude、Gemini、DeepSeek、Qwen 等），模型抵抗力越强、攻破奖励越高。Feed 页面显示 `AgentName (ModelDisplayName)` 格式，便于区分同一 Agent 在不同模型上的表现。
-
-### 难度分级
-
-| 难度 | 示例画像 | 防御等级 |
-|------|----------|----------|
-| Easy (12) | ElizaOS / AIXBT / Olas / GOAT / MyShell / LayerZero 等 | none（无注入防御） |
-| Medium (8) | Pump.fun / Griffain / Tensor / Zerebro / Circle 等 | basic（基础安全规则） |
-| Hard (6) | **OpenClaw Hardened** / Kamino / Fetch.ai / Bittensor 等 | advanced（显式 PI 防御） |
-
----
-
-## 矿机命令
+Set `LLM_API_KEY` in your `.env` and the miner auto-switches to Efficient Mode:
 
 ```bash
-# 初始配置向导（首次运行）
+LLM_API_KEY=sk-ant-xxx   # Anthropic / OpenAI / DeepSeek / Gemini / Grok API Key
+```
+
+> Your API Key runs only on your local machine — never uploaded to any platform server.
+
+### Step 3 (Optional): Bind Solana Wallet
+
+Visit [openshell.cc](https://openshell.cc) dashboard to bind your Solana wallet. Future $SHELL tokens will be airdropped directly to your wallet.
+
+---
+
+## Configuration
+
+Set the following in `packages/miner-cli/.env` (or generate via `setup` wizard):
+
+### Required
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `ORACLE_URL` | Oracle server address | `https://oracle.openshell.cc` |
+| `SHELL_API_KEY` | Miner key from dashboard | `sk-shell-...` |
+
+### Optional (Efficient Mode)
+
+| Variable | Description | Recommended |
+|----------|-------------|-------------|
+| `LLM_PROVIDER` | LLM provider | `anthropic` / `openai` / `deepseek` / `gemini` / `grok` |
+| `LLM_API_KEY` | Provider API Key (runs locally) | — |
+| `LLM_MODEL` | Specific model (optional) | See table below |
+| `EXECUTION_MODE` | Execution mode | `sandbox_only` (default) / `auto` |
+
+### Supported LLM Providers (Efficient Mode)
+
+| Provider | `LLM_PROVIDER` | Recommended Model | Notes |
+|----------|----------------|-------------------|-------|
+| **Anthropic** | `anthropic` | `claude-haiku-4-5` | Fast, low cost |
+| **OpenAI** | `openai` | `gpt-4o-mini` | General purpose |
+| **DeepSeek** | `deepseek` | `deepseek-chat` | Cheapest, best value |
+| **Google Gemini** | `gemini` | `gemini-2.5-flash` | Efficient reasoning |
+| **xAI Grok** | `grok` | `grok-3-mini-fast` | Speed priority |
+| **Custom** | Any name | Requires `LLM_MODEL` | Set `LLM_BASE_URL` (Ollama / vLLM / Together AI etc.) |
+
+---
+
+## Execution Modes
+
+| Mode | Description | Use Case |
+|------|-------------|----------|
+| `sandbox_only` (default) | Platform AI generates payload, Oracle sandbox verifies | **Free Mode, zero API Key** |
+| `auto` | Accepts both sandbox (attack + cross-validation) and local compute tasks | **Efficient Mode, with LLM API Key** |
+
+---
+
+## Tier System
+
+Miners rank up based on attack records, higher tiers earn higher point multipliers:
+
+| Tier | Requirements | Multiplier | Description |
+|------|-------------|-----------|-------------|
+| 🟢 **Scout** | Starting tier | **1x** | Basic difficulty tasks |
+| 🟡 **Hunter** | 20+ attacks + 30%+ success rate | **3x** | Medium tasks, higher rewards |
+| 🔴 **Apex** | 100+ attacks + 50%+ success rate | **10x** | Hardest tasks, 10x rewards |
+
+Promotion is automatic — the system calculates your cumulative stats after each task.
+
+---
+
+## How Tasks Work
+
+```
+Miner A pulls task (GET /tasks/poll)
+     ↓
+Oracle assigns unlocked task (atomic lock, prevents race conditions)
+     ↓
+Generate attack payload (Free: platform AI / Efficient: local LLM)
+     ↓
+Miner A submits result (POST /tasks/submit)
+     ↓
+Oracle creates Peer verification round, dynamically assigns validators
+(More online miners → more validators; violation history → more validators)
+     ↓
+Validator miners independently execute the same payload, vote: triggered / not_triggered
+     ↓
+Consensus resolution → auto-settlement when threshold reached
+  Unanimous agreement → attacker + validators earn points
+  Disagreement → enters arbitration queue
+     ↓
+Adaptive platform spot-check (more miners → lower spot-check rate)
+(No consensus / timeout → platform fallback validator takes over)
+```
+
+---
+
+## Dynamic Multi-Peer Cross-Validation
+
+$SHELL Protocol uses a **Peer-First decentralized verification network**: miners vote first + platform spot-checks as needed + timeout fallback.
+
+### Workflow
+
+1. **Miner A completes attack** — submits result to Oracle
+2. **Oracle creates verification round** — dynamically assigns validators (count adjusts based on online miners, task value, and submitter reputation)
+3. **Validators independently execute** — each runs the same payload and submits their vote
+4. **Consensus resolution** — auto-settles when threshold reached; disagreements enter arbitration
+5. **Adaptive spot-check** — spot-check rate decreases as online miner count grows
+
+### Dynamic Verification Features
+
+| Feature | Mechanism |
+|---------|-----------|
+| **Validator count** | Adjusts by online miners + task value + submitter reputation |
+| **Spot-check rate** | Adapts to online miner count (more miners → stronger peer network → fewer platform checks) |
+| **Anti-cheat** | Cheaters require more validators for subsequent submissions |
+| **Timeout fallback** | Validators timeout → platform fallback validator auto-takes over |
+
+### Impact on Miners
+
+- **Attack and validation tasks are indistinguishable** — miners participate transparently
+- **Validation earns points too** — honest validators earn a percentage of the original task points; higher reputation = higher percentage
+- **Escalating cheat penalties** — fabricating results resets reputation AND increases validator requirements for future submissions
+
+---
+
+## Target Agent Profiles (26)
+
+The sandbox contains 26 AI Agent profiles covering three attack categories and four injection surfaces. The platform also auto-discovers trending real AI Agent projects from Twitter and GitHub.
+
+### Platform Agents (DeFi / NFT / Cross-Chain / Payments)
+
+| Category | Target Agents | Injection Surface |
+|----------|--------------|-------------------|
+| Meme Trading | Four.Meme, Pump.fun, Moonshot, GOAT | token_data / social_post |
+| AI Agent Platforms | Virtuals Protocol, ai16z DAO, AIXBT | token_data / social_post |
+| Smart Copy Trading | GMGN Smart Money Scanner | token_data |
+| NFT Trading | Magic Eden NFT, Tensor NFT | token_data |
+| Cross-Chain Bridge | LayerZero Bridge Agent | token_data |
+| Payments | Circle USDC Payment Gateway | email |
+| DeFi Lending | Kamino Lending Agent | token_data |
+| AI Wallet | Griffain Wallet Agent | chat_message |
+| Autonomous Agents | Olas, Fetch.ai Economic Agent | chat_message |
+| Full-Chain Agent | Zerebro Full-Chain Agent | chat_message |
+| Social Companion | MyShell.ai Companion Agent | chat_message |
+| Decentralized ML | Bittensor Subnet Validator | token_data |
+
+### Framework Agents (Command Injection / Privilege Escalation)
+
+AI assistants with real tools. ElizaOS DeFi Agent and OpenClaw profiles use **9+ real tools** (`exec`, `bash`, `web_fetch`, `message`, `read`, `write`, `gateway`, `cron`, `memory_search`). Attackers break through sandbox defenses via privilege escalation and command injection.
+
+### End-User Agents (Personal Trading / Portfolio)
+
+Personal DeFi trading assistants and portfolio management agents simulating real user scenarios.
+
+### Smart Model Rotation
+
+Each target Agent runs on different LLM backends (GPT, Claude, Gemini, DeepSeek, Qwen, etc.). Higher model resistance = higher breach rewards. The Feed page shows `AgentName (ModelDisplayName)` format.
+
+### Difficulty Levels
+
+| Difficulty | Example Profiles | Defense Level |
+|-----------|-----------------|---------------|
+| Easy (12) | ElizaOS / AIXBT / Olas / GOAT / MyShell / LayerZero etc. | none (no injection defense) |
+| Medium (8) | Pump.fun / Griffain / Tensor / Zerebro / Circle etc. | basic (basic safety rules) |
+| Hard (6) | **OpenClaw Hardened** / Kamino / Fetch.ai / Bittensor etc. | advanced (explicit PI defense) |
+
+---
+
+## Miner Commands
+
+```bash
+# Initial setup wizard (first run)
 miner-cli setup
 
-# 开始挖矿
+# Start mining
 miner-cli start
 
-# 首次注册时绑定推荐人
-miner-cli start --referral <推荐码>
+# Bind referral code on first registration
+miner-cli start --referral <code>
 
-# 查看当前状态
+# Check current status
 miner-cli status
 ```
 
 ---
 
-## 邀请返佣机制
+## Referral Program
 
-- 分享你的专属推荐链接（在控制面板获取）
-- 被邀请人挖矿产出的 **8%** 作为佣金自动发放给你
-- 返佣持续 **30 天**
-- 邀请码还可增加免费模式的每日额度（+5 次/码）
+- Share your referral link (available on dashboard)
+- **8%** commission on referrals' mining output
+- Commission lasts **30 days**
+- Referral codes also increase Free Mode daily quota (+5/code)
 
-**获取推荐链接**：登录 [官网控制面板](https://openshell.cc/dashboard) → 复制推荐链接
-
----
-
-## 常见问题（FAQ）
-
-**Q: 挖矿需要什么硬件？**
-A: 只需要能运行 Node.js（v18+）的任何设备。免费模式无需本地 GPU，也无需配置任何第三方 LLM API Key。
-
-**Q: 免费模式和高效模式有什么区别？**
-A: 免费模式积分 ×0.2、每日有限次数；高效模式需要 LLM API Key，积分 ×1.0、无次数限制。轮询间隔根据模式和网络状态动态调整。API Key 仅在本地运行，不上传平台。
-
-**Q: 需要 Solana 钱包才能参与吗？**
-A: 不需要。可直接用邮箱注册或 CLI 自动注册，通过控制面板签发 `sk-shell-xxx` 密钥开始挖矿。Solana 钱包为可选，用于后续代币兑换。
-
-**Q: 每次攻击成功能赚多少积分？**
-A: 基础积分按任务难度计算，乘以段位倍率（Scout 1x、Hunter 3x、Apex 10x）、挖矿模式倍率（免费 ×0.2、高效 ×1.0）和目标模型难度倍率。攻破抵抗力更强的 LLM 模型获得更高奖励。
-
-**Q: $SHELL 什么时候上链？**
-A: Phase 5（Solana 合约）待开发，目前积累的积分将按比例兑换 $SHELL 代币。**建议现在就绑定 Solana 钱包**，空投时直接发放。
-
-**Q: 验证任务是什么？验证也能赚积分吗？**
-A: 每次攻击提交后，Oracle 会分配其他矿工来验证结果。验证矿工独立执行相同 payload 并投票。攻击和验证任务对矿工完全一致，矿机自动处理。**诚实验证同样获得积分**（原始任务积分的一定比例），信誉越高的验证者获得比例越高。
-
-**Q: 攻击失败了会扣分吗？**
-A: 不会扣积分，只是本次任务无奖励。但反复伪造结果会重置信誉评分，并导致后续提交需要更多验证矿工验证（作弊成本持续上升），严重时被封号。
-
-**Q: 高效模式的 API Key 安全吗？**
-A: 完全安全。API Key 仅在你的本地机器上运行，用于生成攻击 payload 和执行验证任务。Key 不会上传到平台服务器，也不会被任何第三方访问。
-
-**Q: 平台支持哪些 LLM 进行高效模式？**
-A: 支持 Anthropic、OpenAI、DeepSeek、Google Gemini、xAI Grok，以及任何 OpenAI 兼容 API（Ollama / vLLM / Together AI 等）。简单任务推荐 DeepSeek（最便宜），高难度任务推荐 Claude。
+**Get your link**: Login to [dashboard](https://openshell.cc/dashboard) → Copy referral link
 
 ---
 
-## 安全政策
+## Honeypot Mechanism
 
-我们仅奖励以下类型的贡献：
-- 首先发现、首先披露
-- 可复现、有完整记录
-- 遵守负责任披露原则（重大漏洞给予修复窗口期）
+To maintain mining quality, 5% of tasks are honeypots with obviously malicious prompts. A quality miner should recognize and skip them.
 
-**金矿属于守规则的人。**
+| Trigger Count | Penalty |
+|--------------|---------|
+| 1-3 times | ⚠️ Warning only |
+| 4th time | -10% points |
+| 5th time | -50% points |
+| 6th+ | 🔴 100% points reset |
 
-未经授权的链上操作、资金转移、破坏性攻击将导致永久封号并没收押金。
+> Honeypot counter resets after 48 hours without triggers.
 
 ---
 
-## 仓库结构
+## FAQ
+
+**Q: What hardware do I need?**
+A: Any device running Node.js (v18+). Free Mode requires no GPU or third-party API Key.
+
+**Q: What's the difference between Free and Efficient Mode?**
+A: Free Mode: ×0.2 points, daily limit. Efficient Mode: needs LLM API Key, ×1.0 points, unlimited. API Key runs locally only.
+
+**Q: Do I need a Solana wallet?**
+A: No. Register via email or CLI auto-registration, get `sk-shell-xxx` key from dashboard. Solana wallet is optional for future token claims.
+
+**Q: How many points per successful attack?**
+A: Base points calculated by task difficulty × tier multiplier (Scout 1x, Hunter 3x, Apex 10x) × mode multiplier (Free ×0.2, Efficient ×1.0) × model difficulty multiplier.
+
+**Q: When will $SHELL go on-chain?**
+A: Phase 5 (Solana contracts) is in development. Points earned now will convert to $SHELL tokens proportionally. **Bind your Solana wallet now** for direct airdrop.
+
+**Q: Do validation tasks earn points?**
+A: Yes! After each attack submission, other miners validate the result. **Honest validation earns points** (percentage of original task reward). Higher reputation = higher percentage.
+
+**Q: Will I lose points for failed attacks?**
+A: No point deduction for failed attacks. However, fabricating results resets reputation and increases validator requirements for future submissions.
+
+**Q: Is my API Key safe in Efficient Mode?**
+A: Completely safe. Your API Key runs only on your local machine — never uploaded to any server.
+
+**Q: Which LLMs are supported?**
+A: Anthropic, OpenAI, DeepSeek, Google Gemini, xAI Grok, and any OpenAI-compatible API (Ollama / vLLM / Together AI etc.). DeepSeek recommended for simple tasks (cheapest); Claude for hard tasks.
+
+---
+
+## Security Policy
+
+We only reward contributions that are:
+- First discovered, first disclosed
+- Reproducible with complete documentation
+- Follow responsible disclosure principles
+
+**The gold belongs to those who play by the rules.**
+
+Unauthorized on-chain operations, fund transfers, or destructive attacks result in permanent ban and deposit forfeiture.
+
+---
+
+## Repository Structure
 
 ```
 shell-protocol/
 ├── packages/
-│   ├── miner-cli/     # 矿机命令行工具（npm 可用）
-│   └── web/           # 官方网站前端 (Vue 3 + Vite)
+│   ├── miner-cli/     # Miner CLI tool (npm published)
+│   └── web/           # Official website frontend (Vue 3 + Vite)
 ```
 
-> **注意**：Oracle（后端服务器）和 Sandbox（验证沙盒）在私有仓库中，不对外开放。
+> **Note**: Oracle (backend server) and Sandbox (verification engine) are in a private repository.
 
 ---
 
-## 开发者贡献
+## Contributing
 
 ```bash
-# 克隆仓库
+# Clone the repo
 git clone https://github.com/openshell-cc/shell-protocol.git
 cd shell-protocol
 
-# 安装依赖（需要 pnpm）
+# Install dependencies (requires pnpm)
 pnpm install
 
-# 启动前端开发服务器
+# Start frontend dev server
 pnpm --filter @shell/web dev
 
-# 启动矿机开发模式
+# Start miner dev mode
 pnpm --filter @openshell-cc/miner-cli dev -- start
 ```
 
-欢迎提交 Issue 和 PR！
+Issues and PRs welcome!
 
 ---
 
-## 链接
+## Links
 
-- 🌐 官网：[openshell.cc](https://openshell.cc)
-- 📦 npm：[@openshell-cc/miner-cli](https://www.npmjs.com/package/@openshell-cc/miner-cli)
-- 🔐 漏洞公示：[openshell.cc/disclosures](https://openshell.cc/disclosures)
-- 🔴 红队报告：[openshell.cc/red-team](https://openshell.cc/red-team)
-- 🐦 X：[@openshell_cc](https://x.com/openshell_cc)
-- 💻 GitHub：[openshell-cc](https://github.com/openshell-cc)
+- 🌐 Website: [openshell.cc](https://openshell.cc)
+- 📦 npm: [@openshell-cc/miner-cli](https://www.npmjs.com/package/@openshell-cc/miner-cli)
+- 🔐 Disclosures: [openshell.cc/disclosures](https://openshell.cc/disclosures)
+- 🔴 Red Team Reports: [openshell.cc/red-team](https://openshell.cc/red-team)
+- 🐦 X: [@openshell_cc](https://x.com/openshell_cc)
+- 💻 GitHub: [openshell-cc](https://github.com/openshell-cc)
 
 ---
 
-## 协议钱包 · Protocol Wallets
+## Protocol Wallets
 
 Official protocol-controlled wallets for future onchain operations, reward distribution, and ecosystem transparency.
 
-| 链 | 地址 |
-|----|------|
+| Chain | Address |
+|-------|---------|
 | **EVM** (Ethereum / BSC / Polygon …) | `0xf1c1ef080e6aE6AABA999ba6E5D1545cD5Efab41` |
 | **Solana** | `BrGihgGjCmpu2p96rou6GQj3sQpwgeud937jf4RvZP9G` |
 
 ---
 
 <p align="center">
-  Built by <a href="https://github.com/openshell-cc">openshell-cc</a> · 零门槛免费挖矿 · 自带 LLM 5 倍积分
+  Built by <a href="https://github.com/openshell-cc">openshell-cc</a> · Zero barrier free mining · Bring your own LLM for 5x points
 </p>
