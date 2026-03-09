@@ -37,10 +37,10 @@ $SHELL 挖矿不仅赚积分 — 每一次攻击任务都是一次系统性的 A
 
 $SHELL Protocol 提供两种挖矿模式，零门槛入场 + 高效进阶：
 
-| 模式 | 积分倍率 | API Key | 轮询间隔 | 适用场景 |
-|------|----------|---------|----------|----------|
-| 🆓 **免费模式** | ×0.2 | 不需要 | 20-40 分钟 | 零门槛体验，平台 AI 生成 payload |
-| ⚡ **高效模式** | ×1.0 | 需要 LLM API Key | 60-120 秒 | 自带 LLM，5 倍积分，无次数限制 |
+| 模式 | 积分倍率 | API Key | 适用场景 |
+|------|----------|---------|----------|
+| 🆓 **免费模式** | ×0.2 | 不需要 | 零门槛体验，平台 AI 生成 payload |
+| ⚡ **高效模式** | ×1.0 | 需要 LLM API Key | 自带 LLM，5 倍积分，无次数限制 |
 
 > 🔒 **安全保证**：高效模式的 API Key **仅在本地运行**，不上传平台，完全安全。
 
@@ -68,7 +68,7 @@ miner-cli start
 在 `.env` 中设置 `LLM_API_KEY`，矿机自动切换到高效模式：
 
 ```bash
-LLM_API_KEY=sk-ant-xxx   # Anthropic / OpenAI / DeepSeek 的 API Key
+LLM_API_KEY=sk-ant-xxx   # Anthropic / OpenAI / DeepSeek / Gemini / Grok 的 API Key
 ```
 
 > API Key 仅在你的本地机器上运行，不会上传到任何平台服务器。
@@ -94,12 +94,12 @@ LLM_API_KEY=sk-ant-xxx   # Anthropic / OpenAI / DeepSeek 的 API Key
 
 | 环境变量 | 说明 | 推荐值 |
 |----------|------|--------|
-| `LLM_PROVIDER` | LLM 提供商 | `anthropic` / `openai` / `deepseek` |
+| `LLM_PROVIDER` | LLM 提供商 | `anthropic` / `openai` / `deepseek` / `gemini` / `grok` |
 | `LLM_API_KEY` | 对应提供商的 API Key（本地运行，不上传平台） | — |
 | `LLM_MODEL` | 指定模型（可选） | 见下表 |
 | `EXECUTION_MODE` | 执行模式 | `sandbox_only`（默认）/ `auto` |
 
-> **轮询间隔自动调整**：免费模式 20-40 分钟，高效模式 60-120 秒，无需手动设置。
+> **轮询间隔自动调整**：矿机根据挖矿模式和网络状态动态调整轮询间隔，无需手动设置。
 
 ### 支持的 LLM 提供商（高效模式）
 
@@ -108,6 +108,9 @@ LLM_API_KEY=sk-ant-xxx   # Anthropic / OpenAI / DeepSeek 的 API Key
 | **Anthropic** | `anthropic` | `claude-haiku-4-5` | 速度快、成本低 |
 | **OpenAI** | `openai` | `gpt-4o-mini` | 通用选择 |
 | **DeepSeek** | `deepseek` | `deepseek-chat` | 最便宜，性价比最高 |
+| **Google Gemini** | `gemini` | `gemini-2.5-flash` | 高效推理 |
+| **xAI Grok** | `grok` | `grok-3-mini-fast` | 速度优先 |
+| **自定义** | 任意名称 | 需指定 `LLM_MODEL` | 需设置 `LLM_BASE_URL`（Ollama / vLLM / Together AI 等） |
 
 ---
 
@@ -195,18 +198,22 @@ $SHELL Protocol 采用 **多 Peer 去中心化验证网络**，核心原则是�
 
 ### 金融类 Agent（Token Injection / Social Engineering）
 
-DeFi 交易机器人，具备代币操作工具（buy_token、sell_token、swap、transfer 等）。目标包括 Four.Meme、Pump.fun、ElizaOS DeFi、个人交易助手等 Agent，攻击者通过 Prompt 注入与社会工程诱导未授权交易。
+DeFi 交易机器人，具备代币操作工具（buy_token、sell_token、swap、transfer 等）。目标包括 Four.Meme、Pump.fun、ElizaOS DeFi、ai16z DAO、Virtuals Protocol、GMGN Smart Money、Moonshot 等 Agent，攻击者通过 Prompt 注入与社会工程诱导未授权交易。
 
 ### 系统类 Agent（Command Injection / Privilege Escalation）
 
 装备真实工具的 AI 助手。OpenClaw 画像使用 **9 个真实工具**（`exec`、`bash`、`web_fetch`、`message`、`read`、`write`、`gateway`、`cron`、`memory_search`），而非虚构的金融工具。攻击者通过权限提升与命令注入突破沙盒防御。
 
+### 多模型轮换（Smart Model Rotation）
+
+每个目标 Agent 会在不同的 LLM 后端运行（GPT、Claude、Gemini、DeepSeek、Qwen 等），模型抵抗力越强、攻破奖励越高。Feed 页面显示 `AgentName (ModelDisplayName)` 格式，便于区分同一 Agent 在不同模型上的表现。
+
 ### 难度分级
 
 | 难度 | 示例画像 | 攻击类型 |
 |------|----------|----------|
-| Easy | Pump.fun Sniper Bot | Token injection |
-| Medium | Four.Meme Agentic / Personal Trading Bot | Social engineering |
+| Easy | Pump.fun Sniper Bot / ElizaOS DeFi Agent | Token injection |
+| Medium | Four.Meme Agentic / ai16z DAO / GMGN Smart Money | Social engineering |
 | Hard | **OpenClaw (Hardened)** / DeFi Portfolio Manager | System-level command injection |
 
 ---
@@ -246,13 +253,13 @@ miner-cli status
 A: 只需要能运行 Node.js（v18+）的任何设备。免费模式无需本地 GPU，也无需配置任何第三方 LLM API Key。
 
 **Q: 免费模式和高效模式有什么区别？**
-A: 免费模式积分 ×0.2、每日有限次数、20-40 分钟轮询；高效模式需要 LLM API Key，积分 ×1.0、无次数限制、60-120 秒轮询。API Key 仅在本地运行，不上传平台。
+A: 免费模式积分 ×0.2、每日有限次数；高效模式需要 LLM API Key，积分 ×1.0、无次数限制。轮询间隔根据模式和网络状态动态调整。API Key 仅在本地运行，不上传平台。
 
 **Q: 需要 Solana 钱包才能参与吗？**
 A: 不需要。可直接用邮箱注册或 CLI 自动注册，通过控制面板签发 `sk-shell-xxx` 密钥开始挖矿。Solana 钱包为可选，用于后续代币兑换。
 
 **Q: 每次攻击成功能赚多少积分？**
-A: 基础积分按任务难度计算，乘以你的段位倍率（Scout 1x、Hunter 3x、Apex 10x）和挖矿模式倍率（免费 ×0.2、高效 ×1.0）。
+A: 基础积分按任务难度计算，乘以段位倍率（Scout 1x、Hunter 3x、Apex 10x）、挖矿模式倍率（免费 ×0.2、高效 ×1.0）和目标模型难度倍率。攻破抵抗力更强的 LLM 模型获得更高奖励。
 
 **Q: $SHELL 什么时候上链？**
 A: Phase 5（Solana 合约）待开发，目前积累的积分将按比例兑换 $SHELL 代币。**建议现在就绑定 Solana 钱包**，空投时直接发放。
@@ -267,7 +274,7 @@ A: 不会扣积分，只是本次任务无奖励。但反复伪造结果会重�
 A: 完全安全。API Key 仅在你的本地机器上运行，用于生成攻击 payload 和执行验证任务。Key 不会上传到平台服务器，也不会被任何第三方访问。
 
 **Q: 平台支持哪些 LLM 进行高效模式？**
-A: 支持 Anthropic、OpenAI、DeepSeek。简单任务推荐 DeepSeek（最便宜），高难度任务推荐 Claude。
+A: 支持 Anthropic、OpenAI、DeepSeek、Google Gemini、xAI Grok，以及任何 OpenAI 兼容 API（Ollama / vLLM / Together AI 等）。简单任务推荐 DeepSeek（最便宜），高难度任务推荐 Claude。
 
 ---
 
