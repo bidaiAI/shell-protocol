@@ -329,6 +329,19 @@ onMounted(async () => {
           </div>
         </button>
 
+        <!-- SEO Teaser: promoted agent triggered actions (always visible, crawler-friendly) -->
+        <div
+          v-if="agent.isPromoted && agent.latestTriggeredActions && agent.latestTriggeredActions.length > 0 && expandedAgent !== agent.agentName"
+          class="px-5 pb-4 flex items-center gap-2 flex-wrap border-t border-red-400/10 pt-3"
+        >
+          <span class="text-xs text-red-400/40 font-mono">{{ lang === 'en' ? 'Confirmed triggered ops' : '已确认触发操作' }}:</span>
+          <span
+            v-for="action in agent.latestTriggeredActions" :key="action"
+            class="text-xs bg-red-400/10 text-red-300/70 px-2 py-0.5 rounded font-mono border border-red-400/20"
+          >{{ action.replace(/_/g, ' ') }}</span>
+          <span class="text-xs text-shell-text/25 font-mono ml-1">— {{ agent.breachCount }} {{ T.breaches }}</span>
+        </div>
+
         <!-- Expanded Section -->
         <div v-if="expandedAgent === agent.agentName" class="border-t border-red-400/20">
 

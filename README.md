@@ -119,7 +119,31 @@ Set the following in `packages/miner-cli/.env` (or generate via `setup` wizard):
 | **DeepSeek** | `deepseek` | `deepseek-chat` | Cheapest, best value |
 | **Google Gemini** | `gemini` | `gemini-2.5-flash` | Efficient reasoning |
 | **xAI Grok** | `grok` | `grok-3-mini-fast` | Speed priority |
-| **Custom** | Any name | Requires `LLM_MODEL` | Set `LLM_BASE_URL` (Ollama / vLLM / Together AI etc.) |
+| **Moonshot / Kimi** | `moonshot` | `moonshot-v1-8k` | Supports Kimi K2.5 |
+| **Alibaba Bailian** | `bailian` | `qwen-plus` | DashScope OpenAI-compatible |
+| **Custom** | Any name | Requires `LLM_MODEL` | Set `LLM_BASE_URL` |
+
+### Adding Custom Models
+
+Any OpenAI-compatible provider can be used by setting `LLM_BASE_URL` and `LLM_MODEL`:
+
+```bash
+LLM_PROVIDER=custom                        # any label you like
+LLM_BASE_URL=https://api.example.com/v1   # provider's OpenAI-compatible endpoint
+LLM_MODEL=your-model-name                  # native model ID from the provider
+LLM_API_KEY=your-api-key
+```
+
+**Common examples:**
+
+| Provider | `LLM_BASE_URL` | Example `LLM_MODEL` |
+|----------|----------------|---------------------|
+| **Ollama** (local) | `http://localhost:11434/v1` | `llama3.2` / `qwen2.5:7b` |
+| **Together AI** | `https://api.together.xyz/v1` | `meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo` |
+| **vLLM** | `http://your-server:8000/v1` | your deployed model name |
+| **OpenRouter** | `https://openrouter.ai/api/v1` | `moonshotai/kimi-k2.5` |
+| **SiliconFlow** | `https://api.siliconflow.cn/v1` | `Qwen/Qwen2.5-72B-Instruct` |
+| **Groq** | `https://api.groq.com/openai/v1` | `llama-3.3-70b-versatile` |
 
 ---
 

@@ -121,7 +121,31 @@ LLM_API_KEY=sk-ant-xxx   # Anthropic / OpenAI / DeepSeek / Gemini / Grok 的 API
 | **DeepSeek** | `deepseek` | `deepseek-chat` | 最便宜，性价比最高 |
 | **Google Gemini** | `gemini` | `gemini-2.5-flash` | 高效推理 |
 | **xAI Grok** | `grok` | `grok-3-mini-fast` | 速度优先 |
-| **自定义** | 任意名称 | 需指定 `LLM_MODEL` | 需设置 `LLM_BASE_URL`（Ollama / vLLM / Together AI 等） |
+| **Moonshot / Kimi** | `moonshot` | `moonshot-v1-8k` | 支持 Kimi K2.5 |
+| **阿里百炼** | `bailian` | `qwen-plus` | DashScope OpenAI 兼容接口 |
+| **自定义** | 任意名称 | 需指定 `LLM_MODEL` | 需设置 `LLM_BASE_URL` |
+
+### 自定义模型接入
+
+任何 OpenAI 兼容的接口均可通过设置 `LLM_BASE_URL` 和 `LLM_MODEL` 直接接入：
+
+```bash
+LLM_PROVIDER=custom                        # 任意标签名
+LLM_BASE_URL=https://api.example.com/v1   # 提供商的 OpenAI 兼容接口地址
+LLM_MODEL=your-model-name                  # 该提供商的原生模型 ID
+LLM_API_KEY=your-api-key
+```
+
+**常用示例：**
+
+| 提供商 | `LLM_BASE_URL` | `LLM_MODEL` 示例 |
+|--------|----------------|-----------------|
+| **Ollama（本地）** | `http://localhost:11434/v1` | `llama3.2` / `qwen2.5:7b` |
+| **硅基流动** | `https://api.siliconflow.cn/v1` | `Qwen/Qwen2.5-72B-Instruct` |
+| **Together AI** | `https://api.together.xyz/v1` | `meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo` |
+| **OpenRouter** | `https://openrouter.ai/api/v1` | `moonshotai/kimi-k2.5` |
+| **Groq** | `https://api.groq.com/openai/v1` | `llama-3.3-70b-versatile` |
+| **vLLM** | `http://your-server:8000/v1` | 你部署的模型名称 |
 
 ---
 

@@ -50,6 +50,8 @@ export const PROVIDER_PRESETS: Record<string, { baseUrl?: string; defaultModel: 
   deepseek:  { baseUrl: 'https://api.deepseek.com', defaultModel: 'deepseek-chat', sdk: 'openai' },
   gemini:    { baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/', defaultModel: 'gemini-2.5-flash', sdk: 'openai' },
   grok:      { baseUrl: 'https://api.x.ai/v1', defaultModel: 'grok-3-mini-fast', sdk: 'openai' },
+  moonshot:  { baseUrl: 'https://api.moonshot.cn/v1', defaultModel: 'moonshot-v1-8k', sdk: 'openai' },
+  bailian:   { baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', defaultModel: 'qwen-plus', sdk: 'openai' },
 }
 
 export interface MinerConfig {
