@@ -1,6 +1,6 @@
 {
   "name": "@openshell-cc/miner-cli",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "type": "module",
   "description": "Mine $SHELL by red-teaming AI agents",
   "repository": {

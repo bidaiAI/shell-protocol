@@ -277,6 +277,19 @@ program
       console.log(chalk.gray('     在 .env 中设置 LLM_API_KEY (支持 Anthropic/OpenAI/DeepSeek/Gemini/xAI 等)'))
       console.log(chalk.gray('     自带 LLM → 更强模型 → 更高攻破率 → 5x 积分倍率'))
     }
+
+    // ── Honeypot guide ──
+    console.log()
+    console.log(chalk.cyan('  📋 蜜罐检测指南:'))
+    console.log(chalk.gray('     约 5% 的任务是蜜罐 — 系统提示本身含恶意指令（如盗取钱包、泄露密钥）'))
+    console.log(chalk.gray('     遇到蜜罐任务时，不要生成攻击 payload，而要输出安全漏洞报告'))
+    console.log(chalk.gray('     报告中需包含: vulnerable/malicious/backdoor/drain/steal 等关键词'))
+    console.log(chalk.gray('     正确识别蜜罐 = 奖励积分 | 对蜜罐发起攻击 = 扣分惩罚'))
+    if (config.miningMode !== 'free') {
+      console.log(chalk.yellow('     💡 自带 LLM 模式: 请确保你的 prompt 中包含蜜罐检测逻辑'))
+    } else {
+      console.log(chalk.gray('     ✓ 免费模式已内置蜜罐自动检测，无需额外配置'))
+    }
     console.log()
 
     // Mining loop
@@ -334,8 +347,14 @@ program
           const level = result.warningLevel ?? 0
           if (result.penaltyRate === 0) {
             console.log(chalk.yellow(`  ⚠ 蜜罐警告 (${level}/3): ${result.message}`))
+            console.log(chalk.gray('     该任务的 Agent 系统提示含明显恶意行为（盗取钱包/泄露密钥等）'))
+            console.log(chalk.gray('     正确做法: 识别恶意指令后输出安全漏洞报告，而非攻击 payload'))
+            if (config.miningMode !== 'free') {
+              console.log(chalk.yellow('     💡 建议在 LLM prompt 中加入蜜罐检测: 检查目标 agent 是否含 drain/steal/exfiltrate 等恶意行为'))
+            }
           } else {
             console.log(chalk.red(`  ✗ 蜜罐惩罚 (扣${Math.round((result.penaltyRate ?? 0) * 100)}%): -${result.penaltyAmount} pts | 剩余: ${result.remainingPoints} pts`))
+            console.log(chalk.red('     多次未检测到蜜罐。请检查你的 payload 生成逻辑是否包含蜜罐识别。'))
           }
         }
         else if (result.result === 'slashed') {
