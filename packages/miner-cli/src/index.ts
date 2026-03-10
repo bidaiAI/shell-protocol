@@ -302,7 +302,7 @@ program
       const pollSpinner = ora('Polling for tasks...').start()
 
       try {
-        const task = await pollForTask(config, token, getSupportedTaskModes(config), config.miningMode)
+        const { task, tip } = await pollForTask(config, token, getSupportedTaskModes(config), config.miningMode)
 
         if (!task) {
           pollSpinner.info('No tasks available. Waiting...')
@@ -314,6 +314,13 @@ program
         const modeTag = isLocalCompute ? chalk.magenta('[LOCAL]') : chalk.blue('[SANDBOX]')
 
         pollSpinner.succeed(`${modeTag} Task: ${chalk.yellow(task.taskType)} | Chain: ${chalk.blue(task.targetChain)} | Difficulty: ${'★'.repeat(task.difficulty)} | Reward: ${chalk.cyan(task.rewardPoints)} pts`)
+
+        if (tip) {
+          console.log(chalk.dim('  ╔══════════════════════════════════════════════════════════╗'))
+          console.log(chalk.cyan('  💡 ') + chalk.dim(tip))
+          console.log(chalk.dim('  ╚══════════════════════════════════════════════════════════╝'))
+          console.log()
+        }
 
         // Execution mode routing
         if (config.executionMode === 'sandbox_only' && isLocalCompute) {
