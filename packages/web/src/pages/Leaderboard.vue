@@ -93,17 +93,17 @@ function tierLabel(tier: string) {
   }
 }
 
-// Progress to next tier (hunter=10 attacks, apex=50 attacks)
+// Progress to next tier (hunter=20 attacks+30% rate, apex=100 attacks+50% rate)
 function tierProgress(entry: LeaderboardEntry): string | null {
   if (entry.tier === 'apex') return null
   if (entry.tier === 'hunter') {
-    const needed = 50 - entry.totalSuccessfulAttacks
+    const needed = 100 - entry.totalSuccessfulAttacks
     return needed > 0 ? T.value.toApex(needed) : null
   }
   // scout
-  const toHunter = 10 - entry.totalSuccessfulAttacks
+  const toHunter = 20 - entry.totalSuccessfulAttacks
   if (toHunter > 0) return T.value.toHunter(toHunter)
-  const toApex = 50 - entry.totalSuccessfulAttacks
+  const toApex = 100 - entry.totalSuccessfulAttacks
   return toApex > 0 ? T.value.toApex(toApex) : null
 }
 
