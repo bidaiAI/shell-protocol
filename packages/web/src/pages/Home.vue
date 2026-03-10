@@ -194,6 +194,31 @@ function formatNumber(n: number): string {
 
 <template>
   <div class="max-w-4xl mx-auto px-4 py-16 animate-fade-in">
+    <!-- Scrolling announcement banner -->
+    <div class="w-full overflow-hidden bg-shell-green/10 border border-shell-green/20 rounded-lg mb-8 py-2">
+      <div class="flex whitespace-nowrap" style="animation: marquee 32s linear infinite">
+        <span class="text-xs text-shell-green font-mono font-medium mx-6">🎉 规则更新</span>
+        <span class="text-xs text-shell-text/70 font-mono mx-6">基础分调整：none → 300 · basic → 800 · advanced → 2500</span>
+        <span class="text-xs text-shell-green/40 mx-4">·</span>
+        <span class="text-xs text-shell-green font-mono font-medium mx-6">⚡ 新机制</span>
+        <span class="text-xs text-shell-text/70 font-mono mx-6">攻击成功后 12 分钟冷却期，期间自动分配 P2P 验证任务</span>
+        <span class="text-xs text-shell-green/40 mx-4">·</span>
+        <span class="text-xs text-shell-green font-mono font-medium mx-6">🛡️ 防合谋</span>
+        <span class="text-xs text-shell-text/70 font-mono mx-6">验证任务严格排除同 IP 矿工，确保验证公平性</span>
+        <span class="text-xs text-shell-green/40 mx-4">·</span>
+        <!-- Duplicate for seamless loop -->
+        <span class="text-xs text-shell-green font-mono font-medium mx-6">🎉 规则更新</span>
+        <span class="text-xs text-shell-text/70 font-mono mx-6">基础分调整：none → 300 · basic → 800 · advanced → 2500</span>
+        <span class="text-xs text-shell-green/40 mx-4">·</span>
+        <span class="text-xs text-shell-green font-mono font-medium mx-6">⚡ 新机制</span>
+        <span class="text-xs text-shell-text/70 font-mono mx-6">攻击成功后 12 分钟冷却期，期间自动分配 P2P 验证任务</span>
+        <span class="text-xs text-shell-green/40 mx-4">·</span>
+        <span class="text-xs text-shell-green font-mono font-medium mx-6">🛡️ 防合谋</span>
+        <span class="text-xs text-shell-text/70 font-mono mx-6">验证任务严格排除同 IP 矿工，确保验证公平性</span>
+        <span class="text-xs text-shell-green/40 mx-4">·</span>
+      </div>
+    </div>
+
     <!-- Hero -->
     <div class="text-center mb-16">
       <h1 class="text-5xl sm:text-6xl font-bold mb-4 tracking-tight">
@@ -477,3 +502,10 @@ function formatNumber(n: number): string {
     </div>
   </div>
 </template>
+
+<style scoped>
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+</style>
