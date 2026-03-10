@@ -92,6 +92,13 @@ const T = computed(() => lang.value === 'en' ? {
   agentSurfChat: 'Chat',
   agentSurfSocial: 'Social',
   agentSurfEmail: 'Email',
+  agentSurfPR: 'Pull Request',
+  agentSurfTicket: 'Ticket',
+  agentSurfDoc: 'Document',
+  agentSurfWebPage: 'Web Page',
+  agentSurfAttach: 'Attachment',
+  agentSurfCalendar: 'Calendar',
+  agentSurfIssue: 'Issue',
 } : {
   title: '攻防实况',
   subtitle: '实时监控全网 AI Agent 红队测试',
@@ -159,6 +166,13 @@ const T = computed(() => lang.value === 'en' ? {
   agentSurfChat: '对话',
   agentSurfSocial: '社交',
   agentSurfEmail: '邮件',
+  agentSurfPR: 'PR 代码审查',
+  agentSurfTicket: '工单',
+  agentSurfDoc: '文档',
+  agentSurfWebPage: '网页',
+  agentSurfAttach: '附件',
+  agentSurfCalendar: '日历',
+  agentSurfIssue: 'Issue',
 })
 
 const taskTypeLabels = computed<Record<string, string>>(() => lang.value === 'en' ? {
@@ -443,7 +457,13 @@ function toggleDetail(id: string) {
             class="bg-shell-card p-3 hover:bg-white/[0.02] transition-colors"
           >
             <div class="flex items-start justify-between gap-2 mb-2">
-              <h3 class="text-xs font-mono font-medium text-white leading-tight truncate" :title="agent.name">{{ agent.name }}</h3>
+              <h3 class="text-xs font-mono font-medium leading-tight truncate">
+                <a v-if="agent.officialUrl" :href="agent.officialUrl" target="_blank" rel="noopener"
+                   class="text-white hover:text-blue-400 transition-colors" :title="agent.officialUrl">
+                  {{ agent.name }} <span class="text-blue-400/50 text-[10px]">↗</span>
+                </a>
+                <span v-else class="text-white" :title="agent.name">{{ agent.name }}</span>
+              </h3>
               <span v-if="agent.targetChain" class="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex-shrink-0">
                 {{ agent.targetChain }}
               </span>
@@ -461,6 +481,13 @@ function toggleDetail(id: string) {
                   : agent.injectionSurface === 'chat_message' ? T.agentSurfChat
                   : agent.injectionSurface === 'social_post' ? T.agentSurfSocial
                   : agent.injectionSurface === 'email' ? T.agentSurfEmail
+                  : agent.injectionSurface === 'pull_request' ? T.agentSurfPR
+                  : agent.injectionSurface === 'issue_comment' ? T.agentSurfIssue
+                  : agent.injectionSurface === 'ticket_message' ? T.agentSurfTicket
+                  : agent.injectionSurface === 'doc_content' ? T.agentSurfDoc
+                  : agent.injectionSurface === 'web_page' ? T.agentSurfWebPage
+                  : agent.injectionSurface === 'attachment' ? T.agentSurfAttach
+                  : agent.injectionSurface === 'calendar_event' ? T.agentSurfCalendar
                   : agent.injectionSurface }}
               </span>
             </div>

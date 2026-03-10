@@ -266,6 +266,8 @@ export interface AgentProfile {
   canaryActionCount: number
   tools: string[]
   canaryActions: string[]
+  officialUrl?: string | null
+  twitterHandle?: string | null
 }
 
 export interface AgentProfilesResponse {
