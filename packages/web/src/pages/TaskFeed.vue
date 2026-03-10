@@ -278,7 +278,7 @@ onMounted(async () => {
   pollTimer = setInterval(async () => {
     if (feedFilter.value !== 'all') return
     try {
-      const f = await getRecentFeed(PAGE_SIZE, 0, false)
+      const f = await getRecentFeed(PAGE_SIZE, 0)
       const existingIds = new Set(feed.value.map(e => e.id))
       const incoming = f.feed.filter(e => !existingIds.has(e.id))
       if (incoming.length > 0) {
