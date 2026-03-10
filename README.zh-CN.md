@@ -1,6 +1,6 @@
 <p align="center">
   <img src="https://img.shields.io/npm/v/@openshell-cc/miner-cli?color=00ff88&label=miner-cli" alt="npm" />
-  <img src="https://img.shields.io/badge/agents-26-00ccff" alt="agents" />
+  <img src="https://img.shields.io/badge/agents-34-00ccff" alt="agents" />
   <img src="https://img.shields.io/badge/chains-6+-ff6600" alt="chains" />
   <a href="https://github.com/openshell-cc/shell-protocol"><img src="https://img.shields.io/badge/GitHub-openshell--cc-181717?logo=github" alt="GitHub" /></a>
   <a href="https://x.com/openshell_cc"><img src="https://img.shields.io/badge/X-openshell__cc-000000?logo=x" alt="X" /></a>
@@ -19,7 +19,7 @@
 
 ## 什么是 $SHELL Protocol？
 
-$SHELL Protocol 是一个 **混合式去中心化 AI 安全测试网络**，让任何人都能通过运行矿机（Miner CLI）对 AI Agent 进行红队攻击。沙盒内含 **26 个目标 Agent 画像**，覆盖 DeFi 交易、NFT、跨链桥、借贷、支付、DAO 治理等热门赛道。攻击手段包括 Prompt 注入、社会工程和系统级命令注入。
+$SHELL Protocol 是一个 **混合式去中心化 AI 安全测试网络**，让任何人都能通过运行矿机（Miner CLI）对 AI Agent 进行红队攻击。沙盒内含 **34 个目标 Agent 画像**，覆盖 DeFi 交易、NFT、跨链桥、借贷、支付、DAO 治理、DevOps 等热门赛道。攻击手段包括 Prompt 注入、社会工程和系统级命令注入。
 
 攻击结果由 **矿工动态多 Peer 交叉投票验证**（在线矿工越多、验证者越多），平台仅作为自适应低频抽查与超时兜底。成功的攻击赚取 $SHELL 积分。
 
@@ -166,7 +166,7 @@ LLM_API_KEY=your-api-key
 |------|------|------|------|
 | 🟢 **Scout 侦察兵** | 初始段位 | **1x** | 基础难度任务 |
 | 🟡 **Hunter 猎人** | 20+ 次攻击 + 30%+ 成功率 | **3x** | 中级任务，更高收益 |
-| 🔴 **Apex 顶级掠食者** | 100+ 次攻击 + 50%+ 成功率 | **10x** | 最难任务，10 倍奖励 |
+| 🔴 **Apex 顶级掠食者** | 100+ 次攻击 + 50%+ 成功率 | **5x** | 最难任务，5 倍奖励 |
 
 晋升是自动的，系统每次任务完成后计算你的累计数据。
 
@@ -227,9 +227,9 @@ $SHELL Protocol 采用 **Peer-First 去中心化验证网络**，核心原则是
 
 ---
 
-## 目标 Agent 画像（26 个）
+## 目标 Agent 画像（34 个）
 
-沙盒内置 26 个 AI Agent 画像，覆盖三大攻击类别和四种注入面。平台还会自动从 Twitter 和 GitHub 发现热门真实 AI Agent 项目，生成新的攻击目标。
+沙盒内置 34 个 AI Agent 画像，覆盖四大攻击类别和 13 种注入面。平台还会自动从 Twitter 和 GitHub 发现热门真实 AI Agent 项目，生成新的攻击目标。
 
 ### 平台 Agent（DeFi / NFT / 跨链 / 支付）
 
@@ -256,6 +256,10 @@ $SHELL Protocol 采用 **Peer-First 去中心化验证网络**，核心原则是
 
 个人 DeFi 交易助手和投资组合管理 Agent，模拟真实用户场景。
 
+### DevOps & 企业 Agent（第四类）
+
+处理真实企业数据的 AI 助手：GitHub Code Review Bot（pull_request）、Zendesk Support Bot（ticket_message）、Notion Documentation Agent（doc_content）、SEO Content Analyzer（web_page）、Slack File Processing Bot（attachment）、Google Calendar Scheduler（calendar_event）、Linear Issue Triage Bot（issue_comment）、Confluence Wiki Agent（doc_content）。这些 Agent 使用超越传统 chat/token 通道的多种注入面。
+
 ### 多模型轮换（Smart Model Rotation）
 
 每个目标 Agent 会在不同的 LLM 后端运行（GPT、Claude、Gemini、DeepSeek、Qwen 等），模型抵抗力越强、攻破奖励越高。Feed 页面显示 `AgentName (ModelDisplayName)` 格式，便于区分同一 Agent 在不同模型上的表现。
@@ -264,9 +268,9 @@ $SHELL Protocol 采用 **Peer-First 去中心化验证网络**，核心原则是
 
 | 难度 | 示例画像 | 防御等级 |
 |------|----------|----------|
-| Easy (12) | ElizaOS / AIXBT / Olas / GOAT / MyShell / LayerZero 等 | none（无注入防御） |
-| Medium (8) | Pump.fun / Griffain / Tensor / Zerebro / Circle 等 | basic（基础安全规则） |
-| Hard (6) | **OpenClaw Hardened** / Kamino / Fetch.ai / Bittensor 等 | advanced（显式 PI 防御） |
+| Easy (16) | ElizaOS / AIXBT / Olas / GOAT / MyShell / LayerZero / GitHub Bot / Zendesk Bot 等 | none（无注入防御） |
+| Medium (10) | Pump.fun / Griffain / Tensor / Zerebro / Circle / Notion Agent 等 | basic（基础安全规则） |
+| Hard (8) | **OpenClaw Hardened** / Kamino / Fetch.ai / Bittensor / Calendar Agent 等 | advanced（显式 PI 防御） |
 
 ---
 
@@ -345,7 +349,7 @@ A: 免费模式积分 ×0.2、每日有限次数；高效模式需要 LLM API Ke
 A: 不需要。可直接用邮箱注册或 CLI 自动注册，通过控制面板签发 `sk-shell-xxx` 密钥开始挖矿。Solana 钱包为可选，用于后续代币兑换。
 
 **Q: 每次攻击成功能赚多少积分？**
-A: 基础积分按任务难度计算，乘以段位倍率（Scout 1x、Hunter 3x、Apex 10x）、挖矿模式倍率（免费 ×0.2、高效 ×1.0）和目标模型难度倍率。攻破抵抗力更强的 LLM 模型获得更高奖励。
+A: 基础积分按任务难度计算，乘以段位倍率（Scout 1x、Hunter 3x、Apex 5x）、挖矿模式倍率（免费 ×0.2、高效 ×1.0）和目标模型难度倍率。攻破抵抗力更强的 LLM 模型获得更高奖励。
 
 **Q: $SHELL 什么时候上链？**
 A: Phase 5（Solana 合约）待开发，目前积累的积分将按比例兑换 $SHELL 代币。**建议现在就绑定 Solana 钱包**，空投时直接发放。

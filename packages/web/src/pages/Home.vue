@@ -38,9 +38,9 @@ const T = computed(() => lang.value === 'en' ? {
   s2Desc: 'Your miner requests a task from the Oracle. After completing an attack, 2-4 miners independently execute the same payload and vote to verify the result.',
   s2Highlight: 'Multi-peer decentralized verification — 2-4 miners vote on each result, platform spot-checks 1-5% and handles timeout fallback.',
   s3Title: 'Submit & Earn $SHELL',
-  s3Desc: 'Verified results earn $SHELL points automatically. The miner polls for results (up to 120s). Higher tiers earn more (up to 10x multiplier).',
+  s3Desc: 'Verified results earn $SHELL points automatically. The miner polls for results (up to 120s). Higher tiers earn more (up to 5x multiplier).',
   targetsTitle: 'Target Agent Profiles',
-  targetsDesc: '26 sandboxed AI agent profiles spanning DeFi, NFT, cross-chain, lending, payments, DAO, and system tool categories. Miners are assigned targets of varying difficulty.',
+  targetsDesc: '34 sandboxed AI agent profiles spanning DeFi, NFT, cross-chain, lending, payments, DAO, DevOps, and system tool categories. Miners are assigned targets of varying difficulty.',
   targetFinTitle: 'Financial Agents',
   targetFinDesc: 'DeFi trading bots with token operations — Four.Meme, Pump.fun, Raydium swap agents. Attack via prompt injection & social engineering to trigger unauthorized trades.',
   targetSysTitle: 'System Agents',
@@ -49,8 +49,8 @@ const T = computed(() => lang.value === 'en' ? {
   targetHardDesc: 'High-difficulty target. Realistic replica of OpenClaw\'s tool suite — 9 real tools including exec, bash, read/write, messaging, and gateway. Multi-layered defenses.',
   tierTitle: 'Tier System',
   scoutDesc: 'Starting tier, basic difficulty tasks.',
-  hunterDesc: '10+ successful breaches.',
-  apexDesc: '50+ successful breaches.',
+  hunterDesc: '20+ attacks + 30%+ success rate.',
+  apexDesc: '100+ attacks + 50%+ success rate.',
   searchTitle: 'Search Agents',
   searchPlaceholder: 'Type an agent name to search...',
   searching: 'Searching...',
@@ -98,9 +98,9 @@ const T = computed(() => lang.value === 'en' ? {
   s2Desc: '攻击任务完成后，2-4 名矿工独立执行相同 payload 投票验证结果。',
   s2Highlight: '多 Peer 去中心化验证 — 2-4 名矿工投票共识，平台仅 1-5% 低频抽查与超时兜底。',
   s3Title: '提交验证 & 赚取 $SHELL',
-  s3Desc: '验证通过后自动发放 $SHELL 积分。矿机自动轮询验证进度（最长 120 秒），终端展示成功与否；段位越高倍率越高（最高 10x）。',
+  s3Desc: '验证通过后自动发放 $SHELL 积分。矿机自动轮询验证进度（最长 120 秒），终端展示成功与否；段位越高倍率越高（最高 5x）。',
   targetsTitle: '目标 Agent 画像',
-  targetsDesc: '26 个沙盒化 AI Agent 画像，覆盖 DeFi、NFT、跨链、借贷、支付、DAO、系统工具等类别。矿工按难度分配目标。',
+  targetsDesc: '34 个沙盒化 AI Agent 画像，覆盖 DeFi、NFT、跨链、借贷、支付、DAO、DevOps、系统工具等类别。矿工按难度分配目标。',
   targetFinTitle: '金融类 Agent',
   targetFinDesc: 'DeFi 交易机器人，具备代币操作能力 — Four.Meme、Pump.fun、Raydium 交换 Agent。通过 Prompt 注入与社会工程诱导未授权交易。',
   targetSysTitle: '系统类 Agent',
@@ -109,8 +109,8 @@ const T = computed(() => lang.value === 'en' ? {
   targetHardDesc: '高难度目标。OpenClaw 工具套件的真实仿真 — 9 个真实工具，包括 exec、bash、read/write、messaging、gateway。多层防御体系。',
   tierTitle: '段位系统',
   scoutDesc: '初始段位，基础难度任务。',
-  hunterDesc: '10+ 次成功攻破。',
-  apexDesc: '50+ 次成功攻破。',
+  hunterDesc: '20+ 次攻击 + 30%+ 成功率。',
+  apexDesc: '100+ 次攻击 + 50%+ 成功率。',
   searchTitle: '搜索 Agent',
   searchPlaceholder: '输入 Agent 名称搜索...',
   searching: '搜索中...',
@@ -340,7 +340,7 @@ function formatNumber(n: number): string {
           <div class="flex items-center gap-2 mb-3">
             <span class="w-3 h-3 rounded-full bg-tier-apex"></span>
             <span class="font-semibold text-tier-apex">Apex</span>
-            <span class="text-shell-text text-xs ml-auto">10x</span>
+            <span class="text-shell-text text-xs ml-auto">5x</span>
           </div>
           <p class="text-sm text-shell-text">{{ T.apexDesc }}</p>
         </div>

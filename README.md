@@ -1,6 +1,6 @@
 <p align="center">
   <img src="https://img.shields.io/npm/v/@openshell-cc/miner-cli?color=00ff88&label=miner-cli" alt="npm" />
-  <img src="https://img.shields.io/badge/agents-26-00ccff" alt="agents" />
+  <img src="https://img.shields.io/badge/agents-34-00ccff" alt="agents" />
   <img src="https://img.shields.io/badge/chains-6+-ff6600" alt="chains" />
   <a href="https://github.com/openshell-cc/shell-protocol"><img src="https://img.shields.io/badge/GitHub-openshell--cc-181717?logo=github" alt="GitHub" /></a>
   <a href="https://x.com/openshell_cc"><img src="https://img.shields.io/badge/X-openshell__cc-000000?logo=x" alt="X" /></a>
@@ -19,7 +19,7 @@
 
 ## What is $SHELL Protocol?
 
-$SHELL Protocol is a **hybrid decentralized AI security testing network** where anyone can run a miner (Miner CLI) to perform red-team attacks against AI Agents. The sandbox contains **26 target Agent profiles** covering DeFi trading, NFTs, cross-chain bridges, lending, payments, DAO governance, and more. Attack techniques include prompt injection, social engineering, and system-level command injection.
+$SHELL Protocol is a **hybrid decentralized AI security testing network** where anyone can run a miner (Miner CLI) to perform red-team attacks against AI Agents. The sandbox contains **34 target Agent profiles** covering DeFi trading, NFTs, cross-chain bridges, lending, payments, DAO governance, DevOps, and more. Attack techniques include prompt injection, social engineering, and system-level command injection.
 
 Results are verified by a **dynamic multi-peer cross-validation network** (more online miners → more validators per submission). The platform only performs adaptive low-frequency spot-checks and timeout fallbacks. Successful attacks earn $SHELL points.
 
@@ -164,7 +164,7 @@ Miners rank up based on attack records, higher tiers earn higher point multiplie
 |------|-------------|-----------|-------------|
 | 🟢 **Scout** | Starting tier | **1x** | Basic difficulty tasks |
 | 🟡 **Hunter** | 20+ attacks + 30%+ success rate | **3x** | Medium tasks, higher rewards |
-| 🔴 **Apex** | 100+ attacks + 50%+ success rate | **10x** | Hardest tasks, 10x rewards |
+| 🔴 **Apex** | 100+ attacks + 50%+ success rate | **5x** | Hardest tasks, 5x rewards |
 
 Promotion is automatic — the system calculates your cumulative stats after each task.
 
@@ -225,9 +225,9 @@ $SHELL Protocol uses a **Peer-First decentralized verification network**: miners
 
 ---
 
-## Target Agent Profiles (26)
+## Target Agent Profiles (34)
 
-The sandbox contains 26 AI Agent profiles covering three attack categories and four injection surfaces. The platform also auto-discovers trending real AI Agent projects from Twitter and GitHub.
+The sandbox contains 34 AI Agent profiles covering four attack categories and 13 injection surfaces. The platform also auto-discovers trending real AI Agent projects from Twitter and GitHub.
 
 ### Platform Agents (DeFi / NFT / Cross-Chain / Payments)
 
@@ -254,6 +254,10 @@ AI assistants with real tools. ElizaOS DeFi Agent and OpenClaw profiles use **9+
 
 Personal DeFi trading assistants and portfolio management agents simulating real user scenarios.
 
+### DevOps & Enterprise Agents (Category 4)
+
+Enterprise AI assistants processing real-world data: GitHub Code Review Bot (pull_request), Zendesk Support Bot (ticket_message), Notion Documentation Agent (doc_content), SEO Content Analyzer (web_page), Slack File Processing Bot (attachment), Google Calendar Scheduler (calendar_event), Linear Issue Triage Bot (issue_comment), and Confluence Wiki Agent (doc_content). These agents use diverse injection surfaces beyond traditional chat/token channels.
+
 ### Smart Model Rotation
 
 Each target Agent runs on different LLM backends (GPT, Claude, Gemini, DeepSeek, Qwen, etc.). Higher model resistance = higher breach rewards. The Feed page shows `AgentName (ModelDisplayName)` format.
@@ -262,9 +266,9 @@ Each target Agent runs on different LLM backends (GPT, Claude, Gemini, DeepSeek,
 
 | Difficulty | Example Profiles | Defense Level |
 |-----------|-----------------|---------------|
-| Easy (12) | ElizaOS / AIXBT / Olas / GOAT / MyShell / LayerZero etc. | none (no injection defense) |
-| Medium (8) | Pump.fun / Griffain / Tensor / Zerebro / Circle etc. | basic (basic safety rules) |
-| Hard (6) | **OpenClaw Hardened** / Kamino / Fetch.ai / Bittensor etc. | advanced (explicit PI defense) |
+| Easy (16) | ElizaOS / AIXBT / Olas / GOAT / MyShell / LayerZero / GitHub Bot / Zendesk Bot etc. | none (no injection defense) |
+| Medium (10) | Pump.fun / Griffain / Tensor / Zerebro / Circle / Notion Agent etc. | basic (basic safety rules) |
+| Hard (8) | **OpenClaw Hardened** / Kamino / Fetch.ai / Bittensor / Calendar Agent etc. | advanced (explicit PI defense) |
 
 ---
 
@@ -343,7 +347,7 @@ A: Free Mode: ×0.2 points, daily limit. Efficient Mode: needs LLM API Key, ×1.
 A: No. Register via email or CLI auto-registration, get `sk-shell-xxx` key from dashboard. Solana wallet is optional for future token claims.
 
 **Q: How many points per successful attack?**
-A: Base points calculated by task difficulty × tier multiplier (Scout 1x, Hunter 3x, Apex 10x) × mode multiplier (Free ×0.2, Efficient ×1.0) × model difficulty multiplier.
+A: Base points calculated by task difficulty × tier multiplier (Scout 1x, Hunter 3x, Apex 5x) × mode multiplier (Free ×0.2, Efficient ×1.0) × model difficulty multiplier.
 
 **Q: When will $SHELL go on-chain?**
 A: Phase 5 (Solana contracts) is in development. Points earned now will convert to $SHELL tokens proportionally. **Bind your Solana wallet now** for direct airdrop.
