@@ -25,6 +25,23 @@ const filteredAgents = computed(() => {
   return agentProfiles.value.filter(p => p.defenseLevel === agentFilterLevel.value)
 })
 
+// Build agent name → officialUrl lookup from profiles (for linking feed entries)
+const agentUrlMap = computed(() => {
+  const map: Record<string, string> = {}
+  for (const p of agentProfiles.value) {
+    if (p.officialUrl) map[p.name] = p.officialUrl
+  }
+  return map
+})
+
+/** Get officialUrl for a feed entry's targetAgentName (strip model suffix in parens) */
+function getAgentUrl(targetAgentName: string | undefined): string | null {
+  if (!targetAgentName) return null
+  // Feed shows "AgentName (ModelName)" — strip model suffix
+  const baseName = targetAgentName.replace(/\s*\([^)]*\)\s*$/, '').trim()
+  return agentUrlMap.value[baseName] || null
+}
+
 const T = computed(() => lang.value === 'en' ? {
   title: 'Attack Feed',
   subtitle: 'Live monitoring of AI Agent red-team attacks across the network',
@@ -565,7 +582,9 @@ function toggleDetail(id: string) {
                     <span class="w-2 h-2 rounded-full flex-shrink-0" :class="tierDot(entry.tier)"></span>
                     <span class="font-mono text-xs truncate" :class="tierColor(entry.tier)">{{ entry.displayName }}</span>
                     <span class="text-shell-text text-xs">→</span>
-                    <span v-if="entry.targetAgentName" class="text-xs text-purple-400 truncate hidden sm:inline" :title="entry.targetAgentName">{{ entry.targetAgentName }}</span>
+                    <a v-if="entry.targetAgentName && getAgentUrl(entry.targetAgentName)" :href="getAgentUrl(entry.targetAgentName)!" target="_blank" rel="noopener"
+                       class="text-xs text-purple-400 hover:text-blue-400 transition-colors truncate hidden sm:inline" :title="getAgentUrl(entry.targetAgentName)!">{{ entry.targetAgentName }} <span class="text-blue-400/50 text-[10px]">↗</span></a>
+                    <span v-else-if="entry.targetAgentName" class="text-xs text-purple-400 truncate hidden sm:inline" :title="entry.targetAgentName">{{ entry.targetAgentName }}</span>
                     <span v-else class="text-shell-text text-xs hidden sm:inline">{{ taskTypeLabels[entry.taskType] || entry.taskType }}</span>
                   </div>
                 </div>
@@ -617,7 +636,9 @@ function toggleDetail(id: string) {
                   <div v-if="entry.targetAgentName" class="flex flex-wrap gap-x-6 gap-y-2 text-xs">
                     <div>
                       <span class="text-shell-text">{{ T.targetAgent }}</span>
-                      <p class="font-mono text-purple-400 font-medium">{{ entry.targetAgentName }}</p>
+                      <a v-if="getAgentUrl(entry.targetAgentName)" :href="getAgentUrl(entry.targetAgentName)!" target="_blank" rel="noopener"
+                         class="font-mono text-purple-400 font-medium hover:text-blue-400 transition-colors block">{{ entry.targetAgentName }} <span class="text-blue-400/50 text-[10px]">↗</span></a>
+                      <p v-else class="font-mono text-purple-400 font-medium">{{ entry.targetAgentName }}</p>
                     </div>
                     <div v-if="entry.targetAgentModel">
                       <span class="text-shell-text">{{ T.model }}</span>
