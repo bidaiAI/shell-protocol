@@ -149,7 +149,7 @@ async function runWithAnthropic(
     messages.push(toolResults)
   }
 
-  return { agentResponse, inputTokens, outputTokens, rounds: rounds + 1 }
+  return { agentResponse, inputTokens, outputTokens, rounds: Math.min(rounds + 1, MAX_ROUNDS) }
 }
 
 // ── OpenAI / DeepSeek Backend ──
@@ -164,9 +164,7 @@ async function runWithOpenAI(
   const client = new OpenAI({
     apiKey: config.llmApiKey,
     timeout: LLM_TIMEOUT_MS,
-    baseURL: config.llmProvider === 'deepseek'
-      ? 'https://api.deepseek.com'
-      : undefined,
+    baseURL: config.llmBaseUrl || undefined,
   })
 
   const openaiTools = tools.map(t => ({
@@ -231,7 +229,7 @@ async function runWithOpenAI(
     }
   }
 
-  return { agentResponse, inputTokens, outputTokens, rounds: rounds + 1 }
+  return { agentResponse, inputTokens, outputTokens, rounds: Math.min(rounds + 1, MAX_ROUNDS) }
 }
 
 // ── Injection Message Builder ──

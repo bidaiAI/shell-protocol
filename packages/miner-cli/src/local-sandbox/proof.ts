@@ -47,8 +47,10 @@ export function buildSubmissionBody(
   config: { llmProvider: string, llmModel: string },
 ): Record<string, unknown> {
   // Sanitize BEFORE hashing to match server-side sanitizeSubmissionData()
-  const sanitizedResponse = executionResult.agentResponse.slice(0, 5000)
-  const sanitizedPayload = payload.slice(0, 10000)
+  // Strip control characters (keep \n and \t) — must match server-side exactly
+  const stripControl = (s: string) => s.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '')
+  const sanitizedResponse = stripControl(executionResult.agentResponse.slice(0, 5000))
+  const sanitizedPayload = stripControl(payload.slice(0, 10000))
   const sanitizedLog = executionResult.actionLog.slice(0, 50).map(entry => {
     const argsStr = JSON.stringify(entry.arguments ?? {})
     const args = argsStr.length > 2048

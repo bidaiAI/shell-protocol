@@ -25,7 +25,7 @@ const program = new Command()
 program
   .name('shell-miner')
   .description('$SHELL Protocol Miner CLI — Mine $SHELL by red-teaming AI agents')
-  .version('0.3.0')
+  .version('0.4.4')
 
 // ── Setup command (interactive first-run wizard) ──────────────────────────────
 
@@ -300,15 +300,18 @@ program
 
     while (true) {
       const pollSpinner = ora('Polling for tasks...').start()
+      let lastTask: TaskData | null = null
 
       try {
         const { task, tip } = await pollForTask(config, token, getSupportedTaskModes(config), config.miningMode)
 
         if (!task) {
           pollSpinner.info('No tasks available. Waiting...')
-          await sleep(config.pollingIntervalMs)
+          await sleep(getRandomPollInterval(config.miningMode))
           continue
         }
+
+        lastTask = task
 
         const isLocalCompute = task.executionMode === 'local_compute'
         const modeTag = isLocalCompute ? chalk.magenta('[LOCAL]') : chalk.blue('[SANDBOX]')
@@ -456,13 +459,20 @@ program
           } else {
             // API key users can't re-auth — key is likely revoked
             console.log(chalk.red('  API key may be invalid or revoked. Please check your configuration.'))
+            console.log(chalk.red('  Exiting. Re-run `shell-miner setup` or update SHELL_API_KEY in .env'))
+            process.exit(1)
           }
         }
       }
 
-      // Use a fresh random interval each cycle for free mode jitter
-      const nextInterval = getRandomPollInterval(config.miningMode)
-      await sleep(nextInterval)
+      // Verify tasks: quick re-poll (30s) to boost P2P verification throughput
+      // Attack tasks + errors: normal random interval
+      if (lastTask?.isVerifyTask) {
+        await sleep(30_000)
+      } else {
+        const nextInterval = getRandomPollInterval(config.miningMode)
+        await sleep(nextInterval)
+      }
     }
   })
 

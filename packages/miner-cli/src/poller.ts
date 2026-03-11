@@ -19,6 +19,8 @@ export interface TaskData {
   injectionSurface: string
   rewardPoints: number
   expiresAt: string | null
+  // ── Task type flags ──
+  isVerifyTask?: boolean
   // ── Local Compute extensions ──
   executionMode?: 'sandbox_verified' | 'local_compute'
   challengeNonce?: string
@@ -103,6 +105,7 @@ export async function requestPayloadFromOracle(
   })
 
   if (!res.ok) {
+    if (res.status === 404) throw new Error('ORACLE_UNAVAILABLE')
     const errBody = await res.text().catch(() => '')
     throw new Error(`Payload generation failed (${res.status}): ${errBody || res.statusText}`)
   }
@@ -129,6 +132,7 @@ export async function submitPayload(
   })
 
   if (!res.ok) {
+    if (res.status === 404) throw new Error('ORACLE_UNAVAILABLE')
     const errBody = await res.text().catch(() => '')
     throw new Error(`Submit failed (${res.status}): ${errBody || res.statusText}`)
   }

@@ -74,8 +74,8 @@ export function loadConfig(): MinerConfig {
   // Custom base URL: LLM_BASE_URL > OPENAI_BASE_URL > provider preset > undefined
   const llmBaseUrl = process.env.LLM_BASE_URL || process.env.OPENAI_BASE_URL || preset?.baseUrl || ''
 
-  const llmApiKey = process.env.LLM_API_KEY || process.env.ANTHROPIC_API_KEY || process.env.GEMINI_API_KEY || ''
-  const executionMode = (process.env.EXECUTION_MODE || 'sandbox_only') as ExecutionMode
+  const llmApiKey = process.env.LLM_API_KEY || process.env.ANTHROPIC_API_KEY || process.env.OPENAI_API_KEY || process.env.DEEPSEEK_API_KEY || process.env.GEMINI_API_KEY || ''
+  const executionMode = (process.env.EXECUTION_MODE || (llmApiKey ? 'auto' : 'sandbox_only')) as ExecutionMode
   const miningMode = inferMiningMode()
 
   return {

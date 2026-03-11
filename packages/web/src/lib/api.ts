@@ -39,6 +39,9 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
+    if (res.status === 401) {
+      setToken(null)
+    }
     throw new ApiError(res.status, body.error || res.statusText)
   }
 
