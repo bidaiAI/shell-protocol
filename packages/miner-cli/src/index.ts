@@ -5,7 +5,7 @@ import ora from 'ora'
 import { createInterface } from 'node:readline'
 import { writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { loadConfig, validateConfig, isFirstRun, isPlatformManaged, getSupportedTaskModes, getDeviceFingerprint, getRandomPollInterval, getPollIntervalLabel, type MinerConfig } from './config.js'
+import { loadConfig, validateConfig, isFirstRun, isPlatformManaged, getSupportedTaskModes, getDeviceFingerprint, getRandomPollInterval, getPollIntervalLabel, CLIENT_VERSION, type MinerConfig } from './config.js'
 import { autoAuthenticate, type AuthResult } from './auth.js'
 import { pollForTask, requestPayloadFromOracle, submitPayload, submitLocalComputeResult, pollSubmissionResult, type TaskData, type SubmitResult } from './poller.js'
 import { executeLocally } from './local-sandbox/executor.js'
@@ -25,7 +25,7 @@ const program = new Command()
 program
   .name('shell-miner')
   .description('$SHELL Protocol Miner CLI — Mine $SHELL by red-teaming AI agents')
-  .version('0.4.4')
+  .version('0.5.0')
 
 // ── Setup command (interactive first-run wizard) ──────────────────────────────
 
@@ -66,7 +66,11 @@ program
         const deviceFp = getDeviceFingerprint()
         const res = await fetch(`${oracleUrl}/auth/cli-register`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Device-Fingerprint': deviceFp,
+            'X-Client-Version': CLIENT_VERSION,
+          },
           body: JSON.stringify({ deviceFingerprint: deviceFp }),
         })
 
@@ -107,7 +111,9 @@ program
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${shellApiKey}`,
+            'Authorization': `Bearer ${shellApiKey}`,
+            'X-Device-Fingerprint': getDeviceFingerprint(),
+            'X-Client-Version': CLIENT_VERSION,
           },
           body: JSON.stringify({ inviteCode }),
         })
@@ -391,6 +397,29 @@ program
       catch (err) {
         const errMsg = err instanceof Error ? err.message : 'Unknown'
 
+        // Version outdated — must upgrade
+        if (errMsg.startsWith('VERSION_OUTDATED')) {
+          const parts = errMsg.split(':')
+          const minVersion = parts[1] || 'latest'
+          const upgradeCmd = parts[2] || 'npm install -g @openshell-cc/miner-cli@latest'
+          pollSpinner.fail(chalk.red(`Client outdated! Server requires v${minVersion}+`))
+          console.log(chalk.yellow('  Please upgrade your miner:'))
+          console.log(chalk.cyan(`    ${upgradeCmd}`))
+          console.log()
+          process.exit(1)
+        }
+
+        // IP login limit — too many accounts from this IP today
+        if (errMsg === 'IP_LOGIN_LIMIT') {
+          pollSpinner.fail(chalk.yellow('Too many accounts from this IP today'))
+          console.log(chalk.gray('  Each IP can only have 5 active accounts per day.'))
+          console.log(chalk.gray('  Try again tomorrow or use a different network.'))
+          console.log()
+          console.log(chalk.gray('  Retrying in 30 minutes...'))
+          await sleep(30 * 60_000)
+          continue
+        }
+
         // Mining access restricted (banned)
         if (errMsg === 'MINING_ACCESS_RESTRICTED') {
           pollSpinner.fail(chalk.yellow('Mining access not yet enabled for your account'))
@@ -501,12 +530,14 @@ program
           headers: {
             Authorization: `Bearer ${token}`,
             'X-Device-Fingerprint': getDeviceFingerprint(),
+            'X-Client-Version': CLIENT_VERSION,
           },
         }),
         fetch(`${config.oracleUrl}/tasks/my-submissions?limit=${recentCount}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             'X-Device-Fingerprint': getDeviceFingerprint(),
+            'X-Client-Version': CLIENT_VERSION,
           },
         }),
       ])

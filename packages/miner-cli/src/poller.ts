@@ -1,5 +1,5 @@
 import type { MinerConfig, TaskExecutionMode, MiningMode } from './config.js'
-import { getDeviceFingerprint } from './config.js'
+import { getDeviceFingerprint, CLIENT_VERSION } from './config.js'
 
 export interface TaskData {
   id: string
@@ -47,11 +47,34 @@ export async function pollForTask(
     headers: {
       Authorization: `Bearer ${token}`,
       'X-Device-Fingerprint': getDeviceFingerprint(),
+      'X-Client-Version': CLIENT_VERSION,
     },
   })
 
   if (!res.ok) {
     if (res.status === 401) throw new Error('Token expired, re-authenticate')
+    // Version outdated — client must upgrade
+    if (res.status === 426) {
+      try {
+        const errBody = await res.json() as { code?: string; upgradeCommand?: string; minVersion?: string }
+        throw new Error(`VERSION_OUTDATED:${errBody.minVersion || ''}:${errBody.upgradeCommand || ''}`)
+      } catch (e) {
+        if (e instanceof Error && e.message.startsWith('VERSION_OUTDATED')) throw e
+        throw new Error('VERSION_OUTDATED::')
+      }
+    }
+    // IP login limit
+    if (res.status === 429) {
+      try {
+        const errBody = await res.json() as { code?: string; error?: string }
+        if (errBody.code === 'IP_LOGIN_LIMIT') {
+          throw new Error('IP_LOGIN_LIMIT')
+        }
+      } catch (e) {
+        if (e instanceof Error && e.message === 'IP_LOGIN_LIMIT') throw e
+        // fall through to other 429 handling
+      }
+    }
     // 404 from Railway = service temporarily unavailable (deploying or domain issue)
     if (res.status === 404) {
       throw new Error('ORACLE_UNAVAILABLE')
@@ -80,6 +103,8 @@ export async function pollForTask(
       if (e instanceof Error && e.message === 'FREE_MODE_DAILY_LIMIT') throw e
       if (e instanceof Error && e.message.startsWith('FREE_MODE_CONGESTED')) throw e
       if (e instanceof Error && e.message === 'ORACLE_UNAVAILABLE') throw e
+      if (e instanceof Error && e.message.startsWith('VERSION_OUTDATED')) throw e
+      if (e instanceof Error && e.message === 'IP_LOGIN_LIMIT') throw e
       throw new Error(`Poll failed: ${res.statusText}`)
     }
   }
@@ -100,6 +125,7 @@ export async function requestPayloadFromOracle(
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
       'X-Device-Fingerprint': getDeviceFingerprint(),
+      'X-Client-Version': CLIENT_VERSION,
     },
     body: JSON.stringify({ taskId }),
   })
@@ -127,6 +153,7 @@ export async function submitPayload(
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
       'X-Device-Fingerprint': getDeviceFingerprint(),
+      'X-Client-Version': CLIENT_VERSION,
     },
     body: JSON.stringify({ taskId, payload, ...(payloadHash ? { payloadHash } : {}) }),
   })
@@ -177,6 +204,7 @@ export async function pollSubmissionResult(
         headers: {
           Authorization: `Bearer ${token}`,
           'X-Device-Fingerprint': getDeviceFingerprint(),
+          'X-Client-Version': CLIENT_VERSION,
         },
       })
 
@@ -208,6 +236,7 @@ export async function submitLocalComputeResult(
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
       'X-Device-Fingerprint': getDeviceFingerprint(),
+      'X-Client-Version': CLIENT_VERSION,
     },
     body: JSON.stringify(body),
   })

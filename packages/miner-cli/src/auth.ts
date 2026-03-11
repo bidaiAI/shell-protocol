@@ -1,7 +1,7 @@
 import nacl from 'tweetnacl'
 import bs58 from 'bs58'
 import type { MinerConfig } from './config.js'
-import { getDeviceFingerprint } from './config.js'
+import { getDeviceFingerprint, CLIENT_VERSION } from './config.js'
 
 export interface AuthResult {
   token: string
@@ -40,6 +40,7 @@ export async function authenticate(config: MinerConfig, referralCode?: string): 
     headers: {
       'Content-Type': 'application/json',
       'X-Device-Fingerprint': getDeviceFingerprint(),
+      'X-Client-Version': CLIENT_VERSION,
     },
     body: JSON.stringify({ walletAddress }),
   })
@@ -59,6 +60,7 @@ export async function authenticate(config: MinerConfig, referralCode?: string): 
     headers: {
       'Content-Type': 'application/json',
       'X-Device-Fingerprint': getDeviceFingerprint(),
+      'X-Client-Version': CLIENT_VERSION,
     },
     body: JSON.stringify({ walletAddress, signature, nonce, referralCode }),
   })
@@ -97,6 +99,7 @@ export async function authenticateWithApiKey(config: MinerConfig): Promise<AuthR
     headers: {
       Authorization: `Bearer ${config.shellApiKey}`,
       'X-Device-Fingerprint': getDeviceFingerprint(),
+      'X-Client-Version': CLIENT_VERSION,
     },
   })
 
