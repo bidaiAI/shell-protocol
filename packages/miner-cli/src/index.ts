@@ -10,6 +10,7 @@ import { autoAuthenticate, type AuthResult } from './auth.js'
 import { pollForTask, requestPayloadFromOracle, submitPayload, submitLocalComputeResult, pollSubmissionResult, type TaskData, type SubmitResult } from './poller.js'
 import { executeLocally } from './local-sandbox/executor.js'
 import { buildSubmissionBody } from './local-sandbox/proof.js'
+import { T } from './i18n.js'
 
 const BANNER = chalk.cyan(`
   ███████╗██╗  ██╗███████╗██╗     ██╗
@@ -25,7 +26,7 @@ const program = new Command()
 program
   .name('shell-miner')
   .description('$SHELL Protocol Miner CLI — Mine $SHELL by red-teaming AI agents')
-  .version('0.5.0')
+  .version(CLIENT_VERSION)
 
 // ── Setup command (interactive first-run wizard) ──────────────────────────────
 
@@ -34,9 +35,9 @@ program
   .description('Interactive setup wizard — configure your miner in 2 minutes')
   .action(async () => {
     console.log(BANNER)
-    console.log(chalk.cyan('  Miner Setup Wizard'))
+    console.log(chalk.cyan(`  ${T('setupTitle')}`))
     console.log()
-    console.log(chalk.gray('  This wizard will create a .env file with your configuration.'))
+    console.log(chalk.gray(`  ${T('setupDesc')}`))
     console.log()
 
     const rl = createInterface({ input: process.stdin, output: process.stdout })
@@ -47,21 +48,21 @@ program
     let shellApiKey = ''
 
     // Step 1: Auth — auto-register or paste existing key
-    console.log(chalk.bold('Step 1: 获取你的 $SHELL 密钥'))
-    console.log(chalk.gray('  1) 自动注册（推荐，一键完成）'))
-    console.log(chalk.gray('  2) 已有密钥（手动粘贴 sk-shell-xxx）'))
+    console.log(chalk.bold(T('step1Title')))
+    console.log(chalk.gray(`  ${T('step1Auto')}`))
+    console.log(chalk.gray(`  ${T('step1Manual')}`))
     console.log()
-    const authChoice = (await ask(chalk.white('  选择 [1]: '))).trim() || '1'
+    const authChoice = (await ask(chalk.white(`  ${T('step1Choose')}`))).trim() || '1'
 
     if (authChoice === '2') {
       // Manual: paste existing key
       console.log()
-      console.log(chalk.gray('  前往 https://openshell.cc → 注册 → 控制面板 → Agent 注册'))
+      console.log(chalk.gray(`  ${T('step1ManualGuide')}`))
       shellApiKey = (await ask(chalk.white('  SHELL_API_KEY (sk-shell-xxx): '))).trim()
     } else {
       // Auto-register
       console.log()
-      const regSpinner = ora('Registering with Oracle...').start()
+      const regSpinner = ora(T('registering')).start()
       try {
         const deviceFp = getDeviceFingerprint()
         const res = await fetch(`${oracleUrl}/auth/cli-register`, {
@@ -87,25 +88,25 @@ program
         regSpinner.succeed(`Registered as ${chalk.green(data.user.agentName)}`)
         console.log(chalk.gray(`  API Key: ${shellApiKey}`))
         console.log(chalk.gray(`  Referral Code: ${data.user.referralCode}`))
-        console.log(chalk.yellow('  ⚠ Save this API key! It will NOT be shown again.'))
+        console.log(chalk.yellow(`  ${T('saveKeyWarn')}`))
       } catch (err) {
-        regSpinner.fail(`Registration failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
+        regSpinner.fail(`${T('regFailed')}: ${err instanceof Error ? err.message : 'Unknown error'}`)
         console.log()
-        console.log(chalk.gray('  You can manually paste an existing key instead:'))
+        console.log(chalk.gray(`  ${T('manualKeyFallback')}`))
         shellApiKey = (await ask(chalk.white('  SHELL_API_KEY (sk-shell-xxx): '))).trim()
       }
     }
 
     // Step 2: Invite code (optional — increases daily free limit)
     console.log()
-    console.log(chalk.bold('Step 2: 邀请码（可选）'))
-    console.log(chalk.gray('  有邀请码？输入后可增加每日免费额度'))
-    console.log(chalk.gray('  没有邀请码？直接回车跳过，注册即可免费挖矿'))
+    console.log(chalk.bold(T('step2Title')))
+    console.log(chalk.gray(`  ${T('step2Desc')}`))
+    console.log(chalk.gray(`  ${T('step2Skip')}`))
     console.log()
-    const inviteCode = (await ask(chalk.white('  邀请码（留空跳过）: '))).trim()
+    const inviteCode = (await ask(chalk.white(`  ${T('step2Prompt')}`))).trim()
 
     if (inviteCode && shellApiKey) {
-      const inviteSpinner = ora('Redeeming invite code...').start()
+      const inviteSpinner = ora(T('redeemingInvite')).start()
       try {
         const res = await fetch(`${oracleUrl}/auth/redeem-invite`, {
           method: 'POST',
@@ -123,25 +124,25 @@ program
           throw new Error(err.error || `HTTP ${res.status}`)
         }
 
-        inviteSpinner.succeed(chalk.green('Daily free limit increased! +5 submissions/day'))
+        inviteSpinner.succeed(chalk.green(T('inviteSuccess')))
       } catch (err) {
-        inviteSpinner.fail(`Invite code failed: ${err instanceof Error ? err.message : 'Unknown'}`)
-        console.log(chalk.gray('  You can try again later, or share your own referral code to earn points.'))
+        inviteSpinner.fail(`${T('inviteFailed')}: ${err instanceof Error ? err.message : 'Unknown'}`)
+        console.log(chalk.gray(`  ${T('inviteRetryHint')}`))
       }
     } else if (!inviteCode) {
-      console.log(chalk.cyan('  ℹ 已跳过。无需邀请码即可开始免费挖矿！'))
+      console.log(chalk.cyan(`  ℹ ${T('inviteSkipped')}`))
     }
 
     // Step 3: Mining mode selection
     console.log()
-    console.log(chalk.bold('Step 3: 挖矿模式'))
+    console.log(chalk.bold(T('step3Title')))
     console.log()
-    console.log(chalk.cyan('  🆓 免费模式') + chalk.gray(' — 直接回车，零 API Key，积分 ×0.2，每日有限次数'))
-    console.log(chalk.cyan('  ⚡ 高效模式') + chalk.gray(' — 填写 LLM API Key，积分 ×1.0，无次数限制'))
+    console.log(chalk.cyan(`  ${T('step3Free')}`))
+    console.log(chalk.cyan(`  ${T('step3Adv')}`))
     console.log()
-    console.log(chalk.green('  🔒 安全保证：API Key 仅在本地运行，不上传平台，完全安全'))
+    console.log(chalk.green(`  ${T('step3Security')}`))
     console.log()
-    const llmApiKey = (await ask(chalk.white('  LLM_API_KEY（留空 = 免费模式）: '))).trim()
+    const llmApiKey = (await ask(chalk.white(`  ${T('step3Prompt')}`))).trim()
 
     let llmProvider = 'anthropic'
     if (llmApiKey) {
@@ -153,13 +154,13 @@ program
       else if (llmApiKey.startsWith('sk-')) llmProvider = 'deepseek'
       else {
         console.log()
-        console.log(chalk.gray('  LLM Provider:'))
+        console.log(chalk.gray(`  ${T('providerTitle')}`))
         console.log(chalk.gray('    1) Anthropic (Claude)'))
         console.log(chalk.gray('    2) OpenAI (GPT)'))
         console.log(chalk.gray('    3) DeepSeek'))
         console.log(chalk.gray('    4) Google Gemini'))
         console.log(chalk.gray('    5) xAI Grok'))
-        const pChoice = (await ask(chalk.white('  Choose [1]: '))).trim() || '1'
+        const pChoice = (await ask(chalk.white(`  ${T('providerChoose')}`))).trim() || '1'
         llmProvider = { '1': 'anthropic', '2': 'openai', '3': 'deepseek', '4': 'gemini', '5': 'grok' }[pChoice] || 'anthropic'
       }
     }
@@ -177,9 +178,9 @@ program
       '',
       '# Authentication',
       shellApiKey ? `SHELL_API_KEY=${shellApiKey}` : '# SHELL_API_KEY=sk-shell-...',
-      '# WALLET_PRIVATE_KEY=  # 可选：Solana 钱包',
+      `# WALLET_PRIVATE_KEY=  ${T('envWallet')}`,
       '',
-      '# LLM (高效模式) — API Key 仅本地使用，不上传平台',
+      T('envLlm'),
       llmApiKey ? `LLM_PROVIDER=${llmProvider}` : '# LLM_PROVIDER=anthropic',
       llmApiKey ? `LLM_API_KEY=${llmApiKey}` : '# LLM_API_KEY=',
       '',
@@ -191,9 +192,9 @@ program
 
     writeFileSync(envPath, envContent)
     console.log()
-    console.log(chalk.green('  ✓ Configuration saved to .env'))
+    console.log(chalk.green(`  ${T('configSaved')}`))
     console.log()
-    console.log(chalk.cyan('  Start mining:'), chalk.white('npx @openshell-cc/miner-cli start'))
+    console.log(chalk.cyan(`  ${T('startMiningCmd')}`), chalk.white('npx @openshell-cc/miner-cli start'))
     console.log()
   })
 
@@ -209,14 +210,14 @@ program
     // First-run: guide user to setup wizard
     if (isFirstRun(config)) {
       console.log(BANNER)
-      console.log(chalk.yellow('  未找到配置文件！'))
+      console.log(chalk.yellow(`  ${T('noConfig')}`))
       console.log()
-      console.log(chalk.white('  运行配置向导（2 分钟完成）：'))
+      console.log(chalk.white(`  ${T('runSetup')}`))
       console.log(chalk.cyan('    npx @openshell-cc/miner-cli setup'))
       console.log()
-      console.log(chalk.gray('  或手动创建 .env 文件：'))
-      console.log(chalk.gray('    SHELL_API_KEY=sk-shell-xxx  ← 在 https://openshell.cc/dashboard 获取'))
-      console.log(chalk.gray('    # LLM_API_KEY=sk-ant-...  ← 可选，仅用于高级本地计算模式'))
+      console.log(chalk.gray(`  ${T('orManualEnv')}`))
+      console.log(chalk.gray(`    SHELL_API_KEY=sk-shell-xxx  ${T('getKeyAt')}`))
+      console.log(chalk.gray('    # LLM_API_KEY=sk-ant-...'))
       console.log(chalk.gray('    ORACLE_URL=https://oracle.openshell.cc'))
       console.log()
       process.exit(0)
@@ -240,18 +241,18 @@ program
     console.log(chalk.cyan('  Decentralized AI Red Team Network'))
     const authMethod = config.shellApiKey ? 'API Key' : 'Solana Wallet'
     const miningModeLabel = config.miningMode === 'self_llm'
-      ? chalk.magenta('⚡ 高效模式') + chalk.gray(` (${config.llmProvider}/${config.llmModel}, ×1.0 积分)`)
-      : chalk.cyan('🆓 免费模式') + chalk.gray(' (×0.2 积分)')
+      ? chalk.magenta(T('modeAdvLabel')) + chalk.gray(` (${config.llmProvider}/${config.llmModel}, ×1.0 ${T('ptsUnit')})`)
+      : chalk.cyan(T('modeFreeLabel')) + chalk.gray(` (×0.2 ${T('ptsUnit')})`)
     const pollLabel = getPollIntervalLabel(config.miningMode)
     console.log(chalk.gray(`  Oracle:  ${config.oracleUrl}`))
     console.log(chalk.gray(`  Auth:    ${authMethod}`))
     console.log(`  ${chalk.gray('Mode:')}   ${miningModeLabel}`)
     console.log(chalk.gray(`  Poll:    ${pollLabel}`))
     if (config.miningMode === 'free') {
-      console.log(chalk.gray('  ') + chalk.green('✓') + chalk.gray(' 零 API Key 免费挖矿，平台 AI 生成 payload'))
-      console.log(chalk.gray('  ') + chalk.yellow('→') + chalk.gray(' 升级到高效模式：设置 LLM_API_KEY 环境变量（Key 仅本地使用，不上传平台）'))
+      console.log(chalk.gray('  ') + chalk.green('✓') + chalk.gray(` ${T('freeRunning')}`))
+      console.log(chalk.gray('  ') + chalk.yellow('→') + chalk.gray(` ${T('freeUpgrade')}`))
     } else {
-      console.log(chalk.gray('  ') + chalk.green('✓') + chalk.gray(' 高效模式已启用，API Key 仅在本地运行，不上传平台，完全安全'))
+      console.log(chalk.gray('  ') + chalk.green('✓') + chalk.gray(` ${T('advRunning')}`))
     }
     console.log()
 
@@ -276,25 +277,25 @@ program
     }
 
     console.log()
-    console.log(chalk.green('  Mining started.'), chalk.gray('Press Ctrl+C to stop.'))
+    console.log(chalk.green(`  ${T('miningStarted')}`), chalk.gray(T('pressCtrlC')))
     if (config.miningMode === 'free') {
       console.log()
-      console.log(chalk.yellow('  💡 提升成功率: 配置 LLM_API_KEY 解锁高级攻击模式'))
-      console.log(chalk.gray('     在 .env 中设置 LLM_API_KEY (支持 Anthropic/OpenAI/DeepSeek/Gemini/xAI 等)'))
-      console.log(chalk.gray('     自带 LLM → 更强模型 → 更高攻破率 → 5x 积分倍率'))
+      console.log(chalk.yellow(`  ${T('boostTip')}`))
+      console.log(chalk.gray(`     ${T('boostDesc')}`))
+      console.log(chalk.gray(`     ${T('boostBenefit')}`))
     }
 
     // ── Honeypot guide ──
     console.log()
-    console.log(chalk.cyan('  📋 蜜罐检测指南:'))
-    console.log(chalk.gray('     约 5% 的任务是蜜罐 — 系统提示本身含恶意指令（如盗取钱包、泄露密钥）'))
-    console.log(chalk.gray('     遇到蜜罐任务时，不要生成攻击 payload，而要输出安全漏洞报告'))
-    console.log(chalk.gray('     报告中需包含: vulnerable/malicious/backdoor/drain/steal 等关键词'))
-    console.log(chalk.gray('     正确识别蜜罐 = 奖励积分 | 对蜜罐发起攻击 = 扣分惩罚'))
+    console.log(chalk.cyan(`  ${T('honeypotTitle')}`))
+    console.log(chalk.gray(`     ${T('honeypotDesc')}`))
+    console.log(chalk.gray(`     ${T('honeypotAction')}`))
+    console.log(chalk.gray(`     ${T('honeypotKeywords')}`))
+    console.log(chalk.gray(`     ${T('honeypotReward')}`))
     if (config.miningMode !== 'free') {
-      console.log(chalk.yellow('     💡 自带 LLM 模式: 请确保你的 prompt 中包含蜜罐检测逻辑'))
+      console.log(chalk.yellow(`     ${T('honeypotLlmTip')}`))
     } else {
-      console.log(chalk.gray('     ✓ 免费模式已内置蜜罐自动检测，无需额外配置'))
+      console.log(chalk.gray(`     ${T('honeypotFreeAuto')}`))
     }
     console.log()
 
@@ -353,24 +354,24 @@ program
           totalSuccess++
           consecutiveFails = 0
           totalPoints += result.pointsAwarded ?? 0
-          console.log(chalk.green(`  ✓ Attack successful! +${result.pointsAwarded} pts`))
+          console.log(chalk.green(`  ${T('attackSuccess')} +${result.pointsAwarded} pts`))
           if (config.miningMode === 'free') {
-            console.log(chalk.yellow(`  💡 配置 LLM_API_KEY 可获得 5x 积分倍率！本地运行，密钥安全不上传`))
+            console.log(chalk.yellow(`  ${T('freePtsHint')}`))
           }
         }
         else if (result.result === 'penalty') {
           consecutiveFails++
           const level = result.warningLevel ?? 0
           if (result.penaltyRate === 0) {
-            console.log(chalk.yellow(`  ⚠ 蜜罐警告 (${level}/3): ${result.message}`))
-            console.log(chalk.gray('     该任务的 Agent 系统提示含明显恶意行为（盗取钱包/泄露密钥等）'))
-            console.log(chalk.gray('     正确做法: 识别恶意指令后输出安全漏洞报告，而非攻击 payload'))
+            console.log(chalk.yellow(`  ⚠ ${T('honeypotWarn')} (${level}/3): ${result.message}`))
+            console.log(chalk.gray(`     ${T('honeypotWarnDesc')}`))
+            console.log(chalk.gray(`     ${T('honeypotWarnFix')}`))
             if (config.miningMode !== 'free') {
-              console.log(chalk.yellow('     💡 建议在 LLM prompt 中加入蜜罐检测: 检查目标 agent 是否含 drain/steal/exfiltrate 等恶意行为'))
+              console.log(chalk.yellow(`     ${T('honeypotLlmFix')}`))
             }
           } else {
-            console.log(chalk.red(`  ✗ 蜜罐惩罚 (扣${Math.round((result.penaltyRate ?? 0) * 100)}%): -${result.penaltyAmount} pts | 剩余: ${result.remainingPoints} pts`))
-            console.log(chalk.red('     多次未检测到蜜罐。请检查你的 payload 生成逻辑是否包含蜜罐识别。'))
+            console.log(chalk.red(`  ✗ ${T('honeypotPenalty')} (-${Math.round((result.penaltyRate ?? 0) * 100)}%): -${result.penaltyAmount} pts | ${result.remainingPoints} pts`))
+            console.log(chalk.red(`     ${T('honeypotPenDesc')}`))
           }
         }
         else if (result.result === 'slashed') {
@@ -379,14 +380,14 @@ program
         }
         else if (result.result === 'failed') {
           consecutiveFails++
-          console.log(chalk.red(`  ✗ Failed: ${result.message}`))
+          console.log(chalk.red(`  ✗ ${T('failedLabel')}: ${result.message}`))
           if (config.miningMode === 'free') {
-            console.log(chalk.yellow(`  💡 配置 LLM_API_KEY 使用更强模型，大幅提升攻破成功率！密钥仅本地使用，安全不上传`))
+            console.log(chalk.yellow(`  ${T('freeFailHint')}`))
           }
         }
         else {
           const spotTag = result.spotCheckSelected ? chalk.yellow(' [spot-check pending]') : ''
-          console.log(chalk.gray(`  ~ Submitted for verification.${spotTag}`))
+          console.log(chalk.gray(`  ~ ${T('submittedVerify')}${spotTag}`))
         }
 
         const rate = totalTasks > 0 ? (totalSuccess / totalTasks * 100).toFixed(1) : '0.0'
@@ -401,9 +402,9 @@ program
         if (errMsg.startsWith('VERSION_OUTDATED')) {
           const parts = errMsg.split(':')
           const minVersion = parts[1] || 'latest'
-          const upgradeCmd = parts[2] || 'npm install -g @openshell-cc/miner-cli@latest'
-          pollSpinner.fail(chalk.red(`Client outdated! Server requires v${minVersion}+`))
-          console.log(chalk.yellow('  Please upgrade your miner:'))
+          const upgradeCmd = parts[2] || 'npx @openshell-cc/miner-cli@latest setup'
+          pollSpinner.fail(chalk.red(`${T('versionOutdated')} v${minVersion}+`))
+          console.log(chalk.yellow(`  ${T('pleaseUpgrade')}`))
           console.log(chalk.cyan(`    ${upgradeCmd}`))
           console.log()
           process.exit(1)
@@ -411,24 +412,24 @@ program
 
         // IP login limit — too many accounts from this IP today
         if (errMsg === 'IP_LOGIN_LIMIT') {
-          pollSpinner.fail(chalk.yellow('Too many accounts from this IP today'))
-          console.log(chalk.gray('  Each IP can only have 5 active accounts per day.'))
-          console.log(chalk.gray('  Try again tomorrow or use a different network.'))
+          pollSpinner.fail(chalk.yellow(T('ipLoginLimit')))
+          console.log(chalk.gray(`  ${T('ipLoginDesc')}`))
+          console.log(chalk.gray(`  ${T('ipLoginRetry')}`))
           console.log()
-          console.log(chalk.gray('  Retrying in 30 minutes...'))
+          console.log(chalk.gray(`  ${T('retryIn')} 30 min...`))
           await sleep(30 * 60_000)
           continue
         }
 
         // Mining access restricted (banned)
         if (errMsg === 'MINING_ACCESS_RESTRICTED') {
-          pollSpinner.fail(chalk.yellow('Mining access not yet enabled for your account'))
-          console.log(chalk.cyan('  ✓ Your account is logged in successfully'))
-          console.log(chalk.cyan('  ✗ Mining access has not been enabled yet'))
-          console.log(chalk.cyan('  → Visit your Dashboard to check status, or contact the admin'))
+          pollSpinner.fail(chalk.yellow(T('miningRestricted')))
+          console.log(chalk.cyan(`  ${T('accountLoggedIn')}`))
+          console.log(chalk.cyan(`  ${T('miningNotEnabled')}`))
+          console.log(chalk.cyan(`  ${T('checkDashboard')}`))
           console.log(chalk.cyan('  → Dashboard: https://openshell.cc'))
           console.log()
-          console.log(chalk.gray('  Retrying in 60 seconds...'))
+          console.log(chalk.gray(`  ${T('retryIn')} 60s...`))
           await sleep(60_000)
           continue
         }
@@ -436,38 +437,38 @@ program
         // Free mode: IP already in use by another miner
         if (errMsg.startsWith('FREE_MODE_IP_LIMIT')) {
           const hint = errMsg.split(':').slice(1).join(':').trim()
-          pollSpinner.fail(chalk.yellow('Free mode IP limit: another free miner is already using this IP'))
+          pollSpinner.fail(chalk.yellow(T('freeIpLimit')))
           if (hint) console.log(chalk.gray(`  ℹ ${hint}`))
-          console.log(chalk.cyan('  → 解决方案: 在 .env 中配置 LLM_API_KEY 升级到⚡高效模式'))
-          console.log(chalk.cyan('  → 高效模式无 IP 限制，更强模型，5x 积分！'))
-          console.log(chalk.gray('  → 密钥仅在你本地运行，绝不上传到平台'))
+          console.log(chalk.cyan(`  ${T('freeIpSolution')}`))
+          console.log(chalk.cyan(`  ${T('freeIpBenefit')}`))
+          console.log(chalk.gray(`  ${T('keyLocalSafe')}`))
           console.log()
-          console.log(chalk.gray('  Retrying in 5 minutes...'))
+          console.log(chalk.gray(`  ${T('retryIn')} 5 min...`))
           await sleep(5 * 60_000)
           continue
         }
 
         // Free mode: nodes congested (too many free miners online)
         if (errMsg.startsWith('FREE_MODE_CONGESTED')) {
-          pollSpinner.fail(chalk.yellow('免费节点目前拥堵'))
-          console.log(chalk.cyan('  ⏳ 当前免费矿工过多，节点资源紧张'))
-          console.log(chalk.cyan('  → 解决方案: 在 .env 中配置 LLM_API_KEY 升级到⚡高效模式'))
-          console.log(chalk.cyan('  → 高效模式无排队限制，更强模型，5x 积分！'))
-          console.log(chalk.gray('  → 支持 Anthropic/OpenAI/DeepSeek/Gemini/xAI 等'))
-          console.log(chalk.gray('  → 密钥仅在你本地运行，绝不上传到平台，完全安全'))
+          pollSpinner.fail(chalk.yellow(T('freeCongested')))
+          console.log(chalk.cyan(`  ${T('freeCongestedDesc')}`))
+          console.log(chalk.cyan(`  ${T('freeCongestSln')}`))
+          console.log(chalk.cyan(`  ${T('freeCongestAdv')}`))
+          console.log(chalk.gray(`  ${T('freeCongestProv')}`))
+          console.log(chalk.gray(`  ${T('keyLocalSafe')}`))
           console.log()
-          console.log(chalk.gray('  Retrying in 3 minutes...'))
+          console.log(chalk.gray(`  ${T('retryIn')} 3 min...`))
           await sleep(3 * 60_000)
           continue
         }
 
         // Free mode: daily limit reached
         if (errMsg === 'FREE_MODE_DAILY_LIMIT') {
-          pollSpinner.info(chalk.yellow('Free mode daily limit reached'))
-          console.log(chalk.cyan('  → Today\'s free submissions used up, come back tomorrow!'))
-          console.log(chalk.cyan('  → Or upgrade to ⚡ 高效模式: set LLM_API_KEY for unlimited mining'))
+          pollSpinner.info(chalk.yellow(T('freeDailyLimit')))
+          console.log(chalk.cyan(`  ${T('freeDailyTomorrow')}`))
+          console.log(chalk.cyan(`  ${T('freeDailyUpgrade')}`))
           console.log()
-          console.log(chalk.gray('  Retrying in 30 minutes...'))
+          console.log(chalk.gray(`  ${T('retryIn')} 30 min...`))
           await sleep(30 * 60_000)
           continue
         }
@@ -476,19 +477,19 @@ program
 
         if (err instanceof Error && (errMsg.includes('Token expired') || errMsg.includes('re-authenticate') || errMsg.includes('Invalid or expired'))) {
           if (config.walletPrivateKey) {
-            console.log(chalk.yellow('  Re-authenticating...'))
+            console.log(chalk.yellow(`  ${T('reAuthenticating')}`))
             try {
               const result = await autoAuthenticate(config, opts.referral)
               token = result.token
-              console.log(chalk.green('  Re-authenticated successfully'))
+              console.log(chalk.green(`  ${T('reAuthSuccess')}`))
             }
             catch (authErr) {
               console.error(chalk.red(`  Re-auth failed: ${authErr instanceof Error ? authErr.message : 'Unknown'}`))
             }
           } else {
             // API key users can't re-auth — key is likely revoked
-            console.log(chalk.red('  API key may be invalid or revoked. Please check your configuration.'))
-            console.log(chalk.red('  Exiting. Re-run `shell-miner setup` or update SHELL_API_KEY in .env'))
+            console.log(chalk.red(`  ${T('apiKeyInvalid')}`))
+            console.log(chalk.red(`  ${T('apiKeyExit')}`))
             process.exit(1)
           }
         }
@@ -578,19 +579,19 @@ program
           let statusText: string
           if (pending) {
             statusIcon = chalk.yellow('⏳')
-            statusText = chalk.yellow('验证中')
+            statusText = chalk.yellow(T('verifying'))
           } else if (valid && settleStatus === 'settled') {
             statusIcon = chalk.green('✓')
-            statusText = chalk.green(`成功 +${pts} pts`)
+            statusText = chalk.green(`${T('success')} +${pts} pts`)
           } else if (valid && settleStatus === 'pending') {
             statusIcon = chalk.cyan('⏳')
-            statusText = chalk.cyan(`结算中 (${pts} pts 待发)`)
+            statusText = chalk.cyan(`${T('settling')} (${pts} pts ${T('ptsAwait')})`)
           } else if (valid) {
             statusIcon = chalk.green('✓')
             statusText = chalk.green(`+${pts} pts`)
           } else {
             statusIcon = chalk.red('✗')
-            statusText = chalk.red('未触发 canary')
+            statusText = chalk.red(T('canaryMiss'))
           }
           const modeTag = mode === 'local_compute' ? chalk.magenta('[L]') : chalk.blue('[S]')
           console.log(`  ${statusIcon} ${modeTag} ${statusText.padEnd(24)} ${chalk.gray(submitted)}`)
@@ -676,9 +677,7 @@ async function handleSandboxVerified(
     pollSpinner.stop()
 
     if (!final || final.status === 'infra_error') {
-      // Timed out or infra error — return the original submitted result so the
-      // caller shows "Submitted for verification" rather than a false failure
-      console.log(chalk.gray('  ℹ Verification still pending — check back with `shell-miner status`'))
+      console.log(chalk.gray(`  ℹ ${T('pendingCheck')}`))
       return submitResult
     }
 
