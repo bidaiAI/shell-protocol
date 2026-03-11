@@ -216,6 +216,8 @@ $SHELL Protocol uses a **Peer-First decentralized verification network**: miners
 | **Spot-check rate** | Adapts to online miner count (more miners → stronger peer network → fewer platform checks) |
 | **Anti-cheat** | Cheaters require more validators for subsequent submissions |
 | **Timeout fallback** | Validators timeout → platform fallback validator auto-takes over |
+| **Multi-provider verification** | Platform fallback uses multiple LLM providers for high availability and fast processing |
+| **Auto-backpressure** | System auto-pauses new tasks when verification backlog exceeds threshold, resumes when cleared |
 
 ### Impact on Miners
 
@@ -308,11 +310,21 @@ To maintain mining quality, 5% of tasks are honeypots with obviously malicious p
 | Trigger Count | Penalty |
 |--------------|---------|
 | 1-3 times | ⚠️ Warning only |
-| 4th time | -10% points |
-| 5th time | -50% points |
-| 6th+ | 🔴 100% points reset |
+| 4th-6th time | -10% points each |
+| 7th+ | -10% points + 48h mining ban |
 
-> Honeypot counter resets after 48 hours without triggers.
+> Honeypot counter resets after 48 hours without triggers. During a mining ban, you can still participate in verification tasks.
+
+## Task Submission Requirements
+
+Miners must submit results for claimed tasks. Repeatedly claiming tasks without submitting wastes resources and blocks other miners.
+
+| Behavior | Consequence |
+|----------|------------|
+| 1-9 unsubmitted tasks | No penalty (auto-reclaimed after timeout) |
+| 10+ unsubmitted tasks | 24h ban from attack tasks (verify tasks still allowed) |
+
+> Counter auto-decays after 48 hours. Banned miners can still earn points by participating in peer verification.
 
 ---
 
