@@ -1,6 +1,6 @@
 <p align="center">
   <img src="https://img.shields.io/npm/v/@openshell-cc/miner-cli?color=00ff88&label=miner-cli" alt="npm" />
-  <img src="https://img.shields.io/badge/agents-34-00ccff" alt="agents" />
+  <img src="https://img.shields.io/badge/agents-44-00ccff" alt="agents" />
   <img src="https://img.shields.io/badge/chains-6+-ff6600" alt="chains" />
   <a href="https://github.com/openshell-cc/shell-protocol"><img src="https://img.shields.io/badge/GitHub-openshell--cc-181717?logo=github" alt="GitHub" /></a>
   <a href="https://x.com/openshell_cc"><img src="https://img.shields.io/badge/X-openshell__cc-000000?logo=x" alt="X" /></a>
@@ -19,7 +19,7 @@
 
 ## What is $SHELL Protocol?
 
-$SHELL Protocol is a **hybrid decentralized AI security testing network** where anyone can run a miner (Miner CLI) to perform red-team attacks against AI Agents. The sandbox contains **34 target Agent profiles** covering DeFi trading, NFTs, cross-chain bridges, lending, payments, DAO governance, DevOps, and more. Attack techniques include prompt injection, social engineering, and system-level command injection.
+$SHELL Protocol is a **hybrid decentralized AI security testing network** where anyone can run a miner (Miner CLI) to perform red-team attacks against AI Agents. The sandbox contains **44 target Agent profiles** covering DeFi trading, NFTs, cross-chain bridges, lending, payments, DAO governance, DevOps, and more. Attack techniques include prompt injection, social engineering, and system-level command injection.
 
 Results are verified by a **dynamic multi-peer cross-validation network** (more online miners → more validators per submission). The platform only performs adaptive low-frequency spot-checks and timeout fallbacks. Successful attacks earn $SHELL points.
 
@@ -227,9 +227,9 @@ $SHELL Protocol uses a **Peer-First decentralized verification network**: miners
 
 ---
 
-## Target Agent Profiles (34)
+## Target Agent Profiles (44)
 
-The sandbox contains 34 AI Agent profiles covering four attack categories and 13 injection surfaces. The platform also auto-discovers trending real AI Agent projects from Twitter and GitHub.
+The sandbox contains 44 AI Agent profiles covering five attack categories and 13 injection surfaces. The platform also auto-discovers trending real AI Agent projects from Twitter and GitHub.
 
 ### Platform Agents (DeFi / NFT / Cross-Chain / Payments)
 
@@ -260,6 +260,23 @@ Personal DeFi trading assistants and portfolio management agents simulating real
 
 Enterprise AI assistants processing real-world data: GitHub Code Review Bot (pull_request), Zendesk Support Bot (ticket_message), Notion Documentation Agent (doc_content), SEO Content Analyzer (web_page), Slack File Processing Bot (attachment), Google Calendar Scheduler (calendar_event), Linear Issue Triage Bot (issue_comment), and Confluence Wiki Agent (doc_content). These agents use diverse injection surfaces beyond traditional chat/token channels.
 
+### Self-LLM Exclusive Agents (Category 5)
+
+10 new agent targets exclusively for self-LLM miners (not available to free mode). These agents feature verified attack strategies and progressive hints to boost LLM miner success rates.
+
+| Category | Target Agent | Chain | Injection Surface | Official |
+|----------|-------------|-------|-------------------|----------|
+| Token Analytics | [Birdeye](https://birdeye.so) | SOL | social_post | birdeye.so |
+| Yield Farming | [PancakeSwap](https://pancakeswap.finance) Farmer | BSC | chat_message | pancakeswap.finance |
+| Meme Trading | [SunPump](https://sunpump.meme) Scout | Tron | token_data | sunpump.meme |
+| DEX Monitoring | [DEXScreener](https://dexscreener.com) Monitor | Multi | social_post | dexscreener.com |
+| DEX Aggregator | [OKX DEX](https://www.okx.com/web3/dex) | Multi | chat_message | okx.com |
+| Trading Terminal | [Axiom](https://axiom.trade) Trading | SOL | chat_message | axiom.trade |
+| DeFi Lending | [Aave](https://aave.com) Risk Manager | ETH | email | aave.com |
+| AI Agent Platform | [Virtuals](https://virtuals.io) Multi-Turn | Base | multi_turn | virtuals.io |
+| Social Trading | [ElizaOS](https://elizaos.ai) Social | SOL | social_post | elizaos.ai |
+| Contract Inspector | [Etherscan](https://etherscan.io) Inspector | ETH | chat_message | etherscan.io |
+
 ### Smart Model Rotation
 
 Each target Agent runs on different LLM backends (GPT, Claude, Gemini, DeepSeek, Qwen, etc.). Higher model resistance = higher breach rewards. The Feed page shows `AgentName (ModelDisplayName)` format.
@@ -268,9 +285,9 @@ Each target Agent runs on different LLM backends (GPT, Claude, Gemini, DeepSeek,
 
 | Difficulty | Example Profiles | Defense Level |
 |-----------|-----------------|---------------|
-| Easy (16) | ElizaOS / AIXBT / Olas / GOAT / MyShell / LayerZero / GitHub Bot / Zendesk Bot etc. | none (no injection defense) |
-| Medium (10) | Pump.fun / Griffain / Tensor / Zerebro / Circle / Notion Agent etc. | basic (basic safety rules) |
-| Hard (8) | **OpenClaw Hardened** / Kamino / Fetch.ai / Bittensor / Calendar Agent etc. | advanced (explicit PI defense) |
+| Easy (19) | ElizaOS / AIXBT / Olas / GOAT / MyShell / LayerZero / GitHub Bot / Birdeye / PancakeSwap / SunPump etc. | none (no injection defense) |
+| Medium (14) | Pump.fun / Griffain / Tensor / Zerebro / Circle / DEXScreener / OKX DEX / Axiom / Aave etc. | basic (basic safety rules) |
+| Hard (11) | **OpenClaw Hardened** / Kamino / Fetch.ai / Bittensor / Virtuals Multi-Turn / ElizaOS Social / Etherscan etc. | advanced (explicit PI defense) |
 
 ---
 

@@ -1,6 +1,6 @@
 <p align="center">
   <img src="https://img.shields.io/npm/v/@openshell-cc/miner-cli?color=00ff88&label=miner-cli" alt="npm" />
-  <img src="https://img.shields.io/badge/agents-34-00ccff" alt="agents" />
+  <img src="https://img.shields.io/badge/agents-44-00ccff" alt="agents" />
   <img src="https://img.shields.io/badge/chains-6+-ff6600" alt="chains" />
   <a href="https://github.com/openshell-cc/shell-protocol"><img src="https://img.shields.io/badge/GitHub-openshell--cc-181717?logo=github" alt="GitHub" /></a>
   <a href="https://x.com/openshell_cc"><img src="https://img.shields.io/badge/X-openshell__cc-000000?logo=x" alt="X" /></a>
@@ -19,7 +19,7 @@
 
 ## 什么是 $SHELL Protocol？
 
-$SHELL Protocol 是一个 **混合式去中心化 AI 安全测试网络**，让任何人都能通过运行矿机（Miner CLI）对 AI Agent 进行红队攻击。沙盒内含 **34 个目标 Agent 画像**，覆盖 DeFi 交易、NFT、跨链桥、借贷、支付、DAO 治理、DevOps 等热门赛道。攻击手段包括 Prompt 注入、社会工程和系统级命令注入。
+$SHELL Protocol 是一个 **混合式去中心化 AI 安全测试网络**，让任何人都能通过运行矿机（Miner CLI）对 AI Agent 进行红队攻击。沙盒内含 **44 个目标 Agent 画像**，覆盖 DeFi 交易、NFT、跨链桥、借贷、支付、DAO 治理、DevOps 等热门赛道。攻击手段包括 Prompt 注入、社会工程和系统级命令注入。
 
 攻击结果由 **矿工动态多 Peer 交叉投票验证**（在线矿工越多、验证者越多），平台仅作为自适应低频抽查与超时兜底。成功的攻击赚取 $SHELL 积分。
 
@@ -229,9 +229,9 @@ $SHELL Protocol 采用 **Peer-First 去中心化验证网络**，核心原则是
 
 ---
 
-## 目标 Agent 画像（34 个）
+## 目标 Agent 画像（44 个）
 
-沙盒内置 34 个 AI Agent 画像，覆盖四大攻击类别和 13 种注入面。平台还会自动从 Twitter 和 GitHub 发现热门真实 AI Agent 项目，生成新的攻击目标。
+沙盒内置 44 个 AI Agent 画像，覆盖五大攻击类别和 13 种注入面。平台还会自动从 Twitter 和 GitHub 发现热门真实 AI Agent 项目，生成新的攻击目标。
 
 ### 平台 Agent（DeFi / NFT / 跨链 / 支付）
 
@@ -262,6 +262,23 @@ $SHELL Protocol 采用 **Peer-First 去中心化验证网络**，核心原则是
 
 处理真实企业数据的 AI 助手：GitHub Code Review Bot（pull_request）、Zendesk Support Bot（ticket_message）、Notion Documentation Agent（doc_content）、SEO Content Analyzer（web_page）、Slack File Processing Bot（attachment）、Google Calendar Scheduler（calendar_event）、Linear Issue Triage Bot（issue_comment）、Confluence Wiki Agent（doc_content）。这些 Agent 使用超越传统 chat/token 通道的多种注入面。
 
+### Self-LLM 专属 Agent（第五类）
+
+10 个仅面向 Self-LLM 矿工的新 Agent 靶标（免费模式不可用）。每个 Agent 包含已验证的攻击策略和渐进提示，帮助 LLM 矿工提高成功率。
+
+| 分类 | 目标 Agent | 链 | 注入面 | 官网 |
+|------|-----------|------|--------|------|
+| 代币分析 | [Birdeye](https://birdeye.so) | SOL | social_post | birdeye.so |
+| 流动性挖矿 | [PancakeSwap](https://pancakeswap.finance) Farmer | BSC | chat_message | pancakeswap.finance |
+| Meme 交易 | [SunPump](https://sunpump.meme) Scout | Tron | token_data | sunpump.meme |
+| DEX 监控 | [DEXScreener](https://dexscreener.com) Monitor | Multi | social_post | dexscreener.com |
+| DEX 聚合器 | [OKX DEX](https://www.okx.com/web3/dex) | Multi | chat_message | okx.com |
+| 交易终端 | [Axiom](https://axiom.trade) Trading | SOL | chat_message | axiom.trade |
+| DeFi 借贷 | [Aave](https://aave.com) Risk Manager | ETH | email | aave.com |
+| AI Agent 平台 | [Virtuals](https://virtuals.io) 多轮攻击 | Base | multi_turn | virtuals.io |
+| 社交交易 | [ElizaOS](https://elizaos.ai) Social | SOL | social_post | elizaos.ai |
+| 合约审计 | [Etherscan](https://etherscan.io) Inspector | ETH | chat_message | etherscan.io |
+
 ### 多模型轮换（Smart Model Rotation）
 
 每个目标 Agent 会在不同的 LLM 后端运行（GPT、Claude、Gemini、DeepSeek、Qwen 等），模型抵抗力越强、攻破奖励越高。Feed 页面显示 `AgentName (ModelDisplayName)` 格式，便于区分同一 Agent 在不同模型上的表现。
@@ -270,9 +287,9 @@ $SHELL Protocol 采用 **Peer-First 去中心化验证网络**，核心原则是
 
 | 难度 | 示例画像 | 防御等级 |
 |------|----------|----------|
-| Easy (16) | ElizaOS / AIXBT / Olas / GOAT / MyShell / LayerZero / GitHub Bot / Zendesk Bot 等 | none（无注入防御） |
-| Medium (10) | Pump.fun / Griffain / Tensor / Zerebro / Circle / Notion Agent 等 | basic（基础安全规则） |
-| Hard (8) | **OpenClaw Hardened** / Kamino / Fetch.ai / Bittensor / Calendar Agent 等 | advanced（显式 PI 防御） |
+| Easy (19) | ElizaOS / AIXBT / Olas / GOAT / MyShell / LayerZero / GitHub Bot / Birdeye / PancakeSwap / SunPump 等 | none（无注入防御） |
+| Medium (14) | Pump.fun / Griffain / Tensor / Zerebro / Circle / DEXScreener / OKX DEX / Axiom / Aave 等 | basic（基础安全规则） |
+| Hard (11) | **OpenClaw Hardened** / Kamino / Fetch.ai / Bittensor / Virtuals 多轮 / ElizaOS Social / Etherscan 等 | advanced（显式 PI 防御） |
 
 ---
 
