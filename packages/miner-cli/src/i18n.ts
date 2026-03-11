@@ -123,6 +123,9 @@ const messages = {
   canaryMiss:        { zh: '未触发 canary', en: 'Canary not triggered' },
   pendingCheck:      { zh: '验证仍在进行中 — 稍后可用 `shell-miner status` 查看', en: 'Verification still pending — check back with `shell-miner status`' },
 
+  // ── Soft upgrade hint ──
+  upgradeAvailable:    { zh: '新版本可用！建议升级:', en: 'New version available! Upgrade:' },
+
   // ── .env comments ──
   envWallet:         { zh: '# 可选：Solana 钱包', en: '# Optional: Solana wallet' },
   envLlm:            { zh: '# LLM (高效模式) — API Key 仅本地使用，不上传平台', en: '# LLM (Advanced mode) — API key runs locally, never uploaded' },

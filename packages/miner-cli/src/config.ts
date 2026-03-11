@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-export const CLIENT_VERSION = '0.5.1'
+export const CLIENT_VERSION = '0.5.2'
 
 export type ExecutionMode = 'auto' | 'sandbox_only'
 export type TaskExecutionMode = 'sandbox_verified' | 'local_compute'

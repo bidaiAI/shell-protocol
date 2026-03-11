@@ -30,6 +30,7 @@ export interface TaskData {
 export interface PollResult {
   task: TaskData | null
   tip?: string
+  latestVersion?: string
 }
 
 /** Long-poll the Oracle for the next available task */
@@ -109,8 +110,8 @@ export async function pollForTask(
     }
   }
 
-  const data = await res.json() as { task: TaskData | null; tip?: string }
-  return { task: data.task, tip: data.tip }
+  const data = await res.json() as { task: TaskData | null; tip?: string; latestVersion?: string }
+  return { task: data.task, tip: data.tip, latestVersion: data.latestVersion }
 }
 
 /** Ask Oracle to generate a platform-managed payload for an assigned task. */

@@ -304,13 +304,23 @@ program
     let totalSuccess = 0
     let totalPoints = 0
     let consecutiveFails = 0
+    let upgradeHintShown = false
 
     while (true) {
       const pollSpinner = ora('Polling for tasks...').start()
       let lastTask: TaskData | null = null
 
       try {
-        const { task, tip } = await pollForTask(config, token, getSupportedTaskModes(config), config.miningMode)
+        const { task, tip, latestVersion } = await pollForTask(config, token, getSupportedTaskModes(config), config.miningMode)
+
+        // Soft upgrade hint — show once per session
+        if (latestVersion && latestVersion !== CLIENT_VERSION && !upgradeHintShown) {
+          upgradeHintShown = true
+          console.log()
+          console.log(chalk.yellow(`  ⬆ ${T('upgradeAvailable')} v${latestVersion}`))
+          console.log(chalk.cyan('    npx @openshell-cc/miner-cli@latest start'))
+          console.log()
+        }
 
         if (!task) {
           pollSpinner.info('No tasks available. Waiting...')
