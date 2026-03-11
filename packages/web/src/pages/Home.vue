@@ -147,8 +147,16 @@ let tickerTimer: ReturnType<typeof setInterval> | null = null
 async function fetchBreachTicker() {
   try {
     const { feed } = await getRecentFeed(30, 0, true) // breached only
-    // Filter: advanced (difficulty >= 3) OR high-value (points >= 500)
-    breachTicker.value = feed.filter(e => e.pointsAwarded > 0 && (e.difficulty >= 3 || e.pointsAwarded >= 500)).slice(0, 12)
+    const rewarded = feed.filter(e => e.pointsAwarded > 0)
+    // Advanced/hard breaches (difficulty >= 3) get extra exposure: appear twice
+    const items: FeedEntry[] = []
+    for (const e of rewarded.slice(0, 15)) {
+      items.push(e)
+      if (e.difficulty >= 3 || e.pointsAwarded >= 1000) {
+        items.push({ ...e, id: e.id + '-dup' }) // duplicate for longer display
+      }
+    }
+    breachTicker.value = items.slice(0, 20)
   } catch { /* non-critical */ }
 }
 
