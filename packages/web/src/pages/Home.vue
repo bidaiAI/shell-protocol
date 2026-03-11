@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { getGlobalStats, searchAgent, type GlobalStats, type AgentSearchResult } from '../lib/api'
+import { getGlobalStats, searchAgent, getRecentFeed, type GlobalStats, type AgentSearchResult, type FeedEntry } from '../lib/api'
 import { useWallet } from '../lib/wallet'
 import { useLang } from '../lib/i18n'
 
@@ -140,6 +140,28 @@ const T = computed(() => lang.value === 'en' ? {
   ctaStep2: '② 开始挖矿',
 })
 
+// ── Live breach ticker ──
+const breachTicker = ref<FeedEntry[]>([])
+let tickerTimer: ReturnType<typeof setInterval> | null = null
+
+async function fetchBreachTicker() {
+  try {
+    const { feed } = await getRecentFeed(30, 0, true) // breached only
+    // Filter: advanced (difficulty >= 3) OR high-value (points >= 500)
+    breachTicker.value = feed.filter(e => e.pointsAwarded > 0 && (e.difficulty >= 3 || e.pointsAwarded >= 500)).slice(0, 12)
+  } catch { /* non-critical */ }
+}
+
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  return `${Math.floor(hrs / 24)}d ago`
+}
+
 onMounted(async () => {
   try {
     stats.value = await getGlobalStats()
@@ -147,6 +169,12 @@ onMounted(async () => {
   catch {
     // Stats are non-critical for landing
   }
+  fetchBreachTicker()
+  tickerTimer = setInterval(fetchBreachTicker, 60_000) // refresh every 60s
+})
+
+onUnmounted(() => {
+  if (tickerTimer) clearInterval(tickerTimer)
 })
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null
@@ -194,28 +222,39 @@ function formatNumber(n: number): string {
 
 <template>
   <div class="max-w-4xl mx-auto px-4 py-16 animate-fade-in">
-    <!-- Scrolling announcement banner -->
-    <div class="w-full overflow-hidden bg-shell-green/10 border border-shell-green/20 rounded-lg mb-8 py-2">
-      <div class="flex whitespace-nowrap" style="animation: marquee 32s linear infinite">
-        <span class="text-xs text-shell-green font-mono font-medium mx-6">🎉 规则更新</span>
-        <span class="text-xs text-shell-text/70 font-mono mx-6">基础分调整：none → 300 · basic → 800 · advanced → 2500</span>
-        <span class="text-xs text-shell-green/40 mx-4">·</span>
-        <span class="text-xs text-shell-green font-mono font-medium mx-6">⚡ 新机制</span>
-        <span class="text-xs text-shell-text/70 font-mono mx-6">攻击成功后 12 分钟冷却期，期间自动分配 P2P 验证任务</span>
-        <span class="text-xs text-shell-green/40 mx-4">·</span>
-        <span class="text-xs text-shell-green font-mono font-medium mx-6">🛡️ 防合谋</span>
-        <span class="text-xs text-shell-text/70 font-mono mx-6">验证任务严格排除同 IP 矿工，确保验证公平性</span>
-        <span class="text-xs text-shell-green/40 mx-4">·</span>
+    <!-- Live breach ticker -->
+    <div v-if="breachTicker.length > 0" class="w-full overflow-hidden bg-tier-apex/5 border border-tier-apex/20 rounded-lg mb-8 py-2">
+      <div class="flex whitespace-nowrap ticker-scroll">
+        <template v-for="(entry, i) in breachTicker" :key="entry.id">
+          <span class="text-xs font-mono font-bold mx-3"
+            :class="entry.miningMode === 'self_llm' ? 'text-tier-hunter' : 'text-shell-green'">
+            {{ entry.displayName }}
+          </span>
+          <span class="text-xs text-shell-text/50 font-mono">→</span>
+          <span class="text-xs text-tier-apex font-mono font-medium mx-1">{{ entry.targetAgentName }}</span>
+          <span v-if="entry.targetAgentModel" class="text-xs text-shell-text/40 font-mono">({{ entry.targetAgentModel }})</span>
+          <span class="text-[10px] font-bold ml-1 px-1.5 py-0.5 rounded bg-tier-apex/15 text-tier-apex border border-tier-apex/30">BREACHED</span>
+          <span v-if="entry.miningMode === 'self_llm'" class="text-[10px] ml-1 text-tier-hunter/70">LLM</span>
+          <span class="text-xs text-shell-green font-mono font-bold ml-1">+{{ entry.pointsAwarded }}</span>
+          <span class="text-[10px] text-shell-text/30 font-mono ml-1">{{ timeAgo(entry.verifiedAt) }}</span>
+          <span v-if="i < breachTicker.length - 1" class="text-tier-apex/20 mx-4">|</span>
+        </template>
         <!-- Duplicate for seamless loop -->
-        <span class="text-xs text-shell-green font-mono font-medium mx-6">🎉 规则更新</span>
-        <span class="text-xs text-shell-text/70 font-mono mx-6">基础分调整：none → 300 · basic → 800 · advanced → 2500</span>
-        <span class="text-xs text-shell-green/40 mx-4">·</span>
-        <span class="text-xs text-shell-green font-mono font-medium mx-6">⚡ 新机制</span>
-        <span class="text-xs text-shell-text/70 font-mono mx-6">攻击成功后 12 分钟冷却期，期间自动分配 P2P 验证任务</span>
-        <span class="text-xs text-shell-green/40 mx-4">·</span>
-        <span class="text-xs text-shell-green font-mono font-medium mx-6">🛡️ 防合谋</span>
-        <span class="text-xs text-shell-text/70 font-mono mx-6">验证任务严格排除同 IP 矿工，确保验证公平性</span>
-        <span class="text-xs text-shell-green/40 mx-4">·</span>
+        <span class="text-tier-apex/20 mx-4">|</span>
+        <template v-for="entry in breachTicker" :key="'dup-' + entry.id">
+          <span class="text-xs font-mono font-bold mx-3"
+            :class="entry.miningMode === 'self_llm' ? 'text-tier-hunter' : 'text-shell-green'">
+            {{ entry.displayName }}
+          </span>
+          <span class="text-xs text-shell-text/50 font-mono">→</span>
+          <span class="text-xs text-tier-apex font-mono font-medium mx-1">{{ entry.targetAgentName }}</span>
+          <span v-if="entry.targetAgentModel" class="text-xs text-shell-text/40 font-mono">({{ entry.targetAgentModel }})</span>
+          <span class="text-[10px] font-bold ml-1 px-1.5 py-0.5 rounded bg-tier-apex/15 text-tier-apex border border-tier-apex/30">BREACHED</span>
+          <span v-if="entry.miningMode === 'self_llm'" class="text-[10px] ml-1 text-tier-hunter/70">LLM</span>
+          <span class="text-xs text-shell-green font-mono font-bold ml-1">+{{ entry.pointsAwarded }}</span>
+          <span class="text-[10px] text-shell-text/30 font-mono ml-1">{{ timeAgo(entry.verifiedAt) }}</span>
+          <span class="text-tier-apex/20 mx-4">|</span>
+        </template>
       </div>
     </div>
 
@@ -504,7 +543,13 @@ function formatNumber(n: number): string {
 </template>
 
 <style scoped>
-@keyframes marquee {
+.ticker-scroll {
+  animation: ticker 40s linear infinite;
+}
+.ticker-scroll:hover {
+  animation-play-state: paused;
+}
+@keyframes ticker {
   0%   { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
