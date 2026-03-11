@@ -181,14 +181,14 @@ Generate attack payload (Free: platform AI / Efficient: local LLM)
      ↓
 Miner A submits result (POST /tasks/submit)
      ↓
-Oracle creates Peer verification round, dynamically assigns validators
-(More online miners → more validators; violation history → more validators)
+Oracle creates Peer verification round, assigns 3 validators
      ↓
-Validator miners independently execute the same payload, vote: triggered / not_triggered
+3 validator miners independently execute the same payload, vote: triggered / not_triggered
      ↓
-Consensus resolution → auto-settlement when threshold reached
-  Unanimous agreement → attacker + validators earn points
-  Disagreement → enters arbitration queue
+2/3 majority consensus → auto-settlement
+  Unanimous agreement → attacker + validators earn 1.5x bonus
+  2/3 majority → normal settlement
+  No majority → enters arbitration queue
      ↓
 Adaptive platform spot-check (more miners → lower spot-check rate)
 (No consensus / timeout → platform fallback validator takes over)
@@ -203,16 +203,16 @@ $SHELL Protocol uses a **Peer-First decentralized verification network**: miners
 ### Workflow
 
 1. **Miner A completes attack** — submits result to Oracle
-2. **Oracle creates verification round** — dynamically assigns validators (count adjusts based on online miners, task value, and submitter reputation)
+2. **Oracle creates verification round** — assigns 3 validators per submission
 3. **Validators independently execute** — each runs the same payload and submits their vote
-4. **Consensus resolution** — auto-settles when threshold reached; disagreements enter arbitration
+4. **2/3 majority consensus** — auto-settles when 2+ agree; unanimous 3/3 earns 1.5x bonus; no majority → arbitration
 5. **Adaptive spot-check** — spot-check rate decreases as online miner count grows
 
 ### Dynamic Verification Features
 
 | Feature | Mechanism |
 |---------|-----------|
-| **Validator count** | Adjusts by online miners + task value + submitter reputation |
+| **Validator count** | Fixed 3 validators per submission, 2/3 majority consensus |
 | **Spot-check rate** | Adapts to online miner count (more miners → stronger peer network → fewer platform checks) |
 | **Anti-cheat** | Cheaters require more validators for subsequent submissions |
 | **Timeout fallback** | Validators timeout → platform fallback validator auto-takes over |
