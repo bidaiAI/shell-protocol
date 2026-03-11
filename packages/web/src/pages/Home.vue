@@ -157,9 +157,9 @@ interface TickerItem {
 
 async function fetchBreachTicker() {
   try {
-    // Fetch first-breach-per-agent data from red team reports
+    // Fetch broad feed (200 entries) to catch high-value older entries + agent data
     const [feedData, agentData] = await Promise.all([
-      getRecentFeed(50, 0, true),
+      getRecentFeed(200),
       getRedTeamAgents().catch(() => ({ agents: [] })),
     ])
 
@@ -170,16 +170,12 @@ async function fetchBreachTicker() {
     }
 
     const items: TickerItem[] = []
-    const seenAgents = new Set<string>()
 
     for (const e of feedData.feed) {
       if (e.pointsAwarded <= 0 || !e.targetAgentName) continue
-      const agentKey = e.targetAgentName
-      if (seenAgents.has(agentKey)) continue
-      seenAgents.add(agentKey)
 
       // Check if this feed entry is the first breach for this agent
-      const firstAt = firstBreachMap.get(agentKey)
+      const firstAt = firstBreachMap.get(e.targetAgentName)
       const isFirst = firstAt ? Math.abs(new Date(e.verifiedAt).getTime() - new Date(firstAt).getTime()) < 120_000 : false
 
       items.push({
@@ -194,10 +190,10 @@ async function fetchBreachTicker() {
       })
     }
 
-    // Sort: first breaches first, then by time
+    // Sort: first breaches first, then by points descending (high-value entries visible first)
     items.sort((a, b) => {
       if (a.isFirstBreach !== b.isFirstBreach) return a.isFirstBreach ? -1 : 1
-      return new Date(b.verifiedAt).getTime() - new Date(a.verifiedAt).getTime()
+      return b.pointsAwarded - a.pointsAwarded
     })
 
     breachTicker.value = items.slice(0, 15)
@@ -274,45 +270,65 @@ function formatNumber(n: number): string {
 
 <template>
   <div class="max-w-4xl mx-auto px-4 py-16 animate-fade-in">
-    <!-- Live breach ticker -->
-    <div v-if="breachTicker.length > 0" class="w-full overflow-hidden bg-tier-apex/5 border border-tier-apex/20 rounded-lg mb-8 py-2">
-      <div class="flex whitespace-nowrap ticker-scroll">
-        <template v-for="(entry, i) in breachTicker" :key="entry.id">
-          <span class="text-xs font-mono font-bold mx-3"
-            :class="entry.miningMode === 'self_llm' ? 'text-tier-hunter' : 'text-shell-green'">
-            {{ entry.displayName }}
-          </span>
-          <span class="text-xs text-shell-text/50 font-mono">→</span>
-          <span class="text-xs font-mono font-medium mx-1" :class="entry.isFirstBreach ? 'text-yellow-400' : 'text-tier-apex'">{{ entry.targetAgentName }}</span>
-          <span v-if="entry.targetAgentModel" class="text-xs text-shell-text/40 font-mono">({{ entry.targetAgentModel }})</span>
-          <span v-if="entry.isFirstBreach"
-            class="text-[10px] font-bold ml-1 px-1.5 py-0.5 rounded bg-yellow-400/15 text-yellow-400 border border-yellow-400/30 animate-pulse">FIRST BREACH</span>
-          <span v-else
-            class="text-[10px] font-bold ml-1 px-1.5 py-0.5 rounded bg-tier-apex/15 text-tier-apex border border-tier-apex/30">BREACHED</span>
-          <span v-if="entry.miningMode === 'self_llm'" class="text-[10px] ml-1 text-tier-hunter/70">LLM</span>
-          <span class="text-xs text-shell-green font-mono font-bold ml-1">+{{ entry.pointsAwarded }}</span>
-          <span class="text-[10px] text-shell-text/30 font-mono ml-1">{{ timeAgo(entry.verifiedAt) }}</span>
-          <span v-if="i < breachTicker.length - 1" class="text-tier-apex/20 mx-4">|</span>
-        </template>
-        <!-- Duplicate for seamless loop -->
-        <span class="text-tier-apex/20 mx-4">|</span>
-        <template v-for="entry in breachTicker" :key="'dup-' + entry.id">
-          <span class="text-xs font-mono font-bold mx-3"
-            :class="entry.miningMode === 'self_llm' ? 'text-tier-hunter' : 'text-shell-green'">
-            {{ entry.displayName }}
-          </span>
-          <span class="text-xs text-shell-text/50 font-mono">→</span>
-          <span class="text-xs font-mono font-medium mx-1" :class="entry.isFirstBreach ? 'text-yellow-400' : 'text-tier-apex'">{{ entry.targetAgentName }}</span>
-          <span v-if="entry.targetAgentModel" class="text-xs text-shell-text/40 font-mono">({{ entry.targetAgentModel }})</span>
-          <span v-if="entry.isFirstBreach"
-            class="text-[10px] font-bold ml-1 px-1.5 py-0.5 rounded bg-yellow-400/15 text-yellow-400 border border-yellow-400/30 animate-pulse">FIRST BREACH</span>
-          <span v-else
-            class="text-[10px] font-bold ml-1 px-1.5 py-0.5 rounded bg-tier-apex/15 text-tier-apex border border-tier-apex/30">BREACHED</span>
-          <span v-if="entry.miningMode === 'self_llm'" class="text-[10px] ml-1 text-tier-hunter/70">LLM</span>
-          <span class="text-xs text-shell-green font-mono font-bold ml-1">+{{ entry.pointsAwarded }}</span>
-          <span class="text-[10px] text-shell-text/30 font-mono ml-1">{{ timeAgo(entry.verifiedAt) }}</span>
-          <span class="text-tier-apex/20 mx-4">|</span>
-        </template>
+    <!-- Live breach ticker: pinned top entry + scrolling rest -->
+    <div v-if="breachTicker.length > 0" class="w-full bg-shell-green/5 border-b border-shell-green/15 mb-8 py-2 space-y-1">
+      <!-- Pinned: highest-value entry (always visible) -->
+      <div v-if="breachTicker[0]" class="flex items-center px-3 whitespace-nowrap">
+        <span class="text-[10px] text-yellow-400/60 mr-2">&#9733;</span>
+        <span class="text-xs font-mono font-bold"
+          :class="breachTicker[0].miningMode === 'self_llm' ? 'text-tier-hunter' : 'text-shell-green'">
+          {{ breachTicker[0].displayName }}
+        </span>
+        <span class="text-xs text-shell-text/50 font-mono mx-1">→</span>
+        <span class="text-xs font-mono font-medium" :class="breachTicker[0].isFirstBreach ? 'text-yellow-400' : 'text-shell-text/80'">{{ breachTicker[0].targetAgentName }}</span>
+        <span v-if="breachTicker[0].targetAgentModel" class="text-xs text-shell-text/40 font-mono ml-1">({{ breachTicker[0].targetAgentModel }})</span>
+        <span v-if="breachTicker[0].isFirstBreach"
+          class="text-[10px] font-bold ml-1 px-1.5 py-0.5 rounded bg-yellow-400/15 text-yellow-400 border border-yellow-400/30 animate-pulse">FIRST BREACH</span>
+        <span v-else
+          class="text-[10px] font-bold ml-1 px-1.5 py-0.5 rounded bg-shell-green/15 text-shell-green">BREACHED</span>
+        <span v-if="breachTicker[0].miningMode === 'self_llm'" class="text-[10px] ml-1 text-tier-hunter/70">LLM</span>
+        <span class="text-xs text-shell-green font-mono font-bold ml-1">+{{ breachTicker[0].pointsAwarded }}</span>
+        <span class="text-[10px] text-shell-text/30 font-mono ml-1">{{ timeAgo(breachTicker[0].verifiedAt) }}</span>
+      </div>
+      <!-- Scrolling: remaining entries -->
+      <div v-if="breachTicker.length > 1" class="overflow-hidden">
+        <div class="flex whitespace-nowrap ticker-scroll">
+          <template v-for="(entry, i) in breachTicker.slice(1)" :key="entry.id">
+            <span class="text-xs font-mono font-bold mx-3"
+              :class="entry.miningMode === 'self_llm' ? 'text-tier-hunter' : 'text-shell-green'">
+              {{ entry.displayName }}
+            </span>
+            <span class="text-xs text-shell-text/50 font-mono">→</span>
+            <span class="text-xs font-mono font-medium mx-1" :class="entry.isFirstBreach ? 'text-yellow-400' : 'text-shell-text/80'">{{ entry.targetAgentName }}</span>
+            <span v-if="entry.targetAgentModel" class="text-xs text-shell-text/40 font-mono">({{ entry.targetAgentModel }})</span>
+            <span v-if="entry.isFirstBreach"
+              class="text-[10px] font-bold ml-1 px-1.5 py-0.5 rounded bg-yellow-400/15 text-yellow-400 border border-yellow-400/30 animate-pulse">FIRST BREACH</span>
+            <span v-else
+              class="text-[10px] font-bold ml-1 px-1.5 py-0.5 rounded bg-shell-green/15 text-shell-green">BREACHED</span>
+            <span v-if="entry.miningMode === 'self_llm'" class="text-[10px] ml-1 text-tier-hunter/70">LLM</span>
+            <span class="text-xs text-shell-green font-mono font-bold ml-1">+{{ entry.pointsAwarded }}</span>
+            <span class="text-[10px] text-shell-text/30 font-mono ml-1">{{ timeAgo(entry.verifiedAt) }}</span>
+            <span v-if="i < breachTicker.length - 2" class="text-shell-text/15 mx-4">|</span>
+          </template>
+          <span class="text-shell-text/15 mx-4">|</span>
+          <template v-for="entry in breachTicker.slice(1)" :key="'dup-' + entry.id">
+            <span class="text-xs font-mono font-bold mx-3"
+              :class="entry.miningMode === 'self_llm' ? 'text-tier-hunter' : 'text-shell-green'">
+              {{ entry.displayName }}
+            </span>
+            <span class="text-xs text-shell-text/50 font-mono">→</span>
+            <span class="text-xs font-mono font-medium mx-1" :class="entry.isFirstBreach ? 'text-yellow-400' : 'text-shell-text/80'">{{ entry.targetAgentName }}</span>
+            <span v-if="entry.targetAgentModel" class="text-xs text-shell-text/40 font-mono">({{ entry.targetAgentModel }})</span>
+            <span v-if="entry.isFirstBreach"
+              class="text-[10px] font-bold ml-1 px-1.5 py-0.5 rounded bg-yellow-400/15 text-yellow-400 border border-yellow-400/30 animate-pulse">FIRST BREACH</span>
+            <span v-else
+              class="text-[10px] font-bold ml-1 px-1.5 py-0.5 rounded bg-shell-green/15 text-shell-green">BREACHED</span>
+            <span v-if="entry.miningMode === 'self_llm'" class="text-[10px] ml-1 text-tier-hunter/70">LLM</span>
+            <span class="text-xs text-shell-green font-mono font-bold ml-1">+{{ entry.pointsAwarded }}</span>
+            <span class="text-[10px] text-shell-text/30 font-mono ml-1">{{ timeAgo(entry.verifiedAt) }}</span>
+            <span class="text-shell-text/15 mx-4">|</span>
+          </template>
+        </div>
       </div>
     </div>
 
@@ -602,7 +618,7 @@ function formatNumber(n: number): string {
 
 <style scoped>
 .ticker-scroll {
-  animation: ticker 14s linear infinite;
+  animation: ticker 8s linear infinite;
 }
 .ticker-scroll:hover {
   animation-play-state: paused;
