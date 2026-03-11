@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { getGlobalStats, searchAgent, getRecentFeed, type GlobalStats, type AgentSearchResult, type FeedEntry } from '../lib/api'
+import { getGlobalStats, searchAgent, getRecentFeed, getRedTeamAgents, type GlobalStats, type AgentSearchResult, type FeedEntry } from '../lib/api'
 import { useWallet } from '../lib/wallet'
 import { useLang } from '../lib/i18n'
 
@@ -141,22 +141,66 @@ const T = computed(() => lang.value === 'en' ? {
 })
 
 // ── Live breach ticker ──
-const breachTicker = ref<FeedEntry[]>([])
+const breachTicker = ref<TickerItem[]>([])
 let tickerTimer: ReturnType<typeof setInterval> | null = null
+
+interface TickerItem {
+  id: string
+  displayName: string
+  targetAgentName: string | null
+  targetAgentModel: string | null
+  pointsAwarded: number
+  miningMode?: string
+  verifiedAt: string
+  isFirstBreach: boolean
+}
 
 async function fetchBreachTicker() {
   try {
-    const { feed } = await getRecentFeed(30, 0, true) // breached only
-    const rewarded = feed.filter(e => e.pointsAwarded > 0)
-    // Advanced/hard breaches (difficulty >= 3) get extra exposure: appear twice
-    const items: FeedEntry[] = []
-    for (const e of rewarded.slice(0, 15)) {
-      items.push(e)
-      if (e.difficulty >= 3 || e.pointsAwarded >= 1000) {
-        items.push({ ...e, id: e.id + '-dup' }) // duplicate for longer display
-      }
+    // Fetch first-breach-per-agent data from red team reports
+    const [feedData, agentData] = await Promise.all([
+      getRecentFeed(50, 0, true),
+      getRedTeamAgents().catch(() => ({ agents: [] })),
+    ])
+
+    // Build a map: agentName → firstBreachAt
+    const firstBreachMap = new Map<string, string>()
+    for (const a of agentData.agents) {
+      if (a.firstBreachAt) firstBreachMap.set(a.agentName, a.firstBreachAt)
     }
-    breachTicker.value = items.slice(0, 20)
+
+    const items: TickerItem[] = []
+    const seenAgents = new Set<string>()
+
+    for (const e of feedData.feed) {
+      if (e.pointsAwarded <= 0 || !e.targetAgentName) continue
+      const agentKey = e.targetAgentName
+      if (seenAgents.has(agentKey)) continue
+      seenAgents.add(agentKey)
+
+      // Check if this feed entry is the first breach for this agent
+      const firstAt = firstBreachMap.get(agentKey)
+      const isFirst = firstAt ? Math.abs(new Date(e.verifiedAt).getTime() - new Date(firstAt).getTime()) < 120_000 : false
+
+      items.push({
+        id: e.id,
+        displayName: e.displayName,
+        targetAgentName: e.targetAgentName,
+        targetAgentModel: e.targetAgentModel,
+        pointsAwarded: e.pointsAwarded,
+        miningMode: e.miningMode,
+        verifiedAt: e.verifiedAt,
+        isFirstBreach: isFirst,
+      })
+    }
+
+    // Sort: first breaches first, then by time
+    items.sort((a, b) => {
+      if (a.isFirstBreach !== b.isFirstBreach) return a.isFirstBreach ? -1 : 1
+      return new Date(b.verifiedAt).getTime() - new Date(a.verifiedAt).getTime()
+    })
+
+    breachTicker.value = items.slice(0, 15)
   } catch { /* non-critical */ }
 }
 
@@ -239,9 +283,12 @@ function formatNumber(n: number): string {
             {{ entry.displayName }}
           </span>
           <span class="text-xs text-shell-text/50 font-mono">→</span>
-          <span class="text-xs text-tier-apex font-mono font-medium mx-1">{{ entry.targetAgentName }}</span>
+          <span class="text-xs font-mono font-medium mx-1" :class="entry.isFirstBreach ? 'text-yellow-400' : 'text-tier-apex'">{{ entry.targetAgentName }}</span>
           <span v-if="entry.targetAgentModel" class="text-xs text-shell-text/40 font-mono">({{ entry.targetAgentModel }})</span>
-          <span class="text-[10px] font-bold ml-1 px-1.5 py-0.5 rounded bg-tier-apex/15 text-tier-apex border border-tier-apex/30">BREACHED</span>
+          <span v-if="entry.isFirstBreach"
+            class="text-[10px] font-bold ml-1 px-1.5 py-0.5 rounded bg-yellow-400/15 text-yellow-400 border border-yellow-400/30 animate-pulse">FIRST BREACH</span>
+          <span v-else
+            class="text-[10px] font-bold ml-1 px-1.5 py-0.5 rounded bg-tier-apex/15 text-tier-apex border border-tier-apex/30">BREACHED</span>
           <span v-if="entry.miningMode === 'self_llm'" class="text-[10px] ml-1 text-tier-hunter/70">LLM</span>
           <span class="text-xs text-shell-green font-mono font-bold ml-1">+{{ entry.pointsAwarded }}</span>
           <span class="text-[10px] text-shell-text/30 font-mono ml-1">{{ timeAgo(entry.verifiedAt) }}</span>
@@ -255,9 +302,12 @@ function formatNumber(n: number): string {
             {{ entry.displayName }}
           </span>
           <span class="text-xs text-shell-text/50 font-mono">→</span>
-          <span class="text-xs text-tier-apex font-mono font-medium mx-1">{{ entry.targetAgentName }}</span>
+          <span class="text-xs font-mono font-medium mx-1" :class="entry.isFirstBreach ? 'text-yellow-400' : 'text-tier-apex'">{{ entry.targetAgentName }}</span>
           <span v-if="entry.targetAgentModel" class="text-xs text-shell-text/40 font-mono">({{ entry.targetAgentModel }})</span>
-          <span class="text-[10px] font-bold ml-1 px-1.5 py-0.5 rounded bg-tier-apex/15 text-tier-apex border border-tier-apex/30">BREACHED</span>
+          <span v-if="entry.isFirstBreach"
+            class="text-[10px] font-bold ml-1 px-1.5 py-0.5 rounded bg-yellow-400/15 text-yellow-400 border border-yellow-400/30 animate-pulse">FIRST BREACH</span>
+          <span v-else
+            class="text-[10px] font-bold ml-1 px-1.5 py-0.5 rounded bg-tier-apex/15 text-tier-apex border border-tier-apex/30">BREACHED</span>
           <span v-if="entry.miningMode === 'self_llm'" class="text-[10px] ml-1 text-tier-hunter/70">LLM</span>
           <span class="text-xs text-shell-green font-mono font-bold ml-1">+{{ entry.pointsAwarded }}</span>
           <span class="text-[10px] text-shell-text/30 font-mono ml-1">{{ timeAgo(entry.verifiedAt) }}</span>
