@@ -602,7 +602,7 @@ function formatNumber(n: number): string {
 
 <style scoped>
 .ticker-scroll {
-  animation: ticker 40s linear infinite;
+  animation: ticker 14s linear infinite;
 }
 .ticker-scroll:hover {
   animation-play-state: paused;
