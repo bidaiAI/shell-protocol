@@ -333,10 +333,15 @@ function bindingStatusText(status: string) {
               class="bg-shell-green text-black px-3 py-1 text-xs font-semibold rounded hover:bg-shell-green-dim transition-colors"
               @click="handleBindWallet"
             >
-              绑定钱包
+              Phantom 绑定
             </button>
             <span v-if="bindWalletError" class="text-red-400 text-xs ml-2">{{ bindWalletError }}</span>
             <span v-if="bindWalletSuccess" class="text-shell-green text-xs ml-2">绑定成功</span>
+            <div class="text-[10px] text-shell-text/50 mt-2 leading-relaxed">
+              没有 Phantom？请访问
+              <a href="https://openclaw.cc/bind" target="_blank" class="text-shell-green hover:underline">openclaw.cc/bind</a>
+              通过链上交易验证钱包
+            </div>
           </div>
           <div class="text-xs text-shell-text mt-2">
             注册时间 {{ user.createdAt ? formatDate(user.createdAt) : '—' }}
