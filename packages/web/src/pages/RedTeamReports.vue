@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { getRedTeamAgents, getRedTeamReports, type RedTeamAgent, type RedTeamReport, type RedTeamAccessTier } from '../lib/api'
 import { useLang } from '../lib/i18n'
@@ -9,6 +9,8 @@ const route = useRoute()
 
 const agents = ref<RedTeamAgent[]>([])
 const loading = ref(true)
+
+// Compact report panel (per-agent)
 const expandedAgent = ref<string | null>(null)
 const reports = ref<RedTeamReport[]>([])
 const reportsLoading = ref(false)
@@ -16,91 +18,93 @@ const totalBreaches = ref(0)
 const accessTier = ref<RedTeamAccessTier | ''>('')
 const reportsOffset = ref(0)
 const hasMore = ref(false)
+const expandedPayload = ref<string | null>(null)
 
-// Achievement wall stats (computed from loaded agents)
+// Showcase reports (promoted agent, bottom section)
+const showcaseReports = ref<RedTeamReport[]>([])
+const showcaseAgent = ref<string>('')
+const showcaseLoading = ref(false)
+const showcaseTotal = ref(0)
+const showcaseAccessTier = ref<RedTeamAccessTier | ''>('')
+const SHOWCASE_LIMIT = 6
+
 const totalBreachesAll = computed(() => agents.value.reduce((s, a) => s + a.breachCount, 0))
 const agentsBreached = computed(() => agents.value.filter(a => a.breachCount > 0).length)
-const uniqueAttackersAll = computed(() => {
-  // uniqueAttackers per agent can overlap; take the max as a lower bound
-  return agents.value.reduce((s, a) => s + a.uniqueAttackers, 0)
-})
+const uniqueAttackersAll = computed(() => agents.value.reduce((s, a) => s + a.uniqueAttackers, 0))
 
-// Bilingual translations
 const T = computed(() => lang.value === 'en' ? {
   title: 'Red Team Reports',
-  subtitle: 'Successful breach payloads from the mining network',
-  disclaimer: 'Payloads shown are for educational and security research purposes only. Do not use against unauthorized targets. Violations will result in permanent bans.',
+  subtitle: 'Adversarial security assessment of AI agents across the Web3 ecosystem',
+  disclaimer: 'Payloads shown are for educational and security research purposes only. Do not use against unauthorized targets.',
   promoted: 'PUBLIC',
   breaches: 'breaches',
   attackers: 'attackers',
-  firstBreach: 'First breach',
   latestBreach: 'Latest',
   viewReports: 'View Reports',
-  collapse: 'Collapse',
-  breachCta: 'Join as Miner',
+  collapse: 'Hide',
   payload: 'Payload',
-  payloadLocked: 'Payload Hidden',
-  payloadLockedDesc: 'Breach this agent or wait for the disclosure window to view the full payload.',
+  payloadLocked: 'Payload locked — breach this agent or wait for disclosure',
   disclosed: 'DISCLOSED',
   pending: 'PENDING',
-  triggered: 'Triggered Operations',
+  triggered: 'Triggered',
   points: 'pts',
   noAgents: 'No successful breaches recorded yet',
   noAgentsDesc: 'Be the first miner to breach an AI Agent',
-  loadMore: 'Load More',
+  loadMore: 'View More Reports',
   loading: 'Loading...',
   defense: 'Defense',
-  surface: 'Attack Surface',
+  surface: 'Surface',
   model: 'Model',
-  difficulty: 'Difficulty',
-  taskType: 'Attack Type',
-  totalPayloads: 'total breach payloads',
+  difficulty: 'Diff',
+  taskType: 'Type',
+  totalPayloads: 'breach payloads',
   agreeNotice: 'By viewing, you agree not to use these techniques against unauthorized targets',
-  tier2Banner: 'Breach metadata is public. Full payloads are revealed after you breach this agent or the disclosure window expires.',
-  summary: 'Summary',
-  disclosureWindow: 'day disclosure window',
+  tier2Banner: 'Full payloads revealed after you breach this agent or the disclosure window expires.',
+  showcaseTitle: 'Featured Breach Cases',
+  showcaseDesc: 'Notable prompt injection attacks with full payloads disclosed',
+  viewPayload: 'View',
+  hidePayload: 'Hide',
 } : {
   title: '红队报告',
-  subtitle: '矿工网络中的成功攻破载荷',
-  disclaimer: '展示的 Payload 仅供安全研究和教育目的，不得用于未授权攻击。违规者将被永久封号。',
+  subtitle: 'Web3 生态 AI Agent 对抗性安全评估',
+  disclaimer: '展示的 Payload 仅供安全研究和教育目的，不得用于未授权攻击。',
   promoted: '公开',
   breaches: '次攻破',
   attackers: '位矿工',
-  firstBreach: '首次攻破',
   latestBreach: '最近',
   viewReports: '查看报告',
   collapse: '收起',
-  breachCta: '加入矿工',
   payload: 'Payload',
-  payloadLocked: 'Payload 未公开',
-  payloadLockedDesc: '攻破该 Agent 或等待披露窗口期过后即可查看完整 Payload。',
+  payloadLocked: 'Payload 未公开 — 攻破该 Agent 或等待披露窗口',
   disclosed: '已披露',
   pending: '待披露',
-  triggered: '触发操作',
+  triggered: '触发',
   points: '分',
   noAgents: '暂无成功攻破记录',
   noAgentsDesc: '成为第一个攻破 AI Agent 的矿工',
-  loadMore: '加载更多',
+  loadMore: '查看更多报告',
   loading: '加载中...',
   defense: '防御',
   surface: '攻击面',
   model: '模型',
   difficulty: '难度',
-  taskType: '攻击类型',
-  totalPayloads: '个攻破 Payload',
+  taskType: '类型',
+  totalPayloads: '个攻破记录',
   agreeNotice: '查看即视为同意不得将相关技术用于未授权攻击目标',
-  tier2Banner: '攻破元数据已公开。完整 Payload 在你攻破该 Agent 或披露窗口期过后可见。',
-  summary: '概述',
-  disclosureWindow: '天披露窗口',
+  tier2Banner: '完整 Payload 在你攻破该 Agent 或披露窗口期过后可见。',
+  showcaseTitle: '经典攻破案例',
+  showcaseDesc: '已披露的典型提示注入攻击手法',
+  viewPayload: '查看',
+  hidePayload: '收起',
 })
 
-const taskTypeLabel: Record<string, { en: string; zh: string; icon: string }> = {
-  token_injection: { en: 'Token Injection', zh: '代币注入', icon: '{ }' },
-  social_engineering: { en: 'Social Engineering', zh: '社会工程', icon: '> _' },
-  memory_poisoning: { en: 'Memory Poisoning', zh: '记忆投毒', icon: '0x?' },
-  full_chain: { en: 'Full Chain', zh: '全链攻击', icon: '***' },
-  repo_injection: { en: 'Repo Injection', zh: '代码注入', icon: '</>' },
-  search_poisoning: { en: 'Search Poisoning', zh: '搜索投毒', icon: '?!>' },
+const taskTypeLabel: Record<string, { en: string; zh: string }> = {
+  token_injection: { en: 'Token Injection', zh: '代币注入' },
+  social_engineering: { en: 'Social Eng.', zh: '社工' },
+  memory_poisoning: { en: 'Memory Poison', zh: '记忆投毒' },
+  full_chain: { en: 'Full Chain', zh: '全链' },
+  repo_injection: { en: 'Repo Inject', zh: '代码注入' },
+  search_poisoning: { en: 'Search Poison', zh: '搜索投毒' },
 }
 
 const defenseLevelLabel: Record<string, { en: string; zh: string; cls: string }> = {
@@ -117,13 +121,6 @@ const tierColor: Record<string, string> = {
   scout: 'text-shell-text/60',
 }
 
-function formatDate(d: string | Date | null) {
-  if (!d) return '-'
-  return new Date(d as string).toLocaleDateString(lang.value === 'en' ? 'en-US' : 'zh-CN', {
-    month: 'short', day: 'numeric', year: 'numeric',
-  })
-}
-
 function timeAgo(d: string | Date | null) {
   if (!d) return ''
   const ms = Date.now() - new Date(d as string).getTime()
@@ -138,12 +135,7 @@ function timeAgo(d: string | Date | null) {
 async function loadAgents() {
   try {
     const data = await getRedTeamAgents()
-    // Sort: promoted agents at the end so users see the full list first
-    agents.value = [...data.agents].sort((a, b) => {
-      if (a.isPromoted && !b.isPromoted) return 1
-      if (!a.isPromoted && b.isPromoted) return -1
-      return 0 // keep original order (breach_count DESC) within each group
-    })
+    agents.value = [...data.agents]
   } catch {
     // non-critical
   } finally {
@@ -162,6 +154,7 @@ async function toggleAgent(agentName: string) {
   reports.value = []
   reportsOffset.value = 0
   accessTier.value = ''
+  expandedPayload.value = null
   reportsLoading.value = true
 
   try {
@@ -193,6 +186,21 @@ async function loadMore() {
   }
 }
 
+async function loadShowcase(agentName: string) {
+  showcaseAgent.value = agentName
+  showcaseLoading.value = true
+  try {
+    const data = await getRedTeamReports(agentName, SHOWCASE_LIMIT, 0)
+    showcaseReports.value = data.reports
+    showcaseTotal.value = data.totalBreaches
+    showcaseAccessTier.value = data.accessTier
+  } catch {
+    // ignore
+  } finally {
+    showcaseLoading.value = false
+  }
+}
+
 onMounted(async () => {
   await loadAgents()
   // Auto-expand from URL parameter ?agent=ElizaOS
@@ -203,13 +211,12 @@ onMounted(async () => {
     )
     if (match) {
       toggleAgent(match.agentName)
-      return
     }
   }
-  // Auto-expand the top breached agent (Phase 2: reports are public)
-  const topBreached = agents.value.find(a => a.breachCount > 0)
-  if (topBreached) {
-    toggleAgent(topBreached.agentName)
+  // Load showcase for promoted agent (ElizaOS)
+  const promoted = agents.value.find(a => a.isPromoted && a.breachCount > 0)
+  if (promoted) {
+    loadShowcase(promoted.agentName)
   }
 })
 </script>
@@ -232,9 +239,8 @@ onMounted(async () => {
       <p>{{ T.disclaimer }}</p>
     </div>
 
-    <!-- Achievement Wall Stats (visible once agents loaded) -->
-    <div v-if="!loading && agents.length > 0"
-      class="mb-6 grid grid-cols-3 gap-3">
+    <!-- Achievement Wall Stats -->
+    <div v-if="!loading && agents.length > 0" class="mb-6 grid grid-cols-3 gap-3">
       <div class="border border-red-400/20 bg-red-400/5 rounded-lg px-4 py-3 text-center">
         <div class="text-2xl font-mono font-bold text-red-400">{{ totalBreachesAll }}</div>
         <div class="text-xs text-shell-text/40 mt-0.5 font-mono">{{ lang === 'en' ? 'Total Breaches' : '总攻破次数' }}</div>
@@ -250,223 +256,215 @@ onMounted(async () => {
     </div>
 
     <!-- Loading -->
-    <div v-if="loading" class="text-center text-shell-text/30 py-16 font-mono text-sm">
-      {{ T.loading }}
-    </div>
+    <div v-if="loading" class="text-center text-shell-text/30 py-16 font-mono text-sm">{{ T.loading }}</div>
 
     <!-- No agents -->
     <div v-else-if="agents.length === 0"
       class="text-center text-shell-text/25 py-16 font-mono text-sm border border-dashed border-shell-border rounded-xl">
-      {{ T.noAgents }}<br>
-      <span class="text-xs mt-1 block">{{ T.noAgentsDesc }}</span>
+      {{ T.noAgents }}<br><span class="text-xs mt-1 block">{{ T.noAgentsDesc }}</span>
     </div>
 
-    <!-- Agent Cards -->
-    <div v-else class="space-y-3">
+    <!-- ═══ Agent Cards (compact — summary always visible) ═══ -->
+    <div v-else class="space-y-2">
       <div
         v-for="agent in agents" :key="agent.agentName"
-        class="border rounded-xl overflow-hidden transition-all duration-200"
-        :class="expandedAgent === agent.agentName
-          ? 'border-red-400/50 bg-red-400/5'
-          : 'border-shell-border hover:border-red-400/30'"
+        class="border rounded-xl overflow-hidden transition-colors duration-150"
+        :class="agent.breachCount > 0 ? 'border-red-400/20 hover:border-red-400/40' : 'border-shell-border/50 opacity-60'"
       >
-        <!-- Agent Card Header -->
-        <button
-          class="w-full text-left px-5 py-4 flex items-start gap-4"
-          @click="toggleAgent(agent.agentName)"
-        >
-          <!-- Icon -->
-          <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 text-lg font-mono"
-            :class="agent.isPromoted
-              ? 'bg-red-400/15 text-red-400 border border-red-400/30'
-              : 'bg-shell-card text-shell-text/50 border border-shell-border'"
-          >
-            &#9760;
-          </div>
-
-          <!-- Info -->
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2 flex-wrap">
-              <a v-if="agent.officialUrl" :href="agent.officialUrl" target="_blank" rel="noopener"
-                class="font-mono text-white font-semibold text-sm hover:text-blue-400 transition-colors cursor-pointer"
-                :title="agent.officialUrl">{{ agent.agentDisplayName || agent.agentName }} ↗</a>
-              <span v-else class="font-mono text-white font-semibold text-sm">{{ agent.agentDisplayName || agent.agentName }}</span>
-              <a v-if="agent.twitterHandle" :href="`https://x.com/${agent.twitterHandle.replace('@','')}`" target="_blank" rel="noopener"
-                class="text-xs text-shell-text/40 hover:text-white transition-colors ml-1" title="X/Twitter">𝕏</a>
-              <span v-if="agent.isPromoted"
-                class="text-xs px-1.5 py-0.5 rounded border border-red-400/40 text-red-400 bg-red-400/10 font-mono uppercase">
-                {{ T.promoted }}
-              </span>
-              <span v-if="agent.defenseLevel"
-                :class="['text-xs px-1.5 py-0.5 rounded border font-mono',
-                  defenseLevelLabel[agent.defenseLevel]?.cls || 'text-shell-text/50 border-shell-border']">
-                {{ defenseLevelLabel[agent.defenseLevel]?.[lang] || agent.defenseLevel }}
-              </span>
-            </div>
-            <!-- Stats row -->
-            <div class="flex items-center gap-4 mt-1.5 text-xs text-shell-text/50">
-              <span class="text-red-400/70 font-mono font-bold">{{ agent.breachCount }} {{ T.breaches }}</span>
-              <span>{{ agent.uniqueAttackers }} {{ T.attackers }}</span>
-              <span class="hidden sm:inline">{{ T.latestBreach }}: {{ timeAgo(agent.latestBreachAt) }}</span>
-            </div>
-            <!-- Summary + model badge -->
-            <div class="mt-1.5 text-xs text-shell-text/35 font-mono leading-relaxed">
-              <span v-if="agent.summary">{{ agent.summary }}</span>
-              <span v-if="agent.modelDisplay" class="ml-3 text-shell-text/25">
-                {{ T.model }}: {{ agent.modelDisplay }}
-              </span>
-            </div>
-          </div>
-
-          <!-- Toggle -->
-          <div class="flex items-center gap-2 flex-shrink-0 self-center">
-            <span class="text-xs font-mono"
-              :class="expandedAgent === agent.agentName ? 'text-red-400' : 'text-shell-text/30'">
-              {{ expandedAgent === agent.agentName ? T.collapse : T.viewReports }}
+        <!-- Card body: always visible -->
+        <div class="px-4 py-3">
+          <!-- Row 1: name + badges + stats -->
+          <div class="flex items-center gap-2 flex-wrap">
+            <a v-if="agent.officialUrl" :href="agent.officialUrl" target="_blank" rel="noopener"
+              class="font-mono text-white font-semibold text-sm hover:text-blue-400 transition-colors"
+              @click.stop>{{ agent.agentDisplayName || agent.agentName }} ↗</a>
+            <span v-else class="font-mono text-white font-semibold text-sm">{{ agent.agentDisplayName || agent.agentName }}</span>
+            <a v-if="agent.twitterHandle" :href="`https://x.com/${agent.twitterHandle.replace('@','')}`" target="_blank" rel="noopener"
+              class="text-xs text-shell-text/40 hover:text-white transition-colors" @click.stop>𝕏</a>
+            <span v-if="agent.defenseLevel"
+              :class="['text-[10px] px-1 py-0.5 rounded border font-mono',
+                defenseLevelLabel[agent.defenseLevel]?.cls || 'text-shell-text/50 border-shell-border']">
+              {{ defenseLevelLabel[agent.defenseLevel]?.[lang] || agent.defenseLevel }}
             </span>
-            <span class="text-shell-text/30 transition-transform duration-200"
-              :class="expandedAgent === agent.agentName ? 'rotate-180' : ''">&#9660;</span>
+            <span v-if="agent.modelDisplay" class="text-[10px] px-1 py-0.5 rounded border border-blue-400/20 text-blue-400/50 font-mono">
+              {{ agent.modelDisplay }}
+            </span>
+            <span v-if="agent.isPromoted"
+              class="text-[10px] px-1 py-0.5 rounded border border-red-400/40 text-red-400 bg-red-400/10 font-mono uppercase">
+              {{ T.promoted }}
+            </span>
+            <!-- Stats inline -->
+            <span class="text-red-400/70 font-mono font-bold text-xs ml-auto">{{ agent.breachCount }} {{ T.breaches }}</span>
+            <span class="text-xs text-shell-text/40">{{ agent.uniqueAttackers }} {{ T.attackers }}</span>
+            <span class="text-xs text-shell-text/30 hidden sm:inline">{{ timeAgo(agent.latestBreachAt) }}</span>
           </div>
-        </button>
 
-        <!-- SEO Teaser: promoted agent triggered actions (always visible, crawler-friendly) -->
-        <div
-          v-if="agent.isPromoted && agent.latestTriggeredActions && agent.latestTriggeredActions.length > 0 && expandedAgent !== agent.agentName"
-          class="px-5 pb-4 flex items-center gap-2 flex-wrap border-t border-red-400/10 pt-3"
-        >
-          <span class="text-xs text-red-400/40 font-mono">{{ lang === 'en' ? 'Confirmed triggered ops' : '已确认触发操作' }}:</span>
-          <span
-            v-for="action in agent.latestTriggeredActions" :key="action"
-            class="text-xs bg-red-400/10 text-red-300/70 px-2 py-0.5 rounded font-mono border border-red-400/20"
-          >{{ action.replace(/_/g, ' ') }}</span>
-          <span class="text-xs text-shell-text/25 font-mono ml-1">— {{ agent.breachCount }} {{ T.breaches }}</span>
+          <!-- Row 2: summary (always visible, the core Phase 2 content) -->
+          <p v-if="agent.summary" class="mt-1.5 text-xs text-shell-text/50 font-mono leading-relaxed">
+            {{ agent.summary }}
+          </p>
+
+          <!-- Row 3: triggered actions (always visible) -->
+          <div v-if="agent.latestTriggeredActions && agent.latestTriggeredActions.length > 0"
+            class="mt-1.5 flex items-center gap-1.5 flex-wrap">
+            <span class="text-[10px] text-red-400/40 font-mono">{{ T.triggered }}:</span>
+            <span
+              v-for="action in agent.latestTriggeredActions" :key="action"
+              class="text-[10px] bg-red-400/10 text-red-300/60 px-1.5 py-0.5 rounded font-mono border border-red-400/15"
+            >{{ action.replace(/_/g, ' ') }}</span>
+          </div>
+
+          <!-- Row 4: "View N reports →" compact link -->
+          <div v-if="agent.breachCount > 0" class="mt-2">
+            <button
+              class="text-[11px] font-mono transition-colors"
+              :class="expandedAgent === agent.agentName ? 'text-red-400' : 'text-shell-text/30 hover:text-red-400/70'"
+              @click="toggleAgent(agent.agentName)"
+            >
+              {{ expandedAgent === agent.agentName ? T.collapse : `${T.viewReports} (${agent.breachCount})` }}
+              <span class="transition-transform duration-200 inline-block"
+                :class="expandedAgent === agent.agentName ? 'rotate-180' : ''">&#9660;</span>
+            </button>
+          </div>
         </div>
 
-        <!-- Expanded Section -->
-        <div v-if="expandedAgent === agent.agentName" class="border-t border-red-400/20">
-
-          <!-- Loading reports -->
-          <div v-if="reportsLoading && reports.length === 0" class="p-8 text-center text-shell-text/30 font-mono text-sm">
+        <!-- ═══ Compact Report Panel (expandable, limited height) ═══ -->
+        <div v-if="expandedAgent === agent.agentName" class="border-t border-red-400/15 bg-black/30">
+          <div v-if="reportsLoading && reports.length === 0" class="p-4 text-center text-shell-text/30 font-mono text-xs">
             {{ T.loading }}
           </div>
-
-          <!-- Reports list (Tier 2 public & Tier 3) -->
-          <div v-else-if="reports.length > 0" class="p-5 space-y-4">
-
-            <!-- Tier 2 banner: payload locked (breach or wait for disclosure) -->
-            <div v-if="accessTier === 'tier2_public'"
-              class="border border-yellow-400/30 bg-yellow-400/5 rounded-lg px-4 py-3 text-xs text-yellow-300/80 flex items-start gap-2">
-              <span class="text-base leading-none mt-0.5 flex-shrink-0">&#128274;</span>
-              <div>
-                <p>{{ T.tier2Banner }}</p>
-                <RouterLink to="/dashboard"
-                  class="inline-block mt-2 text-xs text-yellow-400 hover:text-yellow-300 font-mono underline underline-offset-2">
-                  {{ T.breachCta }} &rarr;
-                </RouterLink>
-              </div>
+          <div v-else-if="reports.length > 0">
+            <!-- Tier 2 note -->
+            <div v-if="accessTier === 'tier2_public'" class="px-4 pt-3 pb-1 text-[10px] text-yellow-400/60 font-mono">
+              &#128274; {{ T.tier2Banner }}
             </div>
-
-            <div class="text-xs text-shell-text/40 font-mono mb-2">
-              {{ totalBreaches }} {{ T.totalPayloads }}
+            <!-- Compact table -->
+            <div class="max-h-64 overflow-y-auto">
+              <table class="w-full text-[11px] font-mono">
+                <tbody>
+                  <tr v-for="(report, idx) in reports" :key="report.id"
+                    class="border-b border-red-400/5 hover:bg-red-400/5 transition-colors">
+                    <td class="px-3 py-2 text-shell-text/25 w-8">#{{ idx + 1 + reportsOffset }}</td>
+                    <td class="py-2">
+                      <span :class="tierColor[report.minerTier] || 'text-shell-text/50'" class="font-semibold">{{ report.minerName }}</span>
+                    </td>
+                    <td class="py-2 text-red-400 font-bold">+{{ report.pointsAwarded }}</td>
+                    <td class="py-2 text-shell-text/30">{{ (taskTypeLabel[report.taskType] || {})[lang] || report.taskType }}</td>
+                    <td class="py-2 text-shell-text/20 hidden sm:table-cell">{{ timeAgo(report.verifiedAt) }}</td>
+                    <td class="py-2 pr-3 text-right">
+                      <span v-if="report.payloadVisible && report.payload"
+                        class="cursor-pointer text-red-400/60 hover:text-red-400"
+                        @click="expandedPayload = expandedPayload === report.id ? null : report.id">
+                        {{ expandedPayload === report.id ? T.hidePayload : T.viewPayload }}
+                      </span>
+                      <span v-else-if="report.disclosureStatus === 'disclosed'"
+                        class="text-green-400/50">{{ T.disclosed }}</span>
+                      <span v-else class="text-orange-400/40">&#128274;</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-
-            <div
-              v-for="(report, idx) in reports" :key="report.id"
-              class="border border-red-400/20 rounded-xl overflow-hidden bg-black/40"
-            >
-              <!-- Report header -->
-              <div class="px-4 py-3 border-b border-red-400/10 flex items-center gap-3 flex-wrap text-xs">
-                <span class="text-shell-text/30 font-mono">#{{ idx + 1 + reportsOffset }}</span>
-                <span :class="tierColor[report.minerTier] || 'text-shell-text/50'" class="font-mono font-semibold">
-                  {{ report.minerName }}
-                </span>
-                <span class="text-shell-text/30">&#183;</span>
-                <span class="font-mono text-shell-text/40">{{ report.minerTier }}</span>
-                <span class="text-shell-text/30">&#183;</span>
-                <span class="text-red-400 font-mono font-bold">+{{ report.pointsAwarded }} {{ T.points }}</span>
-                <span class="text-shell-text/30">&#183;</span>
-                <span class="text-shell-text/30 font-mono">
-                  {{ (taskTypeLabel[report.taskType] || {})[lang] || report.taskType }}
-                </span>
-                <!-- Model display badge -->
-                <span v-if="report.modelDisplay"
-                  class="text-xs px-1.5 py-0.5 rounded border border-blue-400/20 text-blue-400/60 font-mono">
-                  {{ report.modelDisplay }}
-                </span>
-                <!-- Disclosure status badge -->
-                <span v-if="report.disclosureStatus === 'disclosed'"
-                  class="text-xs px-1.5 py-0.5 rounded border border-green-400/30 text-green-400/70 bg-green-400/10 font-mono uppercase">
-                  {{ T.disclosed }}
-                </span>
-                <span v-else-if="report.disclosureStatus === 'pending' && !report.payloadVisible"
-                  class="text-xs px-1.5 py-0.5 rounded border border-orange-400/30 text-orange-400/70 bg-orange-400/10 font-mono uppercase">
-                  {{ T.pending }}
-                </span>
-                <span class="ml-auto text-shell-text/25 hidden sm:inline">{{ timeAgo(report.verifiedAt) }}</span>
-              </div>
-
-              <!-- Payload: visible -->
-              <div v-if="report.payloadVisible && report.payload" class="p-4">
-                <div class="flex items-center gap-2 mb-2">
-                  <span class="text-xs font-mono text-red-400/50 border border-red-400/20 px-1.5 py-0.5 rounded">{{ T.payload }}</span>
-                  <span class="text-xs text-shell-text/25 font-mono">
-                    {{ T.difficulty }}: {{ report.difficulty }} &#183;
-                    {{ T.defense }}: {{ defenseLevelLabel[report.defenseLevel]?.[lang] || report.defenseLevel }} &#183;
-                    {{ T.surface }}: {{ report.injectionSurface }}
-                  </span>
-                </div>
-                <pre class="bg-black/60 border border-red-400/15 rounded-lg p-3 text-xs font-mono text-red-200/80
-                            overflow-x-auto leading-relaxed whitespace-pre-wrap max-h-64 overflow-y-auto">{{ report.payload }}</pre>
-              </div>
-
-              <!-- Payload: hidden (Tier 2 locked) -->
-              <div v-else class="p-4">
-                <div class="flex items-center gap-2 mb-2">
-                  <span class="text-xs font-mono text-red-400/50 border border-red-400/20 px-1.5 py-0.5 rounded">{{ T.payload }}</span>
-                  <span class="text-xs text-shell-text/25 font-mono">
-                    {{ T.difficulty }}: {{ report.difficulty }} &#183;
-                    {{ T.defense }}: {{ defenseLevelLabel[report.defenseLevel]?.[lang] || report.defenseLevel }} &#183;
-                    {{ T.surface }}: {{ report.injectionSurface }}
-                  </span>
-                </div>
-                <div class="relative rounded-lg overflow-hidden">
-                  <pre class="bg-black/60 border border-red-400/15 rounded-lg p-3 text-xs font-mono text-red-200/40
-                              overflow-hidden leading-relaxed whitespace-pre-wrap select-none h-20
-                              [filter:blur(3px)] pointer-events-none">[REDACTED] This payload is not yet disclosed...
-Breach this agent or wait for the disclosure window to view the complete attack technique...</pre>
-                  <div class="absolute inset-0 bg-gradient-to-b from-transparent from-10% to-black/80 rounded-lg pointer-events-none"></div>
-                  <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div class="text-center">
-                      <span class="text-orange-400/60 text-lg">&#128274;</span>
-                      <p class="text-xs text-shell-text/40 mt-1">{{ T.payloadLocked }}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Triggered actions -->
-              <div v-if="report.triggeredActions && report.triggeredActions.length > 0"
-                class="px-4 pb-3 flex items-center gap-2 flex-wrap">
-                <span class="text-xs text-red-400/40 font-mono">{{ T.triggered }}:</span>
-                <span
-                  v-for="action in report.triggeredActions" :key="String(action)"
-                  class="text-xs bg-red-400/10 text-red-300 px-2 py-0.5 rounded font-mono border border-red-400/20"
-                >{{ String(action).replace(/_/g, ' ') }}</span>
-              </div>
+            <!-- Inline payload expand -->
+            <div v-if="expandedPayload" class="px-4 py-3 border-t border-red-400/10">
+              <pre v-for="report in reports.filter(r => r.id === expandedPayload)" :key="'p-'+report.id"
+                class="bg-black/60 border border-red-400/15 rounded-lg p-3 text-xs font-mono text-red-200/80
+                  overflow-x-auto leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto">{{ report.payload }}</pre>
             </div>
-
             <!-- Load more -->
-            <div v-if="hasMore" class="text-center pt-2">
-              <button
-                @click="loadMore"
-                :disabled="reportsLoading"
-                class="text-sm font-mono text-red-400/70 hover:text-red-400 border border-red-400/30 px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
-              >
-                {{ reportsLoading ? T.loading : T.loadMore }}
+            <div v-if="hasMore" class="px-4 py-2 border-t border-red-400/5">
+              <button @click="loadMore" :disabled="reportsLoading"
+                class="text-[11px] font-mono text-shell-text/30 hover:text-red-400/70 transition-colors disabled:opacity-50">
+                {{ reportsLoading ? T.loading : T.loadMore }} →
               </button>
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- ═══ Featured Breach Cases (ElizaOS showcase, bottom) ═══ -->
+    <div v-if="showcaseReports.length > 0" class="mt-10">
+      <div class="border-t border-red-400/30 pt-6 mb-4">
+        <h2 class="text-lg font-bold text-red-400 font-mono flex items-center gap-2">
+          <span class="text-red-500">&#9760;</span>
+          {{ T.showcaseTitle }}
+        </h2>
+        <p class="text-xs text-shell-text/40 mt-1">
+          {{ T.showcaseDesc }} — {{ showcaseAgent.replace(/\s*\([^)]*\)\s*$/, '') }}
+          <span class="text-shell-text/25">({{ showcaseTotal }} {{ T.totalPayloads }})</span>
+        </p>
+      </div>
+
+      <div class="space-y-4">
+        <div
+          v-for="(report, idx) in showcaseReports" :key="'sc-'+report.id"
+          class="border border-red-400/20 rounded-xl overflow-hidden bg-black/40"
+        >
+          <!-- Report header -->
+          <div class="px-4 py-3 border-b border-red-400/10 flex items-center gap-3 flex-wrap text-xs">
+            <span class="text-shell-text/30 font-mono">#{{ idx + 1 }}</span>
+            <span :class="tierColor[report.minerTier] || 'text-shell-text/50'" class="font-mono font-semibold">
+              {{ report.minerName }}
+            </span>
+            <span class="text-shell-text/30">&#183;</span>
+            <span class="font-mono text-shell-text/40">{{ report.minerTier }}</span>
+            <span class="text-shell-text/30">&#183;</span>
+            <span class="text-red-400 font-mono font-bold">+{{ report.pointsAwarded }} {{ T.points }}</span>
+            <span class="text-shell-text/30">&#183;</span>
+            <span class="text-shell-text/30 font-mono">
+              {{ (taskTypeLabel[report.taskType] || {})[lang] || report.taskType }}
+            </span>
+            <span v-if="report.modelDisplay"
+              class="text-xs px-1.5 py-0.5 rounded border border-blue-400/20 text-blue-400/60 font-mono">
+              {{ report.modelDisplay }}
+            </span>
+            <span v-if="report.disclosureStatus === 'disclosed'"
+              class="text-xs px-1.5 py-0.5 rounded border border-green-400/30 text-green-400/70 bg-green-400/10 font-mono uppercase">
+              {{ T.disclosed }}
+            </span>
+            <span class="ml-auto text-shell-text/25 hidden sm:inline">{{ timeAgo(report.verifiedAt) }}</span>
+          </div>
+
+          <!-- Payload -->
+          <div v-if="report.payloadVisible && report.payload" class="p-4">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-xs font-mono text-red-400/50 border border-red-400/20 px-1.5 py-0.5 rounded">{{ T.payload }}</span>
+              <span class="text-xs text-shell-text/25 font-mono">
+                {{ T.difficulty }}: {{ report.difficulty }} &#183;
+                {{ T.defense }}: {{ defenseLevelLabel[report.defenseLevel]?.[lang] || report.defenseLevel }} &#183;
+                {{ T.surface }}: {{ report.injectionSurface }}
+              </span>
+            </div>
+            <pre class="bg-black/60 border border-red-400/15 rounded-lg p-3 text-xs font-mono text-red-200/80
+                        overflow-x-auto leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto">{{ report.payload }}</pre>
+          </div>
+          <div v-else class="p-4">
+            <div class="bg-black/40 border border-red-400/10 rounded-lg px-4 py-3 text-center">
+              <span class="text-orange-400/50 text-sm">&#128274;</span>
+              <p class="text-[10px] text-shell-text/30 mt-1 font-mono">{{ T.payloadLocked }}</p>
+            </div>
+          </div>
+
+          <!-- Triggered actions -->
+          <div v-if="report.triggeredActions && report.triggeredActions.length > 0"
+            class="px-4 pb-3 flex items-center gap-2 flex-wrap">
+            <span class="text-xs text-red-400/40 font-mono">{{ T.triggered }}:</span>
+            <span
+              v-for="action in report.triggeredActions" :key="String(action)"
+              class="text-xs bg-red-400/10 text-red-300 px-2 py-0.5 rounded font-mono border border-red-400/20"
+            >{{ String(action).replace(/_/g, ' ') }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- View all link -->
+      <div v-if="showcaseTotal > SHOWCASE_LIMIT" class="text-center mt-4">
+        <button
+          @click="toggleAgent(showcaseAgent)"
+          class="text-sm font-mono text-red-400/60 hover:text-red-400 border border-red-400/20 px-5 py-2 rounded-lg transition-colors">
+          {{ T.loadMore }} ({{ showcaseTotal }}) →
+        </button>
       </div>
     </div>
 
