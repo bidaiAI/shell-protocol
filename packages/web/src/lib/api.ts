@@ -551,8 +551,8 @@ export interface RedTeamAgent {
   firstBreachAt: string
   latestBreachAt: string
   isPromoted: boolean
-  // Tier 1 enrichment
-  modelsUsed: string[]
+  // Per-profile model display (no dedup — each variant listed separately)
+  modelDisplay: string | null
   latestTriggeredActions: string[]
   summary: string
   disclosureWindowDays: number
@@ -564,9 +564,7 @@ export interface RedTeamAgent {
 export type RedTeamAccessTier =
   | 'tier3_promoted'
   | 'tier3_breached'
-  | 'tier2_miner'
-  | 'denied_no_auth'
-  | 'denied_no_mining'
+  | 'tier2_public'
 
 export interface RedTeamReport {
   id: string
@@ -593,7 +591,7 @@ export interface RedTeamAccess {
   agentName: string
   hasAccess: boolean
   accessTier: RedTeamAccessTier
-  reason: 'promoted_public' | 'not_authenticated' | 'no_mining_history' | 'has_mining_record' | 'has_breached_agent'
+  reason: 'promoted_public' | 'public_metadata' | 'has_breached_agent'
 }
 
 export async function getRedTeamAgents() {
