@@ -338,9 +338,7 @@ function bindingStatusText(status: string) {
             <span v-if="bindWalletError" class="text-red-400 text-xs ml-2">{{ bindWalletError }}</span>
             <span v-if="bindWalletSuccess" class="text-shell-green text-xs ml-2">绑定成功</span>
             <div class="text-[10px] text-shell-text/50 mt-2 leading-relaxed">
-              没有 Phantom？请访问
-              <a href="https://openclaw.cc/bind" target="_blank" class="text-shell-green hover:underline">openclaw.cc/bind</a>
-              通过链上交易验证钱包
+              没有 Phantom？请等待平台新的认证模式（反作弊机制之一），开多个号后果自负
             </div>
           </div>
           <div class="text-xs text-shell-text mt-2">
