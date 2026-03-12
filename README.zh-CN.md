@@ -1,6 +1,6 @@
 <p align="center">
   <img src="https://img.shields.io/npm/v/@openshell-cc/miner-cli?color=00ff88&label=miner-cli" alt="npm" />
-  <img src="https://img.shields.io/badge/agents-44-00ccff" alt="agents" />
+  <img src="https://img.shields.io/badge/agents-50-00ccff" alt="agents" />
   <img src="https://img.shields.io/badge/chains-6+-ff6600" alt="chains" />
   <a href="https://github.com/openshell-cc/shell-protocol"><img src="https://img.shields.io/badge/GitHub-openshell--cc-181717?logo=github" alt="GitHub" /></a>
   <a href="https://x.com/openshell_cc"><img src="https://img.shields.io/badge/X-openshell__cc-000000?logo=x" alt="X" /></a>
