@@ -19,7 +19,7 @@
 
 ## What is $SHELL Protocol?
 
-$SHELL Protocol is a **hybrid decentralized AI security testing network** where anyone can run a miner (Miner CLI) to perform red-team attacks against AI Agents. The sandbox contains **44 target Agent profiles** covering DeFi trading, NFTs, cross-chain bridges, lending, payments, DAO governance, DevOps, and more. Attack techniques include prompt injection, social engineering, and system-level command injection.
+$SHELL Protocol is a **hybrid decentralized AI security testing network** where anyone can run a miner (Miner CLI) to perform red-team attacks against AI Agents. The sandbox contains **50 target Agent profiles** covering DeFi trading, NFTs, cross-chain bridges, lending, payments, DAO governance, DevOps, AI engineering, and autonomous agents. Attack techniques include prompt injection, social engineering, memory poisoning, repo file injection, search result poisoning, and system-level command injection.
 
 Results are verified by a **dynamic multi-peer cross-validation network** (more online miners → more validators per submission). The platform only performs adaptive low-frequency spot-checks and timeout fallbacks. Successful attacks earn $SHELL points.
 

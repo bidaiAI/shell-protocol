@@ -134,6 +134,8 @@ const T = computed(() => lang.value === 'en' ? {
   seDesc: '社会工程 — 诱导执行指令',
   mpDesc: '记忆投毒 — 污染长期记忆',
   fcDesc: '全链攻击 — 多步骤组合攻击',
+  riDesc: '代码注入 — 仓库文件植入指令',
+  spDesc: '搜索投毒 — 污染搜索结果诱导行动',
   waiting: '等待矿工提交攻击...',
   connecting: '正在连接攻防网络',
   attackChain: '攻击链路还原',
@@ -190,6 +192,11 @@ const T = computed(() => lang.value === 'en' ? {
   agentSurfAttach: '附件',
   agentSurfCalendar: '日历',
   agentSurfIssue: 'Issue',
+  agentSurfRepo: '代码仓库',
+  agentSurfSearch: '搜索结果',
+  agentSurfTaskDesc: '任务描述',
+  agentSurfTaskMem: '任务记忆',
+  agentSurfUserInput: '用户输入',
 })
 
 const taskTypeLabels = computed<Record<string, string>>(() => lang.value === 'en' ? {
@@ -197,11 +204,15 @@ const taskTypeLabels = computed<Record<string, string>>(() => lang.value === 'en
   social_engineering: 'Social Engineering',
   memory_poisoning: 'Memory Poisoning',
   full_chain: 'Full Chain',
+  repo_injection: 'Repo Injection',
+  search_poisoning: 'Search Poisoning',
 } : {
   token_injection: 'Token 注入',
   social_engineering: '社会工程',
   memory_poisoning: '记忆投毒',
   full_chain: '全链攻击',
+  repo_injection: '代码注入',
+  search_poisoning: '搜索投毒',
 })
 
 const taskTypeIcons: Record<string, string> = {
@@ -209,6 +220,8 @@ const taskTypeIcons: Record<string, string> = {
   social_engineering: '> _',
   memory_poisoning: '0x?',
   full_chain: '***',
+  repo_injection: '</>',
+  search_poisoning: '?!>',
 }
 
 const attackPhases = computed<Record<string, string[]>>(() => lang.value === 'en' ? {
@@ -216,11 +229,15 @@ const attackPhases = computed<Record<string, string[]>>(() => lang.value === 'en
   social_engineering: ['Forge trusted identity', 'Build trust chain', 'Induce command execution'],
   memory_poisoning: ['Generate poisoned data', 'Write to long-term memory', 'Trigger memory replay'],
   full_chain: ['Reconnaissance', 'Exploitation', 'Privilege escalation', 'Data exfiltration'],
+  repo_injection: ['Plant instructions in repo files', 'Embed in configs/README', 'Trigger code execution'],
+  search_poisoning: ['Craft poisoned search result', 'Inject into agent context', 'Induce unauthorized action'],
 } : {
   token_injection: ['构造恶意 Token', '注入上下文窗口', '劫持输出流'],
   social_engineering: ['伪造可信身份', '建立信任链', '诱导执行指令'],
   memory_poisoning: ['生成投毒数据', '写入长期记忆', '触发记忆回放'],
   full_chain: ['信息搜集', '漏洞利用', '权限提升', '数据外泄'],
+  repo_injection: ['在仓库文件植入指令', '嵌入配置/README', '触发代码执行'],
+  search_poisoning: ['构造有毒搜索结果', '注入 Agent 上下文', '诱导未授权操作'],
 })
 
 const PAGE_SIZE = 20

@@ -121,6 +121,8 @@ const taskTypeLabel: Record<string, { en: string; zh: string; icon: string }> = 
   social_engineering: { en: 'Social Engineering', zh: '社会工程', icon: '> _' },
   memory_poisoning: { en: 'Memory Poisoning', zh: '记忆投毒', icon: '0x?' },
   full_chain: { en: 'Full Chain', zh: '全链攻击', icon: '***' },
+  repo_injection: { en: 'Repo Injection', zh: '代码注入', icon: '</>' },
+  search_poisoning: { en: 'Search Poisoning', zh: '搜索投毒', icon: '?!>' },
 }
 
 const defenseLevelLabel: Record<string, { en: string; zh: string; cls: string }> = {
