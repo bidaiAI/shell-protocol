@@ -270,30 +270,11 @@ function formatNumber(n: number): string {
 
 <template>
   <div class="max-w-4xl mx-auto px-4 py-16 animate-fade-in">
-    <!-- Live breach ticker: pinned top entry + scrolling rest -->
-    <div v-if="breachTicker.length > 0" class="w-full bg-shell-green/5 border-b border-shell-green/15 mb-8 py-2 space-y-1">
-      <!-- Pinned: highest-value entry (always visible) -->
-      <div v-if="breachTicker[0]" class="flex items-center px-3 whitespace-nowrap">
-        <span class="text-[10px] text-yellow-400/60 mr-2">&#9733;</span>
-        <span class="text-xs font-mono font-bold"
-          :class="breachTicker[0].miningMode === 'self_llm' ? 'text-tier-hunter' : 'text-shell-green'">
-          {{ breachTicker[0].displayName }}
-        </span>
-        <span class="text-xs text-shell-text/50 font-mono mx-1">→</span>
-        <span class="text-xs font-mono font-medium" :class="breachTicker[0].isFirstBreach ? 'text-yellow-400' : 'text-shell-text/80'">{{ breachTicker[0].targetAgentName }}</span>
-        <span v-if="breachTicker[0].targetAgentModel" class="text-xs text-shell-text/40 font-mono ml-1">({{ breachTicker[0].targetAgentModel }})</span>
-        <span v-if="breachTicker[0].isFirstBreach"
-          class="text-[10px] font-bold ml-1 px-1.5 py-0.5 rounded bg-yellow-400/15 text-yellow-400 border border-yellow-400/30 animate-pulse">FIRST BREACH</span>
-        <span v-else
-          class="text-[10px] font-bold ml-1 px-1.5 py-0.5 rounded bg-shell-green/15 text-shell-green">BREACHED</span>
-        <span v-if="breachTicker[0].miningMode === 'self_llm'" class="text-[10px] ml-1 text-tier-hunter/70">LLM</span>
-        <span class="text-xs text-shell-green font-mono font-bold ml-1">+{{ breachTicker[0].pointsAwarded }}</span>
-        <span class="text-[10px] text-shell-text/30 font-mono ml-1">{{ timeAgo(breachTicker[0].verifiedAt) }}</span>
-      </div>
-      <!-- Scrolling: remaining entries -->
-      <div v-if="breachTicker.length > 1" class="overflow-hidden">
+    <!-- Live breach ticker: scrolling only -->
+    <div v-if="breachTicker.length > 0" class="w-full bg-shell-green/5 border-b border-shell-green/15 mb-8 py-2">
+      <div class="overflow-hidden">
         <div class="flex whitespace-nowrap ticker-scroll">
-          <template v-for="(entry, i) in breachTicker.slice(1)" :key="entry.id">
+          <template v-for="(entry, i) in breachTicker" :key="entry.id">
             <span class="text-xs font-mono font-bold mx-3"
               :class="entry.miningMode === 'self_llm' ? 'text-tier-hunter' : 'text-shell-green'">
               {{ entry.displayName }}
@@ -308,10 +289,10 @@ function formatNumber(n: number): string {
             <span v-if="entry.miningMode === 'self_llm'" class="text-[10px] ml-1 text-tier-hunter/70">LLM</span>
             <span class="text-xs text-shell-green font-mono font-bold ml-1">+{{ entry.pointsAwarded }}</span>
             <span class="text-[10px] text-shell-text/30 font-mono ml-1">{{ timeAgo(entry.verifiedAt) }}</span>
-            <span v-if="i < breachTicker.length - 2" class="text-shell-text/15 mx-4">|</span>
+            <span v-if="i < breachTicker.length - 1" class="text-shell-text/15 mx-4">|</span>
           </template>
           <span class="text-shell-text/15 mx-4">|</span>
-          <template v-for="entry in breachTicker.slice(1)" :key="'dup-' + entry.id">
+          <template v-for="entry in breachTicker" :key="'dup-' + entry.id">
             <span class="text-xs font-mono font-bold mx-3"
               :class="entry.miningMode === 'self_llm' ? 'text-tier-hunter' : 'text-shell-green'">
               {{ entry.displayName }}
