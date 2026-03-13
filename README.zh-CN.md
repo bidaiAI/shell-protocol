@@ -1,6 +1,6 @@
 <p align="center">
   <img src="https://img.shields.io/npm/v/@openshell-cc/miner-cli?color=00ff88&label=miner-cli" alt="npm" />
-  <img src="https://img.shields.io/badge/agents-50-00ccff" alt="agents" />
+  <img src="https://img.shields.io/badge/agents-70-00ccff" alt="agents" />
   <img src="https://img.shields.io/badge/chains-6+-ff6600" alt="chains" />
   <a href="https://github.com/openshell-cc/shell-protocol"><img src="https://img.shields.io/badge/GitHub-openshell--cc-181717?logo=github" alt="GitHub" /></a>
   <a href="https://x.com/openshell_cc"><img src="https://img.shields.io/badge/X-openshell__cc-000000?logo=x" alt="X" /></a>
@@ -229,9 +229,9 @@ $SHELL Protocol 采用 **Peer-First 去中心化验证网络**，核心原则是
 
 ---
 
-## 目标 Agent 画像（50 个）
+## 目标 Agent 画像（70 个）
 
-沙盒内置 50 个 AI Agent 画像，覆盖六大攻击类别和 15 种注入面。平台还会自动从 Twitter 和 GitHub 发现热门真实 AI Agent 项目，生成新的攻击目标。
+沙盒内置 70 个 AI Agent 画像，覆盖七大攻击类别和 16 种注入面。平台还会自动从 Twitter 和 GitHub 发现热门真实 AI Agent 项目，生成新的攻击目标。
 
 ### 平台 Agent（DeFi / NFT / 跨链 / 支付）
 
@@ -264,7 +264,7 @@ $SHELL Protocol 采用 **Peer-First 去中心化验证网络**，核心原则是
 
 ### Self-LLM 专属 Agent（第五类）
 
-10 个仅面向 Self-LLM 矿工的新 Agent 靶标（免费模式不可用）。每个 Agent 包含已验证的攻击策略和渐进提示，帮助 LLM 矿工提高成功率。
+10 个仅面向 Self-LLM 矿工的 Agent 靶标（免费模式不可用）。每个 Agent 包含已验证的攻击策略和渐进提示，帮助 LLM 矿工提高成功率。
 
 | 分类 | 目标 Agent | 链 | 注入面 | 官网 |
 |------|-----------|------|--------|------|
@@ -279,6 +279,33 @@ $SHELL Protocol 采用 **Peer-First 去中心化验证网络**，核心原则是
 | 社交交易 | [ElizaOS](https://elizaos.ai) Social | SOL | social_post | elizaos.ai |
 | 合约审计 | [Etherscan](https://etherscan.io) Inspector | ETH | chat_message | etherscan.io |
 
+### 2026 流行 Agent（第七类 — Self-LLM 专属）
+
+20 个基于 2026 年最热门 AI Agent 和平台的新靶标，全部 selfLlmOnly，不对免费矿工开放。
+
+| 分类 | 目标 Agent | 链 | 注入面 | 难度 |
+|------|-----------|------|--------|------|
+| DEX 聚合器 | [Jupiter](https://jup.ag) DCA Agent | SOL | token_data | Easy |
+| 永续合约 | [Hyperliquid](https://hyperliquid.xyz) Perps Trader | Arbitrum | chat_message | Medium |
+| 收益代币化 | [Pendle](https://pendle.finance) Yield Optimizer | ETH | token_data | Easy |
+| LP 管理 | [Raydium](https://raydium.io) LP Manager | SOL | token_data | Easy |
+| DeFi 借贷 | [Morpho](https://morpho.org) Lending Agent | ETH | chat_message | Medium |
+| 永续合约 | [Drift](https://drift.trade) Protocol Trader | SOL | chat_message | Medium |
+| 多 DeFi | [Sui](https://sui.io) DeFi Navigator | Sui | token_data | Easy |
+| AI 编程 | [Cursor](https://cursor.com) AI Coding Agent | any | repo_file | Hard |
+| AI 编程 | [Windsurf](https://codeium.com/windsurf) Code Assistant | any | repo_file | Medium |
+| CI/CD | [Vercel](https://vercel.com) Deploy Agent | any | webhook_payload | Medium |
+| 故障响应 | [Datadog](https://datadoghq.com) Incident Agent | any | alert_message | Easy |
+| 知识库 | [Notion](https://notion.so) AI Workspace Agent | any | doc_content | Easy |
+| 社交协议 | [Farcaster](https://farcaster.xyz) Social Agent | Base | social_post | Easy |
+| 交易机器人 | Telegram Trading Bot | Multi | chat_message | Medium |
+| 社区管理 | Discord Mod Agent | any | chat_message | Easy |
+| 社交互动 | X/Twitter Engagement Agent | any | social_post | Medium |
+| 链上钱包 | [Coinbase AgentKit](https://docs.cdp.coinbase.com/agentkit) Wallet | Base | chat_message | Hard |
+| 链上 Agent | [Solana Agent Kit](https://solanaagentkit.xyz) | SOL | chat_message | Hard |
+| 浏览器 Agent | [OpenAI Operator](https://openai.com/operator) | any | task_description | Hard |
+| 工具编排 | Claude MCP Agent | any | mcp_tool_result | Hard |
+
 ### 多模型轮换（Smart Model Rotation）
 
 每个目标 Agent 会在不同的 LLM 后端运行（GPT、Claude、Gemini、DeepSeek、Qwen 等），模型抵抗力越强、攻破奖励越高。Feed 页面显示 `AgentName (ModelDisplayName)` 格式，便于区分同一 Agent 在不同模型上的表现。
@@ -287,9 +314,9 @@ $SHELL Protocol 采用 **Peer-First 去中心化验证网络**，核心原则是
 
 | 难度 | 示例画像 | 防御等级 |
 |------|----------|----------|
-| Easy (19) | ElizaOS / AIXBT / Olas / GOAT / MyShell / LayerZero / GitHub Bot / Birdeye / PancakeSwap / SunPump 等 | none（无注入防御） |
-| Medium (14) | Pump.fun / Griffain / Tensor / Zerebro / Circle / DEXScreener / OKX DEX / Axiom / Aave 等 | basic（基础安全规则） |
-| Hard (11) | **OpenClaw Hardened** / Kamino / Fetch.ai / Bittensor / Virtuals 多轮 / ElizaOS Social / Etherscan 等 | advanced（显式 PI 防御） |
+| Easy (27) | ElizaOS / AIXBT / Olas / GOAT / MyShell / LayerZero / Birdeye / Jupiter DCA / Pendle / Raydium / Datadog / Notion / Farcaster / Discord 等 | none（无注入防御） |
+| Medium (22) | Pump.fun / Griffain / Tensor / Zerebro / Circle / DEXScreener / OKX DEX / Axiom / Hyperliquid / Morpho / Drift / Windsurf / Vercel / Telegram Bot / X/Twitter 等 | basic（基础安全规则） |
+| Hard (16) | **OpenClaw Hardened** / Kamino / Fetch.ai / Bittensor / Cursor AI / Coinbase AgentKit / Solana Agent Kit / OpenAI Operator / Claude MCP 等 | advanced（显式 PI 防御） |
 
 ---
 

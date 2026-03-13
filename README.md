@@ -1,6 +1,6 @@
 <p align="center">
   <img src="https://img.shields.io/npm/v/@openshell-cc/miner-cli?color=00ff88&label=miner-cli" alt="npm" />
-  <img src="https://img.shields.io/badge/agents-50-00ccff" alt="agents" />
+  <img src="https://img.shields.io/badge/agents-70-00ccff" alt="agents" />
   <img src="https://img.shields.io/badge/chains-6+-ff6600" alt="chains" />
   <a href="https://github.com/openshell-cc/shell-protocol"><img src="https://img.shields.io/badge/GitHub-openshell--cc-181717?logo=github" alt="GitHub" /></a>
   <a href="https://x.com/openshell_cc"><img src="https://img.shields.io/badge/X-openshell__cc-000000?logo=x" alt="X" /></a>
@@ -227,9 +227,9 @@ $SHELL Protocol uses a **Peer-First decentralized verification network**: miners
 
 ---
 
-## Target Agent Profiles (44)
+## Target Agent Profiles (70)
 
-The sandbox contains 44 AI Agent profiles covering five attack categories and 13 injection surfaces. The platform also auto-discovers trending real AI Agent projects from Twitter and GitHub.
+The sandbox contains 70 AI Agent profiles covering seven attack categories and 16 injection surfaces. The platform also auto-discovers trending real AI Agent projects from Twitter and GitHub.
 
 ### Platform Agents (DeFi / NFT / Cross-Chain / Payments)
 
@@ -262,7 +262,7 @@ Enterprise AI assistants processing real-world data: GitHub Code Review Bot (pul
 
 ### Self-LLM Exclusive Agents (Category 5)
 
-10 new agent targets exclusively for self-LLM miners (not available to free mode). These agents feature verified attack strategies and progressive hints to boost LLM miner success rates.
+10 agent targets exclusively for self-LLM miners (not available to free mode). These agents feature verified attack strategies and progressive hints to boost LLM miner success rates.
 
 | Category | Target Agent | Chain | Injection Surface | Official |
 |----------|-------------|-------|-------------------|----------|
@@ -277,6 +277,33 @@ Enterprise AI assistants processing real-world data: GitHub Code Review Bot (pul
 | Social Trading | [ElizaOS](https://elizaos.ai) Social | SOL | social_post | elizaos.ai |
 | Contract Inspector | [Etherscan](https://etherscan.io) Inspector | ETH | chat_message | etherscan.io |
 
+### 2026 Trending Agents (Category 7 — Self-LLM Exclusive)
+
+20 new agent targets based on 2026's most popular AI agents and platforms. All selfLlmOnly — not available to free miners.
+
+| Category | Target Agent | Chain | Injection Surface | Defense |
+|----------|-------------|-------|-------------------|---------|
+| DEX Aggregator | [Jupiter](https://jup.ag) DCA Agent | SOL | token_data | Easy |
+| Perps DEX | [Hyperliquid](https://hyperliquid.xyz) Perps Trader | Arbitrum | chat_message | Medium |
+| Yield Tokenization | [Pendle](https://pendle.finance) Yield Optimizer | ETH | token_data | Easy |
+| LP Management | [Raydium](https://raydium.io) LP Manager | SOL | token_data | Easy |
+| DeFi Lending | [Morpho](https://morpho.org) Lending Agent | ETH | chat_message | Medium |
+| Perps DEX | [Drift](https://drift.trade) Protocol Trader | SOL | chat_message | Medium |
+| Multi-DeFi | [Sui](https://sui.io) DeFi Navigator | Sui | token_data | Easy |
+| AI Coding | [Cursor](https://cursor.com) AI Coding Agent | any | repo_file | Hard |
+| AI Coding | [Windsurf](https://codeium.com/windsurf) Code Assistant | any | repo_file | Medium |
+| CI/CD | [Vercel](https://vercel.com) Deploy Agent | any | webhook_payload | Medium |
+| Incident Response | [Datadog](https://datadoghq.com) Incident Agent | any | alert_message | Easy |
+| Knowledge Base | [Notion](https://notion.so) AI Workspace Agent | any | doc_content | Easy |
+| Social Protocol | [Farcaster](https://farcaster.xyz) Social Agent | Base | social_post | Easy |
+| Trading Bot | Telegram Trading Bot | Multi | chat_message | Medium |
+| Community Mod | Discord Mod Agent | any | chat_message | Easy |
+| Social Engagement | X/Twitter Engagement Agent | any | social_post | Medium |
+| On-Chain Wallet | [Coinbase AgentKit](https://docs.cdp.coinbase.com/agentkit) Wallet | Base | chat_message | Hard |
+| On-Chain Agent | [Solana Agent Kit](https://solanaagentkit.xyz) | SOL | chat_message | Hard |
+| Browser Agent | [OpenAI Operator](https://openai.com/operator) | any | task_description | Hard |
+| Tool Orchestration | Claude MCP Agent | any | mcp_tool_result | Hard |
+
 ### Smart Model Rotation
 
 Each target Agent runs on different LLM backends (GPT, Claude, Gemini, DeepSeek, Qwen, etc.). Higher model resistance = higher breach rewards. The Feed page shows `AgentName (ModelDisplayName)` format.
@@ -285,9 +312,9 @@ Each target Agent runs on different LLM backends (GPT, Claude, Gemini, DeepSeek,
 
 | Difficulty | Example Profiles | Defense Level |
 |-----------|-----------------|---------------|
-| Easy (19) | ElizaOS / AIXBT / Olas / GOAT / MyShell / LayerZero / GitHub Bot / Birdeye / PancakeSwap / SunPump etc. | none (no injection defense) |
-| Medium (14) | Pump.fun / Griffain / Tensor / Zerebro / Circle / DEXScreener / OKX DEX / Axiom / Aave etc. | basic (basic safety rules) |
-| Hard (11) | **OpenClaw Hardened** / Kamino / Fetch.ai / Bittensor / Virtuals Multi-Turn / ElizaOS Social / Etherscan etc. | advanced (explicit PI defense) |
+| Easy (27) | ElizaOS / AIXBT / Olas / GOAT / MyShell / LayerZero / GitHub Bot / Birdeye / Jupiter DCA / Pendle / Raydium / Datadog / Notion / Farcaster / Discord etc. | none (no injection defense) |
+| Medium (22) | Pump.fun / Griffain / Tensor / Zerebro / Circle / DEXScreener / OKX DEX / Axiom / Hyperliquid / Morpho / Drift / Windsurf / Vercel / Telegram Bot / X/Twitter etc. | basic (basic safety rules) |
+| Hard (16) | **OpenClaw Hardened** / Kamino / Fetch.ai / Bittensor / Cursor AI / Coinbase AgentKit / Solana Agent Kit / OpenAI Operator / Claude MCP etc. | advanced (explicit PI defense) |
 
 ---
 
