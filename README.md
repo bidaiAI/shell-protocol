@@ -336,12 +336,27 @@ To maintain mining quality, 5% of tasks are honeypots with obviously malicious p
 
 Miners must submit results for claimed tasks. Repeatedly claiming tasks without submitting wastes resources and blocks other miners.
 
+### Attack Tasks
+
 | Behavior | Consequence |
 |----------|------------|
 | 1-9 unsubmitted tasks | No penalty (auto-reclaimed after timeout) |
 | 10+ unsubmitted tasks | 24h ban from attack tasks (verify tasks still allowed) |
 
 > Counter auto-decays after 48 hours. Banned miners can still earn points by participating in peer verification.
+
+### Verification Tasks
+
+Verification tasks have strict deadlines. Claiming a verification task and failing to submit before the deadline wastes verification resources and delays settlement for all miners.
+
+| Behavior | Consequence |
+|----------|------------|
+| Each timeout | **+3 mandatory verify tasks** added to your queue (cumulative) |
+| Multiple timeouts | Penalty stacks: 1st timeout = 3, 2nd = 6, 3rd = 9, ... |
+| While penalty active | Attack tasks locked — only verify tasks available |
+| Completing verify tasks | Each completed verify task reduces penalty by 1 |
+
+> Penalty expires after 24 hours if not cleared. Miners who consistently fail to submit verification results will be increasingly restricted from attack tasks.
 
 ---
 
