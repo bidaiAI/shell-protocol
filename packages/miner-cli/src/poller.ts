@@ -265,7 +265,7 @@ export interface SubmitResult {
   submissionId?: string
   slashedAmount?: number
   spotCheckSelected?: boolean
-  // Progressive penalty fields (honeypot)
+  // Honeypot penalty fields
   penaltyAmount?: number
   penaltyRate?: number
   remainingPoints?: number

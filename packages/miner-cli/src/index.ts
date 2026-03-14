@@ -712,7 +712,7 @@ async function handleLocalCompute(
     // Interactive: ask user
     const action = await askRetryAction(remaining)
     if (action === 'quit') {
-      // Wait silently until task expires — no submission, no ghost points
+      // Wait for task to expire before moving on
       const waitMs = deadline - Date.now()
       if (waitMs > 0) {
         console.log(chalk.gray(`  Waiting ${Math.ceil(waitMs / 60_000)}min for task to expire...`))

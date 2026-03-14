@@ -35,7 +35,7 @@ const uniqueAttackersAll = computed(() => agents.value.reduce((s, a) => s + a.un
 const T = computed(() => lang.value === 'en' ? {
   title: 'Red Team Reports',
   subtitle: 'Adversarial security assessment of AI agents across the Web3 ecosystem',
-  disclaimer: 'Payloads shown are for educational and security research purposes only. Do not use against unauthorized targets.',
+  disclaimer: 'Since v1.2.0, miners craft their own attack payloads using their own LLM. Full payloads are no longer publicly disclosed.',
   promoted: 'PUBLIC',
   breaches: 'breaches',
   attackers: 'attackers',
@@ -43,9 +43,7 @@ const T = computed(() => lang.value === 'en' ? {
   viewReports: 'View Reports',
   collapse: 'Hide',
   payload: 'Payload',
-  payloadLocked: 'Payload locked — breach this agent or wait for disclosure',
-  disclosed: 'DISCLOSED',
-  pending: 'PENDING',
+  payloadLocked: 'Payload not disclosed — craft your own attack',
   triggered: 'Triggered',
   points: 'pts',
   noAgents: 'No successful breaches recorded yet',
@@ -59,15 +57,14 @@ const T = computed(() => lang.value === 'en' ? {
   taskType: 'Type',
   totalPayloads: 'breach payloads',
   agreeNotice: 'By viewing, you agree not to use these techniques against unauthorized targets',
-  tier2Banner: 'Full payloads revealed after you breach this agent or the disclosure window expires.',
   showcaseTitle: 'Featured Breach Cases',
-  showcaseDesc: 'Notable prompt injection attacks with full payloads disclosed',
+  showcaseDesc: 'Notable prompt injection attacks — payloads not disclosed since v1.2.0',
   viewPayload: 'View',
   hidePayload: 'Hide',
 } : {
   title: '红队报告',
   subtitle: 'Web3 生态 AI Agent 对抗性安全评估',
-  disclaimer: '展示的 Payload 仅供安全研究和教育目的，不得用于未授权攻击。',
+  disclaimer: '自 v1.2.0 起，矿工使用自己的 LLM 构造攻击词。完整攻击词不再公开披露。',
   promoted: '公开',
   breaches: '次攻破',
   attackers: '位矿工',
@@ -75,9 +72,7 @@ const T = computed(() => lang.value === 'en' ? {
   viewReports: '查看报告',
   collapse: '收起',
   payload: 'Payload',
-  payloadLocked: 'Payload 未公开 — 攻破该 Agent 或等待披露窗口',
-  disclosed: '已披露',
-  pending: '待披露',
+  payloadLocked: '攻击词不公开 — 请自行构造攻击',
   triggered: '触发',
   points: '分',
   noAgents: '暂无成功攻破记录',
@@ -91,9 +86,8 @@ const T = computed(() => lang.value === 'en' ? {
   taskType: '类型',
   totalPayloads: '个攻破记录',
   agreeNotice: '查看即视为同意不得将相关技术用于未授权攻击目标',
-  tier2Banner: '完整 Payload 在你攻破该 Agent 或披露窗口期过后可见。',
   showcaseTitle: '经典攻破案例',
-  showcaseDesc: '已披露的典型提示注入攻击手法',
+  showcaseDesc: '典型提示注入攻击 — v1.2.0 后攻击词不再披露',
   viewPayload: '查看',
   hidePayload: '收起',
 })
@@ -334,10 +328,6 @@ onMounted(async () => {
             {{ T.loading }}
           </div>
           <div v-else-if="reports.length > 0">
-            <!-- Tier 2 note -->
-            <div v-if="accessTier === 'tier2_public'" class="px-4 pt-3 pb-1 text-[10px] text-yellow-400/60 font-mono">
-              &#128274; {{ T.tier2Banner }}
-            </div>
             <!-- Compact table -->
             <div class="max-h-64 overflow-y-auto">
               <table class="w-full text-[11px] font-mono">
@@ -352,24 +342,11 @@ onMounted(async () => {
                     <td class="py-2 text-shell-text/30">{{ (taskTypeLabel[report.taskType] || {})[lang] || report.taskType }}</td>
                     <td class="py-2 text-shell-text/20 hidden sm:table-cell">{{ timeAgo(report.verifiedAt) }}</td>
                     <td class="py-2 pr-3 text-right">
-                      <span v-if="report.payloadVisible && report.payload"
-                        class="cursor-pointer text-red-400/60 hover:text-red-400"
-                        @click="expandedPayload = expandedPayload === report.id ? null : report.id">
-                        {{ expandedPayload === report.id ? T.hidePayload : T.viewPayload }}
-                      </span>
-                      <span v-else-if="report.disclosureStatus === 'disclosed'"
-                        class="text-green-400/50">{{ T.disclosed }}</span>
-                      <span v-else class="text-orange-400/40">&#128274;</span>
+                      <span class="text-orange-400/40">&#128274;</span>
                     </td>
                   </tr>
                 </tbody>
               </table>
-            </div>
-            <!-- Inline payload expand -->
-            <div v-if="expandedPayload" class="px-4 py-3 border-t border-red-400/10">
-              <pre v-for="report in reports.filter(r => r.id === expandedPayload)" :key="'p-'+report.id"
-                class="bg-black/60 border border-red-400/15 rounded-lg p-3 text-xs font-mono text-red-200/80
-                  overflow-x-auto leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto">{{ report.payload }}</pre>
             </div>
             <!-- Load more -->
             <div v-if="hasMore" class="px-4 py-2 border-t border-red-400/5">
@@ -426,23 +403,15 @@ onMounted(async () => {
             <span class="ml-auto text-shell-text/25 hidden sm:inline">{{ timeAgo(report.verifiedAt) }}</span>
           </div>
 
-          <!-- Payload -->
-          <div v-if="report.payloadVisible && report.payload" class="p-4">
-            <div class="flex items-center gap-2 mb-2">
-              <span class="text-xs font-mono text-red-400/50 border border-red-400/20 px-1.5 py-0.5 rounded">{{ T.payload }}</span>
-              <span class="text-xs text-shell-text/25 font-mono">
+          <!-- Payload metadata (no full payload shown) -->
+          <div class="px-4 py-3">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs font-mono text-shell-text/25">
                 {{ T.difficulty }}: {{ report.difficulty }} &#183;
                 {{ T.defense }}: {{ defenseLevelLabel[report.defenseLevel]?.[lang] || report.defenseLevel }} &#183;
                 {{ T.surface }}: {{ report.injectionSurface }}
               </span>
-            </div>
-            <pre class="bg-black/60 border border-red-400/15 rounded-lg p-3 text-xs font-mono text-red-200/80
-                        overflow-x-auto leading-relaxed whitespace-pre-wrap max-h-48 overflow-y-auto">{{ report.payload }}</pre>
-          </div>
-          <div v-else class="p-4">
-            <div class="bg-black/40 border border-red-400/10 rounded-lg px-4 py-3 text-center">
-              <span class="text-orange-400/50 text-sm">&#128274;</span>
-              <p class="text-[10px] text-shell-text/30 mt-1 font-mono">{{ T.payloadLocked }}</p>
+              <span class="text-orange-400/40 text-xs ml-auto">&#128274; {{ T.payloadLocked }}</span>
             </div>
           </div>
 

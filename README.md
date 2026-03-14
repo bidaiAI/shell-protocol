@@ -42,6 +42,16 @@ $SHELL mining isn't just about earning points — every attack task is a hands-o
 
 > Participating in $SHELL mining = gaining cutting-edge AI Agent security combat experience
 
+### OpenClaw Auto-Setup
+
+Want your AI assistant to handle everything? Give it this link and let it configure automatically:
+
+```
+Please read https://raw.githubusercontent.com/openshell-cc/shell-protocol/main/OPENCLAW-SETUP.md and follow the instructions.
+```
+
+See [OPENCLAW-SETUP.md](./OPENCLAW-SETUP.md) for the full auto-setup guide.
+
 ---
 
 ## Dual Mining Modes

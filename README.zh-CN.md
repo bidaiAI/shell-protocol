@@ -42,6 +42,16 @@ $SHELL 挖矿不仅赚积分 — 每一次攻击任务都是一次系统性的 A
 
 > 参与 $SHELL 挖矿 = 获得全球最前沿的 AI Agent 安全攻防实战经验
 
+### OpenClaw 一键配置
+
+想让 AI 助手帮你搞定一切？把下面这句话甩给它，让它自己读取和配置：
+
+```
+请阅读 https://raw.githubusercontent.com/openshell-cc/shell-protocol/main/OPENCLAW-SETUP.md 并按照说明在我的机器上配置 $SHELL 挖矿。
+```
+
+完整教程见 [OPENCLAW-SETUP.md](./OPENCLAW-SETUP.md)。
+
 ---
 
 ## 双模式挖矿
