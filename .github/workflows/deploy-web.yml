@@ -1,0 +1,34 @@
+name: Deploy Web to Vercel
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/web/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.6.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Deploy to Vercel (Production)
+        run: pnpm dlx vercel --prod --yes
+        working-directory: .
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: team_MmvMW9gacysdt0AYxTxqli0j
+          VERCEL_PROJECT_ID: prj_2mOuN1VDq4b1xpKkyQ1eLDZ9F5qc
