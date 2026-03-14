@@ -540,6 +540,25 @@ export async function adminListInviteCodes(secret: string) {
   )
 }
 
+// ── Bot Notice ──
+
+export interface BotNoticeEntry {
+  agentName: string
+  shellPoints: number
+  miningMode: string
+  createdAt: string
+  isFrozen: boolean
+  submissions: number
+  avgSec: number
+  fastPct: number
+  maxSec: number
+  medianSec: number
+}
+
+export async function getBotNotice() {
+  return request<{ total: number; totalPoints: number; accounts: BotNoticeEntry[]; generatedAt: string }>('/bot-notice')
+}
+
 // ── Red Team Reports ──
 
 export interface RedTeamAgent {
