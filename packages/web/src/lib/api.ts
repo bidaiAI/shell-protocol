@@ -161,6 +161,7 @@ export interface LeaderboardEntry {
   totalTasksCompleted: number
   miningMode?: 'free' | 'self_llm'
   slashCount?: number
+  isFrozen?: boolean
 }
 
 export async function getLeaderboard(limit = 50, offset = 0) {
@@ -554,6 +555,7 @@ export interface RedTeamAgent {
   // Per-profile model display (no dedup — each variant listed separately)
   modelDisplay: string | null
   latestTriggeredActions: string[]
+  modelsUsed?: string[]
   summary: string
   disclosureWindowDays: number
   // Official links

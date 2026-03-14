@@ -20,6 +20,8 @@ const T = computed(() => lang.value === 'en' ? {
   modeFree: 'Free', modeSelfLlm: 'Pro',
   slashedTag: 'Penalized',
   slashedTip: 'Points deducted due to honeypot detection failures',
+  frozenTag: 'Under Review',
+  frozenTip: 'Account frozen — suspected cheating, pending evidence submission',
   tierScout: 'Scout', tierHunter: 'Hunter', tierApex: 'Apex',
   toHunter: (n: number) => `${n} to Hunter`,
   toApex: (n: number) => `${n} to Apex`,
@@ -33,6 +35,8 @@ const T = computed(() => lang.value === 'en' ? {
   modeFree: '免费', modeSelfLlm: '高效',
   slashedTag: '已处罚',
   slashedTip: '因蜜罐检测失败被扣除积分',
+  frozenTag: '作弊待自证',
+  frozenTip: '账号已冻结，涉嫌作弊，等待提交证据申诉',
   tierScout: '侦察者', tierHunter: '猎手', tierApex: '顶点',
   toHunter: (n: number) => `差 ${n} 升猎手`,
   toApex: (n: number) => `差 ${n} 升顶点`,
@@ -137,7 +141,16 @@ function formatPoints(n: number) {
             class="border-b border-shell-border/50 hover:bg-shell-border/20 transition-colors"
           >
             <td class="px-4 py-3 text-shell-text">{{ page * pageSize + i + 1 }}</td>
-            <td class="px-4 py-3 font-mono text-xs">{{ entry.displayName }}</td>
+            <td class="px-4 py-3 font-mono text-xs">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span>{{ entry.displayName }}</span>
+                <span
+                  v-if="entry.isFrozen"
+                  :title="T.frozenTip"
+                  class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-500/20 text-red-400 cursor-help"
+                >{{ T.frozenTag }}</span>
+              </div>
+            </td>
             <td class="px-4 py-3">
               <div class="flex flex-col gap-0.5">
                 <span class="flex items-center gap-1.5">
