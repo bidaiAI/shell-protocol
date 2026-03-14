@@ -62,6 +62,13 @@ watch(() => router.currentRoute.value.path, () => { menuOpen.value = false })
               {{ lang === 'en' ? 'Red Team' : '红队报告' }}
             </RouterLink>
             <RouterLink
+              to="/breaches"
+              class="text-shell-text hover:text-white transition-colors"
+              active-class="!text-yellow-400"
+            >
+              {{ lang === 'en' ? 'Breaches' : '攻破记录' }}
+            </RouterLink>
+            <RouterLink
               v-if="isAuthenticated"
               to="/dashboard"
               class="text-shell-text hover:text-white transition-colors"
@@ -182,6 +189,13 @@ watch(() => router.currentRoute.value.path, () => { menuOpen.value = false })
             active-class="!text-red-400"
           >
             {{ lang === 'en' ? 'Red Team' : '红队报告' }}
+          </RouterLink>
+          <RouterLink
+            to="/breaches"
+            class="text-shell-text hover:text-white py-1.5 transition-colors"
+            active-class="!text-yellow-400"
+          >
+            {{ lang === 'en' ? 'Breaches' : '攻破记录' }}
           </RouterLink>
           <RouterLink
             v-if="isAuthenticated"

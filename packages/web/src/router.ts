@@ -37,6 +37,11 @@ const routes = [
     component: () => import('./pages/RedTeamReports.vue'),
   },
   {
+    path: '/breaches',
+    name: 'breaches',
+    component: () => import('./pages/Breaches.vue'),
+  },
+  {
     path: '/bot-notice',
     name: 'bot-notice',
     component: () => import('./pages/BotNotice.vue'),

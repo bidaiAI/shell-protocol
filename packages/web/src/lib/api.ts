@@ -570,6 +570,7 @@ export interface RedTeamAgent {
   uniqueAttackers: number
   firstBreachAt: string
   latestBreachAt: string
+  firstBreacher: string | null
   isPromoted: boolean
   // Per-profile model display (no dedup — each variant listed separately)
   modelDisplay: string | null
@@ -580,6 +581,22 @@ export interface RedTeamAgent {
   // Official links
   officialUrl?: string
   twitterHandle?: string
+}
+
+export interface BreachRecord {
+  agent_name: string
+  defense_level: string
+  injection_surface: string
+  breach_count: number
+  first_breach_at: string
+  latest_breach_at: string
+}
+
+export interface BreachLeader {
+  miner_name: string
+  agents_breached: number
+  total_breaches: number
+  first_breach_at: string
 }
 
 export type RedTeamAccessTier =
@@ -632,4 +649,12 @@ export async function getRedTeamReports(agentName: string, limit = 20, offset = 
 
 export async function getRedTeamAccess(agentName: string) {
   return request<RedTeamAccess>(`/redteam/reports/${encodeURIComponent(agentName)}/access`)
+}
+
+export async function getMyBreaches() {
+  return request<{ breaches: BreachRecord[], total: number }>('/redteam/my-breaches')
+}
+
+export async function getBreachLeaders(limit = 20) {
+  return request<{ leaders: BreachLeader[] }>(`/redteam/breach-leaders?limit=${limit}`)
 }

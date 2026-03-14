@@ -12,6 +12,7 @@ export interface TaskData {
     systemPrompt: string
     targetChain: string
     availableTools: { name: string, description: string, parameters: Record<string, unknown> }[]
+    canaryActions?: string[]
     defenseLevel: string
     injectionSurface: string
   }

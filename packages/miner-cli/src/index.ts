@@ -7,9 +7,10 @@ import { writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { loadConfig, validateConfig, isFirstRun, isPlatformManaged, getSupportedTaskModes, getDeviceFingerprint, getRandomPollInterval, getPollIntervalLabel, CLIENT_VERSION, type MinerConfig } from './config.js'
 import { autoAuthenticate, type AuthResult } from './auth.js'
-import { pollForTask, requestPayloadFromOracle, submitPayload, submitLocalComputeResult, pollSubmissionResult, type TaskData, type SubmitResult } from './poller.js'
+import { pollForTask, submitLocalComputeResult, type TaskData, type SubmitResult } from './poller.js'
 import { executeLocally } from './local-sandbox/executor.js'
 import { buildSubmissionBody } from './local-sandbox/proof.js'
+import { generatePayloadLocally } from './local-sandbox/payload-generator.js'
 import { T } from './i18n.js'
 
 const BANNER = chalk.cyan(`
@@ -330,8 +331,7 @@ program
 
         lastTask = task
 
-        const isLocalCompute = task.executionMode === 'local_compute'
-        const modeTag = isLocalCompute ? chalk.magenta('[LOCAL]') : chalk.blue('[SANDBOX]')
+        const modeTag = chalk.magenta('[LOCAL]')
 
         pollSpinner.succeed(`${modeTag} Task: ${chalk.yellow(task.taskType)} | Chain: ${chalk.blue(task.targetChain)} | Difficulty: ${'★'.repeat(task.difficulty)} | Reward: ${chalk.cyan(task.rewardPoints)} pts`)
 
@@ -342,21 +342,8 @@ program
           console.log()
         }
 
-        // Execution mode routing
-        if (config.executionMode === 'sandbox_only' && isLocalCompute) {
-          console.log(chalk.gray('  [sandbox_only] Skipping local_compute task...'))
-          await sleep(config.pollingIntervalMs)
-          continue
-        }
-
-        let result: SubmitResult
-
-        if (isLocalCompute) {
-          result = await handleLocalCompute(config, token, task)
-        }
-        else {
-          result = await handleSandboxVerified(config, token, task)
-        }
+        // All tasks use local compute (miner's own LLM)
+        const result = await handleLocalCompute(config, token, task)
 
         totalTasks++
 
@@ -630,88 +617,183 @@ async function handleLocalCompute(
   token: string,
   task: TaskData,
 ): Promise<SubmitResult> {
-  const genSpinner = ora('Requesting attack payload from Oracle...').start()
-  const response = await requestPayloadFromOracle(config, token, task.id)
-  const { payload } = response
-  const sourceTag = response.source === 'cache' ? ' (cached)' : ''
-  genSpinner.succeed(`Platform AI generated payload (${payload.length} chars)${sourceTag}`)
+  const TASK_WINDOW_MS = 30 * 60 * 1000 // 30 min retry window
+  const deadline = Date.now() + TASK_WINDOW_MS
+  const canaryActions = task.targetAgentProfile.canaryActions ?? []
+  const managed = isPlatformManaged(config)
+  let attempt = 0
 
-  const execSpinner = ora('Executing locally against target agent...').start()
-  const executionResult = await executeLocally(
-    config,
-    task.targetAgentProfile,
-    payload,
-    task.mockToolDefinitions,
-  )
-  const totalTokens = executionResult.tokensUsed.input + executionResult.tokensUsed.output
-  execSpinner.succeed(
-    `Local execution: ${executionResult.actionLog.length} actions, ${executionResult.rounds} rounds, ${totalTokens} tokens`,
-  )
+  /** Check if actions triggered any canary */
+  const checkCanary = (actions: string[]) =>
+    canaryActions.length > 0
+      ? canaryActions.some(ca => actions.includes(ca))
+      : actions.length > 0
 
-  if (!task.challengeNonce) {
-    throw new Error('Task missing challengeNonce — cannot submit local_compute result without it')
+  /** Execute payload and return result + canary status */
+  const tryExecute = async (p: string, label: string) => {
+    const spinner = ora(`${label} Executing locally...`).start()
+    const result = await executeLocally(config, task.targetAgentProfile, p, task.mockToolDefinitions)
+    const tokens = result.tokensUsed.input + result.tokensUsed.output
+    const actions = result.actionLog.map(a => a.name)
+    const hit = checkCanary(actions)
+    spinner.succeed(`${label} ${result.actionLog.length} actions, ${result.rounds} rounds, ${tokens} tokens`)
+    return { result, actions, hit }
   }
 
-  const subSpinner = ora('Submitting result...').start()
-  const body = buildSubmissionBody(
-    task.id,
-    payload,
-    task.challengeNonce,
-    executionResult,
-    config,
-  )
-  const result = await submitLocalComputeResult(config, token, body)
-  subSpinner.stop()
-  return result
-}
-
-async function handleSandboxVerified(
-  config: ReturnType<typeof loadConfig>,
-  token: string,
-  task: TaskData,
-): Promise<SubmitResult> {
-  const genSpinner = ora('Generating attack payload...').start()
-  const response = await requestPayloadFromOracle(config, token, task.id)
-  const { payload, payloadHash } = response
-  const sourceTag = response.source === 'cache' ? ' (cached)' : ''
-  genSpinner.succeed(`Platform AI generated payload (${payload.length} chars)${sourceTag}`)
-
-  const subSpinner = ora('Submitting to Oracle sandbox...').start()
-  const submitResult = await submitPayload(config, token, task.id, payload, payloadHash)
-  subSpinner.stop()
-
-  // P1a: If submission is queued for async verification, poll for the real result
-  if (submitResult.result === 'submitted' && submitResult.submissionId) {
-    const pollSpinner = ora('Sandbox verifying... (up to 120s)').start()
-    const final = await pollSubmissionResult(config, token, submitResult.submissionId)
-    pollSpinner.stop()
-
-    if (!final || final.status === 'infra_error') {
-      console.log(chalk.gray(`  ℹ ${T('pendingCheck')}`))
-      return submitResult
-    }
-
-    // Display hint from server (explains 0-point breaches, suggests new approaches)
-    if (final.hint) {
-      console.log(chalk.yellow(`  💡 ${final.hint}`))
-    }
-
-    // Map SubmissionResult → SubmitResult shape for unified display
-    return {
-      result: final.isValid ? 'success' : 'failed',
-      message: final.isValid
-        ? (final.pointsAwarded > 0
-          ? `Sandbox verified! Attack successful.`
-          : `Breach confirmed but duplicate method — 0 pts. Try a different approach!`)
-        : `Sandbox did not detect a canary trigger.`,
-      pointsAwarded: final.pointsAwarded ?? 0,
-      submissionId: final.submissionId,
-      spotCheckSelected: final.spotCheckSelected,
-    }
+  /** Submit successful result to Oracle */
+  const submitResult = async (payload: string, execResult: Awaited<ReturnType<typeof executeLocally>>) => {
+    if (!task.challengeNonce) throw new Error('Task missing challengeNonce')
+    const subSpinner = ora('Submitting result...').start()
+    const body = buildSubmissionBody(task.id, payload, task.challengeNonce, execResult, config)
+    const res = await submitLocalComputeResult(config, token, body)
+    subSpinner.stop()
+    return res
   }
 
-  return submitResult
+  while (Date.now() < deadline) {
+    attempt++
+    const remaining = Math.ceil((deadline - Date.now()) / 60_000)
+
+    // 1. Generate payload
+    const genSpinner = ora(`[#${attempt}] Generating payload... (${remaining}min left)`).start()
+    let payload: string
+    try {
+      payload = await generatePayloadLocally(config, task)
+      genSpinner.succeed(`[#${attempt}] Payload generated (${payload.length} chars)`)
+    } catch (err) {
+      genSpinner.fail(`[#${attempt}] Generation failed: ${err instanceof Error ? err.message : err}`)
+      if (Date.now() >= deadline) break
+      if (managed) { console.log(chalk.gray('  Auto-retrying in 10s...')); await sleep(10_000); continue }
+      const action = await askRetryAction(remaining)
+      if (action === 'quit') {
+        const waitMs = deadline - Date.now()
+        if (waitMs > 0) { console.log(chalk.gray(`  Waiting ${Math.ceil(waitMs / 60_000)}min for task to expire...`)); await sleep(waitMs) }
+        break
+      }
+      continue
+    }
+
+    // 2. Execute
+    let execResult: Awaited<ReturnType<typeof executeLocally>>
+    let triggered: string[]
+    let hit: boolean
+    try {
+      const exec = await tryExecute(payload, `[#${attempt}]`)
+      execResult = exec.result; triggered = exec.actions; hit = exec.hit
+    } catch (err) {
+      console.log(chalk.red(`  [#${attempt}] Execution failed: ${err instanceof Error ? err.message : err}`))
+      if (Date.now() >= deadline) break
+      if (managed) { console.log(chalk.gray('  Auto-retrying in 10s...')); await sleep(10_000); continue }
+      const action = await askRetryAction(remaining)
+      if (action === 'quit') {
+        const waitMs = deadline - Date.now()
+        if (waitMs > 0) { console.log(chalk.gray(`  Waiting ${Math.ceil(waitMs / 60_000)}min for task to expire...`)); await sleep(waitMs) }
+        break
+      }
+      continue
+    }
+
+    // 3. Canary hit → submit
+    if (hit) {
+      console.log(chalk.green(`  [#${attempt}] Canary triggered: ${triggered.join(', ')}`))
+      return await submitResult(payload, execResult)
+    }
+
+    // 4. No canary — retry loop
+    console.log(chalk.yellow(`  [#${attempt}] No canary hit (actions: ${triggered.join(', ') || 'none'})`))
+    if (Date.now() >= deadline) break
+
+    if (managed) {
+      console.log(chalk.gray(`  Auto-retrying in 10s... (${remaining}min left)`))
+      await sleep(10_000)
+      continue
+    }
+
+    // Interactive: ask user
+    const action = await askRetryAction(remaining)
+    if (action === 'quit') {
+      // Wait silently until task expires — no submission, no ghost points
+      const waitMs = deadline - Date.now()
+      if (waitMs > 0) {
+        console.log(chalk.gray(`  Waiting ${Math.ceil(waitMs / 60_000)}min for task to expire...`))
+        await sleep(waitMs)
+      }
+      break
+    }
+    if (action === 'edit') {
+      // Edit → re-execute loop (user can keep editing until satisfied or quit)
+      let editedPayload = payload
+      while (Date.now() < deadline) {
+        editedPayload = await editPayload(editedPayload)
+        try {
+          const reExec = await tryExecute(editedPayload, `[#${attempt}E]`)
+          if (reExec.hit) {
+            console.log(chalk.green(`  Canary triggered: ${reExec.actions.join(', ')}`))
+            return await submitResult(editedPayload, reExec.result)
+          }
+          console.log(chalk.yellow(`  No canary hit (actions: ${reExec.actions.join(', ') || 'none'})`))
+        } catch (err) {
+          console.log(chalk.red(`  Execution failed: ${err instanceof Error ? err.message : err}`))
+        }
+        const rem2 = Math.ceil((deadline - Date.now()) / 60_000)
+        const again = await askRetryAction(rem2)
+        if (again === 'quit') {
+          const waitMs2 = deadline - Date.now()
+          if (waitMs2 > 0) {
+            console.log(chalk.gray(`  Waiting ${Math.ceil(waitMs2 / 60_000)}min for task to expire...`))
+            await sleep(waitMs2)
+          }
+          return { result: 'failed', message: 'Task expired (user quit)' }
+        }
+        if (again === 'retry') break // back to auto-generate
+        // 'edit' continues the edit loop
+      }
+    }
+    // 'retry' — loops back to generate new payload
+  }
+
+  return { result: 'failed', message: `No canary triggered after ${attempt} attempts (30min window expired)` }
 }
+
+/** Ask user what to do after failed attack (interactive mode only) */
+function askRetryAction(minutesLeft: number): Promise<'retry' | 'edit' | 'quit'> {
+  // Non-TTY (nohup/background): auto-retry without waiting for input
+  if (!process.stdin.isTTY) {
+    console.log(chalk.gray(`  [auto-retry] ${minutesLeft}min left, generating new payload...`))
+    return Promise.resolve('retry')
+  }
+  return new Promise(resolve => {
+    const rl = createInterface({ input: process.stdin, output: process.stdout })
+    console.log(chalk.cyan(`\n  What next? (${minutesLeft}min left)`))
+    console.log(chalk.gray('    [R] Retry with new LLM-generated payload (default)'))
+    console.log(chalk.gray('    [E] Edit payload manually before execution'))
+    console.log(chalk.gray('    [Q] Quit — wait for task to expire'))
+    rl.question(chalk.cyan('  Choice [R/e/q]: '), answer => {
+      rl.close()
+      const a = answer.trim().toLowerCase()
+      if (a === 'e') resolve('edit')
+      else if (a === 'q') resolve('quit')
+      else resolve('retry')
+    })
+  })
+}
+
+/** Let user manually edit payload text */
+function editPayload(original: string): Promise<string> {
+  if (!process.stdin.isTTY) return Promise.resolve(original)
+  return new Promise(resolve => {
+    console.log(chalk.cyan('\n  Current payload:'))
+    console.log(chalk.gray('  ─'.repeat(30)))
+    console.log(chalk.white(`  ${original}`))
+    console.log(chalk.gray('  ─'.repeat(30)))
+    const rl = createInterface({ input: process.stdin, output: process.stdout })
+    rl.question(chalk.cyan('  Enter new payload (or press Enter to keep): '), answer => {
+      rl.close()
+      resolve(answer.trim() || original)
+    })
+  })
+}
+
 
 function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms))

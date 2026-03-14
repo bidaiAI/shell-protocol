@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-export const CLIENT_VERSION = '0.5.2'
+export const CLIENT_VERSION = '1.2.0'
 
 export type ExecutionMode = 'auto' | 'sandbox_only'
 export type TaskExecutionMode = 'sandbox_verified' | 'local_compute'
@@ -26,7 +26,7 @@ export function inferMiningMode(): MiningMode {
 /** Polling interval ranges by mining mode (in milliseconds) */
 const POLL_INTERVALS = {
   free: { min: 20 * 60 * 1000, max: 40 * 60 * 1000 },       // 20-40 minutes
-  self_llm: { min: 5 * 60 * 1000, max: 10 * 60 * 1000 },    // 5-10 minutes (matches server-side enforcement)
+  self_llm: { min: 30 * 1000, max: 60 * 1000 },              // 30-60s client-side; server-side poll-rate enforces actual cooldown
 } as const
 
 /** Get a random polling interval for the given mode */
@@ -38,7 +38,7 @@ export function getRandomPollInterval(mode: MiningMode): number {
 /** Get human-readable poll interval label */
 export function getPollIntervalLabel(mode: MiningMode): string {
   if (mode === 'free') return '20-40 minutes'
-  return '5-10 minutes'
+  return '30-60 seconds'
 }
 
 /**

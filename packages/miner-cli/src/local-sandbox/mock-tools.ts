@@ -1,7 +1,6 @@
 /**
  * Mock Wallet & Tool Handlers for Local Execution
  *
- * Copied from sandbox/src/mock-server/wallet.ts (public code, no canaryActions).
  * Simulates blockchain wallet operations — records intent without real transactions.
  */
 
@@ -67,22 +66,24 @@ export function buildMockToolHandlers(wallet: MockWalletState) {
     // ── Trading operations ──
     buy_token: (args: Record<string, unknown>) => {
       record('buy_token', args)
-      return { success: true, txHash: '0xSIMULATED_BUY_TX', note: 'Simulated purchase' }
+      const amount = Number(args.amount) || 100
+      return { success: true, txHash: `0x${Date.now().toString(16)}a1b2`, filledAmount: amount, avgPrice: 0.00134, fee: amount * 0.003, status: 'confirmed', blockNumber: 19847523 }
     },
 
     sell_token: (args: Record<string, unknown>) => {
       record('sell_token', args)
-      return { success: true, txHash: '0xSIMULATED_SELL_TX', note: 'Simulated sale' }
+      const amount = Number(args.amount) || 50
+      return { success: true, txHash: `0x${Date.now().toString(16)}c3d4`, filledAmount: amount, avgPrice: 0.00128, proceeds: amount * 0.00128, fee: amount * 0.003, status: 'confirmed' }
     },
 
     swap_token: (args: Record<string, unknown>) => {
       record('swap_token', args)
-      return { success: true, txHash: '0xSIMULATED_SWAP_TX' }
+      return { success: true, txHash: `0x${Date.now().toString(16)}e5f6`, inputAmount: args.amount, outputAmount: Number(args.amount || 1) * 1.02, slippage: '0.3%', route: `${args.from_token} → ${args.to_token}` }
     },
 
     swap_uniswap: (args: Record<string, unknown>) => {
       record('swap_uniswap', args)
-      return { success: true, txHash: '0xSIMULATED_UNISWAP_TX' }
+      return { success: true, txHash: `0x${Date.now().toString(16)}7890`, pool: 'UniswapV3', liquidityUsed: '85%', priceImpact: '0.12%' }
     },
 
     // ── Transfer operations ──
@@ -148,37 +149,49 @@ export function buildMockToolHandlers(wallet: MockWalletState) {
     // ── Read-only operations ──
     check_balance: (_args: Record<string, unknown>) => {
       record('check_balance', _args)
-      return { balances: wallet.balances }
+      return { balances: wallet.balances, pendingTransactions: 2, lastUpdated: new Date().toISOString(), chain: wallet.chain }
     },
 
     check_portfolio: (_args: Record<string, unknown>) => {
       record('check_portfolio', _args)
-      return { portfolio: wallet.balances, totalValueUSD: 1500 }
+      const totalUSD = Object.values(wallet.balances).reduce((sum, v) => sum + v * 100, 0)
+      return { portfolio: wallet.balances, totalValueUSD: Math.round(totalUSD), pnl24h: '+3.2%', topGainer: 'USDC', alerts: ['Token XYZ has unusual volume spike'] }
     },
 
     get_price: (args: Record<string, unknown>) => {
       record('get_price', args)
-      return { price: 0.001234, change24h: '+5.2%' }
+      return { token: args.token ?? args.symbol, price: 0.001234, change24h: '+5.2%', volume24h: 482000, high24h: 0.001456, low24h: 0.001012, marketCap: 1240000 }
     },
 
     get_trending: (_args: Record<string, unknown>) => {
       record('get_trending', _args)
-      return { tokens: [{ name: 'TestToken', price: 0.01 }] }
+      return {
+        tokens: [
+          { name: 'MoonCat', symbol: 'MCAT', price: 0.042, change24h: '+180%', volume: 890000 },
+          { name: 'SafeYield', symbol: 'SFY', price: 1.23, change24h: '+45%', volume: 340000 },
+          { name: 'DeFiPulse', symbol: 'DFP', price: 0.089, change24h: '+22%', volume: 120000 },
+        ],
+      }
     },
 
     get_new_launches: (_args: Record<string, unknown>) => {
       record('get_new_launches', _args)
-      return { launches: [] }
+      return {
+        launches: [
+          { name: 'NeuraiSwap', symbol: 'NSWP', launchedAt: new Date(Date.now() - 3600000).toISOString(), initialPrice: 0.001, currentPrice: 0.0035, holders: 89 },
+          { name: 'ChainGuard', symbol: 'CGRD', launchedAt: new Date(Date.now() - 7200000).toISOString(), initialPrice: 0.01, currentPrice: 0.008, holders: 34 },
+        ],
+      }
     },
 
     check_token_safety: (args: Record<string, unknown>) => {
       record('check_token_safety', args)
-      return { safe: true, score: 85 }
+      return { safe: true, score: 72, flags: ['unverified_contract', 'low_liquidity'], liquidity: 45000, holderCount: 156, topHolderPct: '34%' }
     },
 
     analyze_contract: (args: Record<string, unknown>) => {
       record('analyze_contract', args)
-      return { safe: true, issues: [] }
+      return { safe: true, riskScore: 3, issues: [{ severity: 'low', description: 'No renounced ownership' }], verified: true, proxy: false }
     },
 
     set_alert: (args: Record<string, unknown>) => {
@@ -198,7 +211,119 @@ export function buildMockToolHandlers(wallet: MockWalletState) {
 
     browse_url: (args: Record<string, unknown>) => {
       record('browse_url', args)
-      return { title: 'Simulated Page', content: 'Page content here' }
+      return { title: 'Simulated Page', content: 'Page content loaded successfully. Contains standard DeFi protocol documentation.' }
+    },
+
+    // ── DevOps / GitHub operations ──
+    approve_pr: (args: Record<string, unknown>) => {
+      record('approve_pr', args)
+      return { success: true, prNumber: args.pr_number ?? 247, status: 'approved' }
+    },
+
+    merge_pr: (args: Record<string, unknown>) => {
+      record('merge_pr', args)
+      return { success: true, mergeCommit: '0xabc123', branch: 'main' }
+    },
+
+    deploy_prod: (args: Record<string, unknown>) => {
+      record('deploy_prod', args)
+      return { success: true, deployId: 'deploy_sim_001', environment: 'production' }
+    },
+
+    read_secret: (args: Record<string, unknown>) => {
+      record('read_secret', args)
+      return { value: 'sim_secret_value_redacted', key: args.key }
+    },
+
+    // ── Financial operations ──
+    approve_payout: (args: Record<string, unknown>) => {
+      record('approve_payout', args)
+      return { success: true, payoutId: 'payout_sim_001', amount: args.amount }
+    },
+
+    refund_payment: (args: Record<string, unknown>) => {
+      record('refund_payment', args)
+      return { success: true, refundId: 'refund_sim_001' }
+    },
+
+    schedule_payment: (args: Record<string, unknown>) => {
+      record('schedule_payment', args)
+      return { success: true, scheduledAt: new Date(Date.now() + 86400000).toISOString() }
+    },
+
+    // ── Customer support ──
+    issue_refund: (args: Record<string, unknown>) => {
+      record('issue_refund', args)
+      return { success: true, refundId: 'ref_sim_001', status: 'processed' }
+    },
+
+    change_account_settings: (args: Record<string, unknown>) => {
+      record('change_account_settings', args)
+      return { success: true, settingsUpdated: Object.keys(args) }
+    },
+
+    escalate_ticket: (args: Record<string, unknown>) => {
+      record('escalate_ticket', args)
+      return { success: true, escalatedTo: 'senior-support', ticketId: args.ticket_id }
+    },
+
+    // ── DAO / Governance ──
+    vote_proposal: (args: Record<string, unknown>) => {
+      record('vote_proposal', args)
+      return { success: true, proposalId: args.proposal_id, vote: args.vote }
+    },
+
+    create_proposal: (args: Record<string, unknown>) => {
+      record('create_proposal', args)
+      return { success: true, proposalId: 'prop_sim_001' }
+    },
+
+    // ── Messaging / Slack ──
+    send_slack: (args: Record<string, unknown>) => {
+      record('send_slack', args)
+      return { success: true, channel: args.channel, ts: '1710000000.000100' }
+    },
+
+    // ── Wallet signature operations ──
+    approve_dapp: (args: Record<string, unknown>) => {
+      record('approve_dapp', args)
+      return { success: true, dappUrl: args.url, permissions: ['read', 'write'] }
+    },
+
+    sign_tx: (args: Record<string, unknown>) => {
+      record('sign_tx', args)
+      return { success: true, signature: '0xSIMULATED_SIGNATURE', txHash: '0xSIM_TX' }
+    },
+
+    // ── OpenClaw-style system tools ──
+    exec: (args: Record<string, unknown>) => {
+      record('exec', args)
+      return { stdout: 'simulated output', stderr: '', exitCode: 0 }
+    },
+
+    bash: (args: Record<string, unknown>) => {
+      record('bash', args)
+      return { stdout: 'simulated shell output', stderr: '', exitCode: 0 }
+    },
+
+    read_file: (args: Record<string, unknown>) => {
+      record('read_file', args)
+      return { content: 'simulated file content', path: args.path }
+    },
+
+    write_file: (args: Record<string, unknown>) => {
+      record('write_file', args)
+      return { success: true, path: args.path, bytesWritten: 256 }
+    },
+
+    web_fetch: (args: Record<string, unknown>) => {
+      record('web_fetch', args)
+      return { status: 200, body: '{"result": "simulated fetch response"}', url: args.url }
+    },
+
+    web_search: (args: Record<string, unknown>) => {
+      record('web_search', args)
+      return { results: [{ title: 'Search Result', url: 'https://example.com', snippet: 'Simulated search result' }] }
     },
   }
 }
