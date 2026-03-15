@@ -12,6 +12,7 @@ const pageSize = 50
 
 const T = computed(() => lang.value === 'en' ? {
   title: 'Leaderboard',
+  antiCheatNotice: 'Any user found bypassing the official client with unauthorized scripts will be permanently banned without appeal.',
   colMiner: 'Miner', colTier: 'Tier', colPoints: 'Points',
   colMode: 'Mode',
   colAttacks: 'Breaches', colSuccessRate: 'Success Rate',
@@ -27,6 +28,7 @@ const T = computed(() => lang.value === 'en' ? {
   toApex: (n: number) => `${n} to Apex`,
 } : {
   title: '排行榜',
+  antiCheatNotice: '任何绕过官方客户端、使用非法脚本的用户，直接封号，不予申诉。',
   colMiner: '矿工', colTier: '段位', colPoints: '积分',
   colMode: '模式',
   colAttacks: '攻破数', colSuccessRate: '成功率',
@@ -119,6 +121,10 @@ function formatPoints(n: number) {
 <template>
   <div class="max-w-4xl mx-auto px-4 py-8 animate-fade-in">
     <h1 class="text-3xl font-bold mb-6">{{ T.title }}</h1>
+
+    <p class="text-xs text-yellow-400/80 mb-6 border border-yellow-400/20 rounded px-3 py-2 bg-yellow-400/5">
+      ⚠️ {{ T.antiCheatNotice }}
+    </p>
 
     <!-- Table -->
     <div class="bg-shell-card border border-shell-border rounded-lg overflow-hidden">
