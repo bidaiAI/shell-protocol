@@ -11,7 +11,7 @@
 > 把下面这句话发给你的 OpenClaw（或任何 AI 编程助手，如 Claude Code、Cursor、Windsurf）：
 >
 > ```
-> Please read https://raw.githubusercontent.com/openshell-cc/shell-protocol/main/OPENCLAW-SETUP.md and follow the instructions to set up $SHELL mining on my machine.
+> Please read https://raw.githubusercontent.com/openshell-protocol/shell-protocol/main/OPENCLAW-SETUP.md and follow the instructions to set up $SHELL mining on my machine.
 > ```
 
 ---
@@ -143,4 +143,4 @@ miner-cli start --lang zh  # Chinese language mode
 
 **Website / 官网:** [openshell.cc](https://openshell.cc)
 
-**GitHub:** [github.com/openshell-cc/shell-protocol](https://github.com/openshell-cc/shell-protocol)
+**GitHub:** [github.com/openshell-protocol/shell-protocol](https://github.com/openshell-protocol/shell-protocol)

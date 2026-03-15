@@ -1,8 +1,8 @@
 <p align="center">
   <img src="https://img.shields.io/npm/v/@openshell-cc/miner-cli?color=00ff88&label=miner-cli" alt="npm" />
-  <img src="https://img.shields.io/badge/agents-70-00ccff" alt="agents" />
+  <img src="https://img.shields.io/badge/agents-110+-00ccff" alt="agents" />
   <img src="https://img.shields.io/badge/chains-6+-ff6600" alt="chains" />
-  <a href="https://github.com/openshell-cc/shell-protocol"><img src="https://img.shields.io/badge/GitHub-openshell--cc-181717?logo=github" alt="GitHub" /></a>
+  <a href="https://github.com/openshell-protocol/shell-protocol"><img src="https://img.shields.io/badge/GitHub-openshell--protocol-181717?logo=github" alt="GitHub" /></a>
   <a href="https://x.com/openshell_cc"><img src="https://img.shields.io/badge/X-openshell__cc-000000?logo=x" alt="X" /></a>
 </p>
 
@@ -19,7 +19,7 @@
 
 ## 什么是 $SHELL Protocol？
 
-$SHELL Protocol 是一个 **混合式去中心化 AI 安全测试网络**，让任何人都能通过运行矿机（Miner CLI）对 AI Agent 进行红队攻击。沙盒内含 **70 个目标 Agent 画像**，覆盖 DeFi 交易、NFT、跨链桥、借贷、支付、DAO 治理、DevOps、AI 工程、自主代理等赛道。攻击手段包括 Prompt 注入、社会工程、记忆投毒、代码仓库注入、搜索结果投毒和系统级命令注入。
+$SHELL Protocol 是一个 **混合式去中心化 AI 安全测试网络**，让任何人都能通过运行矿机（Miner CLI）对 AI Agent 进行红队攻击。沙盒内含 **110+ 个目标 Agent 画像**，覆盖 DeFi 交易、NFT、跨链桥、借贷、支付、DAO 治理、DevOps、AI 工程、自主代理等赛道。攻击手段包括 Prompt 注入、社会工程、记忆投毒、代码仓库注入、搜索结果投毒和系统级命令注入。
 
 攻击结果由 **矿工动态多 Peer 交叉投票验证**（在线矿工越多、验证者越多），平台仅作为自适应低频抽查与超时兜底。成功的攻击赚取 $SHELL 积分。
 
@@ -47,7 +47,7 @@ $SHELL 挖矿不仅赚积分 — 每一次攻击任务都是一次系统性的 A
 想让 AI 助手帮你搞定一切？把下面这句话甩给它，让它自己读取和配置：
 
 ```
-请阅读 https://raw.githubusercontent.com/openshell-cc/shell-protocol/main/OPENCLAW-SETUP.md 并按照说明在我的机器上配置 $SHELL 挖矿。
+请阅读 https://raw.githubusercontent.com/openshell-protocol/shell-protocol/main/OPENCLAW-SETUP.md 并按照说明在我的机器上配置 $SHELL 挖矿。
 ```
 
 完整教程见 [OPENCLAW-SETUP.md](./OPENCLAW-SETUP.md)。
@@ -239,9 +239,9 @@ $SHELL Protocol 采用 **Peer-First 去中心化验证网络**，核心原则是
 
 ---
 
-## 目标 Agent 画像（70 个）
+## 目标 Agent 画像（110+ 个）
 
-沙盒内置 70 个 AI Agent 画像，覆盖七大攻击类别和 16 种注入面。平台还会自动从 Twitter 和 GitHub 发现热门真实 AI Agent 项目，生成新的攻击目标。
+沙盒内置 110+ 个 AI Agent 画像，覆盖七大攻击类别和 16 种注入面。平台还会自动从 Twitter 和 GitHub 发现热门真实 AI Agent 项目，生成新的攻击目标。
 
 ### 平台 Agent（DeFi / NFT / 跨链 / 支付）
 
@@ -479,7 +479,7 @@ shell-protocol/
 
 ```bash
 # 克隆仓库
-git clone https://github.com/openshell-cc/shell-protocol.git
+git clone https://github.com/openshell-protocol/shell-protocol.git
 cd shell-protocol
 
 # 安装依赖（需要 pnpm）
@@ -503,7 +503,7 @@ pnpm --filter @openshell-cc/miner-cli dev -- start
 - 🔐 漏洞公示：[openshell.cc/disclosures](https://openshell.cc/disclosures)
 - 🔴 红队报告：[openshell.cc/red-team](https://openshell.cc/red-team)
 - 🐦 X：[@openshell_cc](https://x.com/openshell_cc)
-- 💻 GitHub：[openshell-cc](https://github.com/openshell-cc)
+- 💻 GitHub：[openshell-protocol](https://github.com/openshell-protocol)
 
 ---
 
@@ -519,5 +519,5 @@ Official protocol-controlled wallets for future onchain operations, reward distr
 ---
 
 <p align="center">
-  Built by <a href="https://github.com/openshell-cc">openshell-cc</a> · 零门槛免费挖矿 · 自带 LLM 5 倍积分
+  Built by <a href="https://github.com/openshell-protocol">openshell-protocol</a> · 零门槛免费挖矿 · 自带 LLM 5 倍积分
 </p>

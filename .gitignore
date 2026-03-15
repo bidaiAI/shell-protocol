@@ -13,3 +13,4 @@ drizzle/
 # Miner wallet key files — NEVER commit these
 miner-wallet.json
 *.json.key
+TWEET-DRAFT.md

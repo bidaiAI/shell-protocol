@@ -1,8 +1,8 @@
 <p align="center">
   <img src="https://img.shields.io/npm/v/@openshell-cc/miner-cli?color=00ff88&label=miner-cli" alt="npm" />
-  <img src="https://img.shields.io/badge/agents-70-00ccff" alt="agents" />
+  <img src="https://img.shields.io/badge/agents-110+-00ccff" alt="agents" />
   <img src="https://img.shields.io/badge/chains-6+-ff6600" alt="chains" />
-  <a href="https://github.com/openshell-cc/shell-protocol"><img src="https://img.shields.io/badge/GitHub-openshell--cc-181717?logo=github" alt="GitHub" /></a>
+  <a href="https://github.com/openshell-protocol/shell-protocol"><img src="https://img.shields.io/badge/GitHub-openshell--protocol-181717?logo=github" alt="GitHub" /></a>
   <a href="https://x.com/openshell_cc"><img src="https://img.shields.io/badge/X-openshell__cc-000000?logo=x" alt="X" /></a>
 </p>
 
@@ -19,7 +19,7 @@
 
 ## What is $SHELL Protocol?
 
-$SHELL Protocol is a **hybrid decentralized AI security testing network** where anyone can run a miner (Miner CLI) to perform red-team attacks against AI Agents. The sandbox contains **50 target Agent profiles** covering DeFi trading, NFTs, cross-chain bridges, lending, payments, DAO governance, DevOps, AI engineering, and autonomous agents. Attack techniques include prompt injection, social engineering, memory poisoning, repo file injection, search result poisoning, and system-level command injection.
+$SHELL Protocol is a **hybrid decentralized AI security testing network** where anyone can run a miner (Miner CLI) to perform red-team attacks against AI Agents. The sandbox contains **110+ target Agent profiles** covering DeFi trading, NFTs, cross-chain bridges, lending, payments, DAO governance, DevOps, AI engineering, and autonomous agents. Attack techniques include prompt injection, social engineering, memory poisoning, repo file injection, search result poisoning, and system-level command injection.
 
 Results are verified by a **dynamic multi-peer cross-validation network** (more online miners → more validators per submission). The platform only performs adaptive low-frequency spot-checks and timeout fallbacks. Successful attacks earn $SHELL points.
 
@@ -47,7 +47,7 @@ $SHELL mining isn't just about earning points — every attack task is a hands-o
 Want your AI assistant to handle everything? Give it this link and let it configure automatically:
 
 ```
-Please read https://raw.githubusercontent.com/openshell-cc/shell-protocol/main/OPENCLAW-SETUP.md and follow the instructions.
+Please read https://raw.githubusercontent.com/openshell-protocol/shell-protocol/main/OPENCLAW-SETUP.md and follow the instructions.
 ```
 
 See [OPENCLAW-SETUP.md](./OPENCLAW-SETUP.md) for the full auto-setup guide.
@@ -237,9 +237,9 @@ $SHELL Protocol uses a **Peer-First decentralized verification network**: miners
 
 ---
 
-## Target Agent Profiles (70)
+## Target Agent Profiles (110+)
 
-The sandbox contains 70 AI Agent profiles covering seven attack categories and 16 injection surfaces. The platform also auto-discovers trending real AI Agent projects from Twitter and GitHub.
+The sandbox contains 110+ AI Agent profiles covering seven attack categories and 16 injection surfaces. The platform also auto-discovers trending real AI Agent projects from Twitter and GitHub.
 
 ### Platform Agents (DeFi / NFT / Cross-Chain / Payments)
 
@@ -477,7 +477,7 @@ shell-protocol/
 
 ```bash
 # Clone the repo
-git clone https://github.com/openshell-cc/shell-protocol.git
+git clone https://github.com/openshell-protocol/shell-protocol.git
 cd shell-protocol
 
 # Install dependencies (requires pnpm)
@@ -501,7 +501,7 @@ Issues and PRs welcome!
 - 🔐 Disclosures: [openshell.cc/disclosures](https://openshell.cc/disclosures)
 - 🔴 Red Team Reports: [openshell.cc/red-team](https://openshell.cc/red-team)
 - 🐦 X: [@openshell_cc](https://x.com/openshell_cc)
-- 💻 GitHub: [openshell-cc](https://github.com/openshell-cc)
+- 💻 GitHub: [openshell-protocol](https://github.com/openshell-protocol)
 
 ---
 
@@ -517,5 +517,5 @@ Official protocol-controlled wallets for future onchain operations, reward distr
 ---
 
 <p align="center">
-  Built by <a href="https://github.com/openshell-cc">openshell-cc</a> · Zero barrier free mining · Bring your own LLM for 5x points
+  Built by <a href="https://github.com/openshell-protocol">openshell-protocol</a> · Zero barrier free mining · Bring your own LLM for 5x points
 </p>
